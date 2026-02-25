@@ -1,9 +1,9 @@
 from uuid import UUID
 
-from backend.data.data_wrappers.abstract_wrapper import AbstractWrapper  # SEE abstract_wrapper.py FOR LOGIC
-from backend.data.tables.aro_user_tables import AROUserAuthToken, AROUserLogin, AROUsers
-from backend.data.tables.main_tables import MainCommand, MainTelemetry
-from backend.data.tables.transactional_tables import (
+from data.data_wrappers.abstract_wrapper import AbstractWrapper  # SEE abstract_wrapper.py FOR LOGIC
+from data.tables.aro_user_tables import AROUserAuthToken, AROUserLogin, AROUsers
+from data.tables.main_tables import MainCommand, MainTelemetry
+from data.tables.transactional_tables import (
     ARORequest,
     Commands,
     CommsSession,

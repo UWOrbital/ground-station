@@ -1,8 +1,8 @@
 # TODO:(335) Improve loading the configuration
 
-from backend.config.cors_config import CORSConfig
-from backend.config.database_config import DatabaseConfig
-from backend.config.logger_config import LoggerConfig
+from config.cors_config import CORSConfig
+from config.database_config import DatabaseConfig
+from config.logger_config import LoggerConfig
 
 
 class BackendConfiguration:

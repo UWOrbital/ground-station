@@ -1,13 +1,13 @@
 import csv
 
-from backend.data.tables.main_tables import MainTelemetry
+from data.tables.main_tables import MainTelemetry
 
 
 def main_telemetry() -> list[MainTelemetry]:
     """
     Returns the list of main telemetry
     """
-    with open("backend/data/resources/telemetry.csv", newline="") as csvfile:
+    with open("backend/resources/telemetry.csv", newline="") as csvfile:
         file = csv.reader(csvfile)
         return [
             MainTelemetry(

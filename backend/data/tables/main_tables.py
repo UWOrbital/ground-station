@@ -4,8 +4,8 @@ from pydantic import model_validator
 from sqlalchemy import Integer
 from sqlmodel import Field
 
-from backend.data.tables.base_model import BaseSQLModel
-from backend.exceptions.exceptions import DatabaseError
+from data.tables.base_model import BaseSQLModel
+from exceptions.exceptions import DatabaseError
 
 # Schema information
 MAIN_SCHEMA_NAME: Final[str] = "main"

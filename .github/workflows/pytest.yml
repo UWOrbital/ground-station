@@ -24,6 +24,7 @@ jobs:
 
     - name: Install dependencies
       run: |
+        cd backend
         sudo apt update
         sudo apt install -y postgresql
         python -m pip install --upgrade pip
@@ -32,12 +33,14 @@ jobs:
 
     - name: Set up PostgreSQL database
       run: |
+        cd backend
         sudo service postgresql start
         sudo -u postgres psql -c "CREATE USER ci_user WITH PASSWORD 'ci_password' SUPERUSER;"
         sudo -u postgres psql -c "CREATE DATABASE gs;"
 
     - name: Create CI .env file
       run: |
+        cd backend
         cat > .env << EOF
         GS_DATABASE_USER=ci_user
         GS_DATABASE_PASSWORD=ci_password
@@ -48,18 +51,8 @@ jobs:
 
     - name: Run Alembic migrations
       run: |
+        cd backend
         alembic upgrade head
-
-    - name: Create binary directory
-      run: |
-        mkdir build_gs
-        cd build_gs
-        cmake .. -DCMAKE_BUILD_TYPE=GS
-
-    - name: Build
-      run: |
-        cd build_gs
-        cmake --build .
 
     - name: Run pytest
       env:
@@ -69,4 +62,5 @@ jobs:
         GS_DATABASE_PORT: 5432
         GS_DATABASE_NAME: gs
       run: |
+        cd backend
         python -m pytest

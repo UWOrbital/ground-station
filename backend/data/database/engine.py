@@ -1,10 +1,10 @@
 from sqlalchemy import Engine
 from sqlmodel import Session, create_engine, text
 
-from backend.config.config import settings
-from backend.data.tables.aro_user_tables import ARO_USER_SCHEMA_NAME
-from backend.data.tables.main_tables import MAIN_SCHEMA_NAME
-from backend.data.tables.transactional_tables import TRANSACTIONAL_SCHEMA_NAME
+from config.config import settings
+from data.tables.aro_user_tables import ARO_USER_SCHEMA_NAME
+from data.tables.main_tables import MAIN_SCHEMA_NAME
+from data.tables.transactional_tables import TRANSACTIONAL_SCHEMA_NAME
 
 
 def get_db_engine() -> Engine:

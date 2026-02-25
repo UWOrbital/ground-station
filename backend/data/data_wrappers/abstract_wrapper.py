@@ -4,8 +4,8 @@ from uuid import UUID
 
 from sqlmodel import select
 
-from backend.data.database.engine import get_db_session
-from backend.data.tables.base_model import BaseSQLModel
+from data.database.engine import get_db_session
+from data.tables.base_model import BaseSQLModel
 
 T = TypeVar("T", bound=BaseSQLModel)
 PK = TypeVar("PK", int, UUID)

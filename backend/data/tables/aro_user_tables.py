@@ -9,14 +9,14 @@ from sqlalchemy.dialects.postgresql import UUID as DB_UUID
 from sqlalchemy.schema import Column, ForeignKey
 from sqlmodel import Field
 
-from backend.config.data_config import (
+from config.data_config import (
     CALL_SIGN_MAX_LENGTH,
     CALL_SIGN_MIN_LENGTH,
     DEFAULT_MAX_LENGTH,
     EMAIL_MIN_LENGTH,
 )
-from backend.data.enums.aro_auth_token import AROAuthToken
-from backend.data.tables.base_model import BaseSQLModel
+from data.enums.aro_auth_token import AROAuthToken
+from data.tables.base_model import BaseSQLModel
 
 # Schema information
 ARO_USER_SCHEMA_NAME: Final[str] = "aro_users"

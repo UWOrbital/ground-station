@@ -1,5 +1,5 @@
-from backend.state_machine.state_enums import StateMachineStates
-from backend.state_machine.state_transition_enums import StateTransition
+from state_machine.state_enums import StateMachineStates
+from state_machine.state_transition_enums import StateTransition
 
 
 class StateMachine:

@@ -1,6 +1,6 @@
 import csv
 
-from backend.data.tables.main_tables import MainCommand
+from data.tables.main_tables import MainCommand
 
 
 # TODO: Pull this from a config file so that it's synced with the OBC
@@ -8,7 +8,7 @@ def main_commands() -> list[MainCommand]:
     """
     Returns the list of main commands
     """
-    with open("backend/data/resources/main_commands.csv", newline="") as csvfile:
+    with open("backend/resources/main_commands.csv", newline="") as csvfile:
         file = csv.reader(csvfile)
         return [
             MainCommand(

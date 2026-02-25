@@ -2,8 +2,8 @@ from typing import Any
 
 from sqlmodel import select
 
-from backend.data.database.engine import get_db_session
-from backend.data.tables.main_tables import MainTelemetry
+from data.database.engine import get_db_session
+from data.tables.main_tables import MainTelemetry
 
 
 def get_all_main_telemetries() -> list[MainTelemetry]:

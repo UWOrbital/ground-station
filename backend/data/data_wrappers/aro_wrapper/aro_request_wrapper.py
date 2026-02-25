@@ -4,9 +4,9 @@ from uuid import UUID
 
 from sqlmodel import select
 
-from backend.data.database.engine import get_db_session
-from backend.data.enums.aro_requests import ARORequestStatus
-from backend.data.tables.transactional_tables import ARORequest
+from data.database.engine import get_db_session
+from data.enums.aro_requests import ARORequestStatus
+from data.tables.transactional_tables import ARORequest
 
 
 def get_all_requests() -> list[ARORequest]:

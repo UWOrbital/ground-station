@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.inmemory import InMemoryBackend
 
-from backend.data.database.engine import get_db_session, setup_database
+from data.database.engine import get_db_session, setup_database
 
 
 @asynccontextmanager

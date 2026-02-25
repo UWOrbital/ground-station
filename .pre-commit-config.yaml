@@ -9,7 +9,7 @@ repos:
       - id: end-of-file-fixer
         exclude: '((libs|hal)/.*|\.(ts|tsx|css|html|json|md|yaml|yml|ipynb)$)'
       - id: check-added-large-files
-        exclude: "(libs|hal)/.*|gs/backend/data/resources/callsigns\\.csv$"
+        exclude: "(libs|hal)/.*|backend/data/resources/callsigns\\.csv$"
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.2.2
     hooks:

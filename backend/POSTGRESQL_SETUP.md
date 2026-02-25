@@ -51,7 +51,7 @@ CREATE DATABASE gs; # gs database
 
 ## Environment Variable Setup
 
-Find the `gs/backend/config/template.env` and create a copy of it in the same directory with the name `.env`
+Find the `backend/config/template.env` and create a copy of it in the same directory with the name `.env`
 Inside your newly created `.env` file, put your username and password created above inside the quotes for `GS_DATABASE_USER` and `GS_DATABASE_PASSWORD` respectively.
 
 In the end your `.env` file, should look like this:
@@ -65,9 +65,9 @@ GS_DATABASE_NAME="gs"            # Name of the database. NOTE: Make sure to crea
 
 Note: You can choose to remove the first to lines of the `.env` that start with \# as those lines are comments.
 
-Now, you can start the backend as by running `fastapi dev gs/backend/main.py` from the top level directory to run in development mode.
+Now, you can start the backend as by running `fastapi dev backend/main.py` from the top level directory to run in development mode.
 
-To migrate pre-determined datainto your local database, you can run `python3 gs/backend/migrate.py` from the top level directory.
+To migrate pre-determined datainto your local database, you can run `python3 backend/migrate.py` from the top level directory.
 
 Alternatively, you can include `callsigns`, `commands`, or `telemetries` as command arguments to migrate those respective datasets individually.
 

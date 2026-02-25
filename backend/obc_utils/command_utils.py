@@ -6,7 +6,6 @@ from typing import Final
 from ax25 import Frame
 from serial import PARITY_NONE, STOPBITS_TWO, Serial
 
-from backend.obc_utils.encode_decode import CommsPipeline
 from interfaces import (
     OBC_UART_BAUD_RATE,
     RS_DECODED_DATA_SIZE,
@@ -32,6 +31,7 @@ from interfaces.obc_gs_interface.commands import (
 )
 from interfaces.obc_gs_interface.commands.command_response_callbacks import parse_command_response
 from interfaces.obc_gs_interface.commands.command_response_classes import CmdRes
+from obc_utils.encode_decode import CommsPipeline
 
 # This is a constant value set in the python and OBC side as to what length of I Frame the OBC will be waiting to
 # receive. This must be followed or the obc will not function as expected

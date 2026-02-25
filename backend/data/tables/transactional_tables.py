@@ -7,23 +7,23 @@ from sqlalchemy.dialects.postgresql import UUID as DB_UUID
 from sqlalchemy.schema import Column, ForeignKey, ForeignKeyConstraint
 from sqlmodel import Field
 
-from backend.config.data_config import (
+from config.data_config import (
     COORDINATE_DECIMAL_NUMBER,
     LATITUDE_MAX_DIGIT_NUMBER,
     LONGITUDE_MAX_DIGIT_NUMBER,
     PACKET_DATA_LENGTH,
     PACKET_RAW_LENGTH,
 )
-from backend.data.database.utils import to_foreign_key_value
-from backend.data.enums.aro_requests import ARORequestStatus
-from backend.data.enums.transactional import (
+from data.database.utils import to_foreign_key_value
+from data.enums.aro_requests import ARORequestStatus
+from data.enums.transactional import (
     CommandStatus,
     MainPacketType,
     SessionStatus,
 )
-from backend.data.tables.aro_user_tables import AROUsers
-from backend.data.tables.base_model import BaseSQLModel
-from backend.data.tables.main_tables import (
+from data.tables.aro_user_tables import AROUsers
+from data.tables.base_model import BaseSQLModel
+from data.tables.main_tables import (
     MainCommand,
     MainTableID,
     MainTableIDDatabase,

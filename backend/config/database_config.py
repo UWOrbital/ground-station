@@ -1,3 +1,5 @@
+import os
+
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -7,13 +9,17 @@ class DatabaseConfig(BaseSettings):
     Pydantic class for storing database configuration settings
     """
 
-    model_config = SettingsConfigDict(env_prefix="GS_DATABASE_")
-
     user: str
     password: SecretStr
     location: str
     port: int
     name: str
+
+    model_config = SettingsConfigDict(
+        env_prefix="GS_DATABASE_",
+        env_file=os.path.join(os.path.dirname(__file__), "../.env"),
+        env_file_encoding="utf-8",
+    )
 
     @property
     def connection_string(self) -> str:

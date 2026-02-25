@@ -1,13 +1,13 @@
 import csv
 
-from backend.data.tables.aro_user_tables import AROUserCallsigns
+from data.tables.aro_user_tables import AROUserCallsigns
 
 
 def callsigns() -> list[AROUserCallsigns]:
     """
     Returns the list of callsigns
     """
-    with open("backend/data/resources/callsigns.csv", newline="") as csvfile:
+    with open("backend/resources/callsigns.csv", newline="") as csvfile:
         file = csv.reader(csvfile)
         entries = []
         for row in file:

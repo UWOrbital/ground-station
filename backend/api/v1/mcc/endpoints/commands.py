@@ -3,11 +3,11 @@ from uuid import UUID
 
 from fastapi import APIRouter
 
-from backend.data.data_wrappers.mcc_wrappers.commands_wrapper import (
+from data.data_wrappers.mcc_wrappers.commands_wrapper import (
     create_commands,
     delete_commands_by_id,
 )
-from backend.data.tables.transactional_tables import Commands
+from data.tables.transactional_tables import Commands
 
 commands_router = APIRouter(tags=["MCC", "Commands"])
 

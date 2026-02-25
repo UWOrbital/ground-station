@@ -12,6 +12,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: 'recursive'
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
@@ -20,10 +22,12 @@ jobs:
 
     - name: Install dependencies
       run: |
+        cd backend
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -e .
 
     - name: Run mypy
       run: |
+        cd backend
         python -m mypy .

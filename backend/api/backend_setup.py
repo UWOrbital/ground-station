@@ -3,16 +3,16 @@ import logging
 from fastapi import FastAPI
 from loguru import logger
 
-from backend.api.middleware.auth_middleware import AuthMiddleware
-from backend.api.middleware.cors_middleware import add_cors_middleware
-from backend.api.middleware.logger_middleware import LoggerMiddleware
-from backend.api.v1.aro.endpoints.picture_requests import picture_requests_router
-from backend.api.v1.aro.endpoints.user import aro_user_router
-from backend.api.v1.mcc.endpoints.aro_requests import aro_requests_router
-from backend.api.v1.mcc.endpoints.commands import commands_router
-from backend.api.v1.mcc.endpoints.main_commands import main_commands_router
-from backend.api.v1.mcc.endpoints.telemetry import telemetry_router
-from backend.config.config import settings
+from api.middleware.auth_middleware import AuthMiddleware
+from api.middleware.cors_middleware import add_cors_middleware
+from api.middleware.logger_middleware import LoggerMiddleware
+from api.v1.aro.endpoints.picture_requests import picture_requests_router
+from api.v1.aro.endpoints.user import aro_user_router
+from api.v1.mcc.endpoints.aro_requests import aro_requests_router
+from api.v1.mcc.endpoints.commands import commands_router
+from api.v1.mcc.endpoints.main_commands import main_commands_router
+from api.v1.mcc.endpoints.telemetry import telemetry_router
+from config.config import settings
 
 
 def setup_routes(app: FastAPI) -> None:

@@ -3,9 +3,9 @@ from uuid import UUID
 
 from sqlmodel import select
 
-from backend.data.database.engine import get_db_session
-from backend.data.enums.aro_auth_token import AROAuthToken as AROEnums
-from backend.data.tables.aro_user_tables import AROUserAuthToken
+from data.database.engine import get_db_session
+from data.enums.aro_auth_token import AROAuthToken as AROEnums
+from data.tables.aro_user_tables import AROUserAuthToken
 
 
 def get_all_auth_tokens() -> list[AROUserAuthToken]:

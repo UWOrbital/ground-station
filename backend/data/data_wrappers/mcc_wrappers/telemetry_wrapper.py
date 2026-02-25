@@ -3,8 +3,8 @@ from uuid import UUID
 
 from sqlmodel import select
 
-from backend.data.database.engine import get_db_session
-from backend.data.tables.transactional_tables import Telemetry
+from data.database.engine import get_db_session
+from data.tables.transactional_tables import Telemetry
 
 
 def get_all_telemetries() -> list[Telemetry]:

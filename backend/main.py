@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
-from backend.api.backend_setup import setup_logging, setup_middlewares, setup_routes
-from backend.api.lifespan import lifespan
+from api.backend_setup import setup_logging, setup_middlewares, setup_routes
+from api.lifespan import lifespan
 
 app = FastAPI(lifespan=lifespan)
 setup_logging()

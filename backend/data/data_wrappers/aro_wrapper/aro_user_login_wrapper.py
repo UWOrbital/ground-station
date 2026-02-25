@@ -2,8 +2,8 @@ from uuid import UUID
 
 from sqlmodel import select
 
-from backend.data.database.engine import get_db_session
-from backend.data.tables.aro_user_tables import AROUserLogin
+from data.database.engine import get_db_session
+from data.tables.aro_user_tables import AROUserLogin
 
 
 def get_all_logins() -> list[AROUserLogin]:

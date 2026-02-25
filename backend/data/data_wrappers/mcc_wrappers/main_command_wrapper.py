@@ -2,8 +2,8 @@ from typing import Any
 
 from sqlmodel import select
 
-from backend.data.database.engine import get_db_session
-from backend.data.tables.main_tables import MainCommand
+from data.database.engine import get_db_session
+from data.tables.main_tables import MainCommand
 
 
 def get_all_main_commands() -> list[MainCommand]:

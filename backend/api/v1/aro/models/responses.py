@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from backend.data.tables.aro_user_tables import AROUsers
+from data.tables.aro_user_tables import AROUsers
 
 
 class AllUsersResponse(BaseModel):

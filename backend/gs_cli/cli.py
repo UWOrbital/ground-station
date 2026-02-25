@@ -13,7 +13,7 @@ from textual.reactive import reactive
 from textual.widget import Widget
 from textual.widgets import Button, DataTable, Input, Label, Static
 
-from backend.gs_cli.ground_station_cli import GroundStationShell
+from gs_cli.ground_station_cli import GroundStationShell
 
 if len(argv) == 2:
     COM_PORT = argv[1]

@@ -1,10 +1,10 @@
 from sqlmodel import Session, select
 
-from backend.data.resources.callsigns import callsigns
-from backend.data.resources.main_commands import main_commands
-from backend.data.resources.main_telemetry import main_telemetry
-from backend.data.tables.aro_user_tables import AROUserCallsigns
-from backend.data.tables.main_tables import MainCommand, MainTelemetry
+from data.tables.aro_user_tables import AROUserCallsigns
+from data.tables.main_tables import MainCommand, MainTelemetry
+from resources.callsigns import callsigns
+from resources.main_commands import main_commands
+from resources.main_telemetry import main_telemetry
 
 
 def add_main_commands(session: Session) -> None:
