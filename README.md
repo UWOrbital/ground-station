@@ -8,7 +8,6 @@
 
 - [UW Orbital Docs](#uw-orbital-docs)
 - [Notion](#notion)
-- [Firmware Dependencies](#firmware-dependencies)
 - [Contributing](#contributing)
 - [Authors](#authors)
 
@@ -25,6 +24,10 @@ The documentation site now contains most of the information previously found in 
 The team Notion is another important source of information. Here you'll find other team documentation, onboarding info, and links to useful resources.
 
 The software section of the Notion is available here: https://www.notion.so/uworbital/Software-a613c4aaa36449969010cabba2fc329d
+
+Useful links:
+- Ground Station Onboarding: https://www.notion.so/uworbital/Ground-Station-Onboarding-10f8a26d767780d7ae8de921d9782b77
+- Software Development Life Cycle (SDLC): https://www.notion.so/uworbital/Software-Development-Life-Cycle-1218a26d767780619d42fa22f0785e73
 
 ## Contributing
 
