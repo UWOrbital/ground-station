@@ -1,3 +1,3 @@
 [submodule "interfaces"]
-	path = backend/interfaces
+	path = backend/src/interfaces
 	url = https://github.com/UWOrbital/interfaces.git
