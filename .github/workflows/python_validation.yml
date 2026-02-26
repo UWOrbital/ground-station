@@ -8,7 +8,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ['3.11']
+        python-version: ['3.12']
 
     steps:
     - uses: actions/checkout@v3
@@ -23,11 +23,10 @@ jobs:
     - name: Install dependencies
       run: |
         cd backend
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install -e .
+        python -m pip install --upgrade pip uv
+        uv sync --frozen
 
     - name: Run mypy
       run: |
         cd backend
-        python -m mypy .
+        uv run mypy .
