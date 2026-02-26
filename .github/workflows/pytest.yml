@@ -47,7 +47,7 @@ jobs:
     - name: Run Alembic migrations
       run: |
         cd backend
-        alembic upgrade head
+        uv run alembic upgrade head
 
     - name: Run pytest
       env:
