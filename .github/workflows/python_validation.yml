@@ -22,11 +22,9 @@ jobs:
 
     - name: Install dependencies
       run: |
-        cd backend
         python -m pip install --upgrade pip uv
         uv sync --frozen
 
     - name: Run mypy
       run: |
-        cd backend
         uv run mypy .
