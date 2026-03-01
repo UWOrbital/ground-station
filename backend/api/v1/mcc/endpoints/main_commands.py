@@ -1,8 +1,8 @@
+from data.data_wrappers.wrappers import MainCommandWrapper
 from fastapi import APIRouter
 from fastapi_cache.decorator import cache
 
 from api.v1.mcc.models.responses import MainCommandsResponse
-from data.data_wrappers.mcc_wrappers.main_command_wrapper import get_all_main_commands
 
 main_commands_router = APIRouter(tags=["MCC", "Main Commands"])
 
@@ -15,5 +15,5 @@ async def get_main_commands() -> MainCommandsResponse:
 
     :return: list of all commands
     """
-    items = get_all_main_commands()
+    items = MainCommandWrapper().get_all()
     return MainCommandsResponse(data=items)

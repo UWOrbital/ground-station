@@ -130,7 +130,7 @@ def test_delete_command_not_found(client):
 
     # The endpoint raises ValueError which is not caught by FastAPI
     # This causes the test client to raise an exception
-    with pytest.raises(ValueError, match="Command not found."):
+    with pytest.raises(ValueError, match=f"Commands with ID {non_existent_id} not found."):
         client.delete(f"/api/v1/mcc/commands/delete/{non_existent_id}")
 
 
@@ -157,5 +157,5 @@ def test_delete_command_twice(client):
     assert delete_response1.status_code == 200
 
     # Second deletion should raise ValueError
-    with pytest.raises(ValueError, match="Command not found."):
+    with pytest.raises(ValueError, match=f"Commands with ID {command_id} not found."):
         client.delete(f"/api/v1/mcc/commands/delete/{command_id}")

@@ -20,7 +20,6 @@ jobs:
 
     - name: Install dependencies
       run: |
-        cd backend
         sudo apt update
         sudo apt install -y postgresql
         python -m pip install --upgrade pip uv
@@ -28,7 +27,6 @@ jobs:
 
     - name: Set up PostgreSQL database
       run: |
-        cd backend
         sudo service postgresql start
         sudo -u postgres psql -c "CREATE USER ci_user WITH PASSWORD 'ci_password' SUPERUSER;"
         sudo -u postgres psql -c "CREATE DATABASE gs;"
