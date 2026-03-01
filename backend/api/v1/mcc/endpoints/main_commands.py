@@ -1,8 +1,8 @@
+from data.data_wrappers.wrappers import MainCommandWrapper
 from fastapi import APIRouter
 from fastapi_cache.decorator import cache
 
 from api.v1.mcc.models.responses import MainCommandsResponse
-from data.data_wrappers.wrappers import MainCommandWrapper
 
 main_commands_router = APIRouter(tags=["MCC", "Main Commands"])
 

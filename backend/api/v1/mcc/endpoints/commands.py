@@ -1,10 +1,9 @@
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter
-
 from data.data_wrappers.wrappers import CommandsWrapper
 from data.tables.transactional_tables import Commands
+from fastapi import APIRouter
 
 commands_router = APIRouter(tags=["MCC", "Commands"])
 
