@@ -3,10 +3,7 @@ from uuid import UUID
 
 from fastapi import APIRouter
 
-from data.data_wrappers.mcc_wrappers.commands_wrapper import (
-    create_commands,
-    delete_commands_by_id,
-)
+from data.data_wrappers.wrappers import CommandsWrapper
 from data.tables.transactional_tables import Commands
 
 commands_router = APIRouter(tags=["MCC", "Commands"])
@@ -20,7 +17,7 @@ async def create_command(payload: dict[str, Any]) -> Commands:
     :param payload: The data used to create a command
     :return: returns the created command object
     """
-    return create_commands(payload)
+    return CommandsWrapper().create(payload)
 
 
 @commands_router.delete("/delete/{command_id}")
@@ -31,5 +28,5 @@ async def delete_command(command_id: UUID) -> dict[str, Any]:
     :param command_id: The id which is to be deleted.
     :return: returns a dict giving confirmation that command with id of command_id has been deleted.
     """
-    delete_commands_by_id(command_id)
+    CommandsWrapper().delete_by_id(command_id)
     return {"message": f"Command with id {command_id} deleted successfully"}
