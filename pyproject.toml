@@ -75,12 +75,8 @@ module = "pyStuffing.*"
 ignore_missing_imports = true
 
 [tool.ruff]
-include = ["pyproject.toml", "**/*.py"]
-exclude = [
-  "libs/*",
-  "cmake/*",
-  "build*",
-  "test/*"]
+include = ["pyproject.toml", "backend/*.py"]
+exclude = ["frontend/*"]
 target-version = "py311"
 line-length = 120
 indent-width = 4
