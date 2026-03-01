@@ -76,7 +76,7 @@ ignore_missing_imports = true
 
 [tool.ruff]
 include = ["pyproject.toml", "backend/*.py"]
-exclude = ["frontend/*"]
+exclude = ["frontend/*", "python_test"]
 target-version = "py311"
 line-length = 120
 indent-width = 4
