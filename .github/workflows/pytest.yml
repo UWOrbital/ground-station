@@ -1,10 +1,6 @@
 name: Pytest
 
-on:
-  pull_request:
-  push:
-    branches:
-      - main
+on: [push, pull_request]
 
 jobs:
   pytest:
@@ -12,7 +8,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ['3.11']
+        python-version: ['3.12']
 
     steps:
     - uses: actions/checkout@v3
@@ -27,9 +23,8 @@ jobs:
         cd backend
         sudo apt update
         sudo apt install -y postgresql
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install -e .
+        python -m pip install --upgrade pip uv
+        uv sync
 
     - name: Set up PostgreSQL database
       run: |
@@ -52,7 +47,7 @@ jobs:
     - name: Run Alembic migrations
       run: |
         cd backend
-        alembic upgrade head
+        uv run alembic upgrade head
 
     - name: Run pytest
       env:
@@ -63,4 +58,4 @@ jobs:
         GS_DATABASE_NAME: gs
       run: |
         cd backend
-        python -m pytest
+        uv run pytest
