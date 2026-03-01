@@ -24,7 +24,7 @@ jobs:
         sudo apt update
         sudo apt install -y postgresql
         python -m pip install --upgrade pip uv
-        uv sync --frozen
+        uv sync
 
     - name: Set up PostgreSQL database
       run: |

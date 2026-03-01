@@ -23,7 +23,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip uv
-        uv sync --frozen
+        uv sync
 
     - name: Run mypy
       run: |
