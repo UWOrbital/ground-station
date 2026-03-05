@@ -1,0 +1,30 @@
+services:
+  api:
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app/backend
+    env_file:
+      - .env
+    environment:
+      - PYTHONPATH=/app/backend
+      - GS_DATABASE_LOCATION=host.docker.internal
+  aro-frontend:
+    build: ./frontend/aro
+    ports:
+      - "5173:5173"
+    working_dir: /app
+    volumes:
+      - ./frontend/aro:/app
+      - /app/node_modules
+  mcc-frontend:
+    build: ./frontend/mcc
+    ports:
+      - "5174:5174"
+    working_dir: /app
+    volumes:
+      - ./frontend/mcc:/app
+      - /app/node_modules
