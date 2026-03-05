@@ -7,7 +7,7 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends gcc libc-dev && \ 
+    apt-get install -y --no-install-recommends gcc libc-dev && \
     rm -rf /var/lib/apt/lists/*
 
 RUN uv sync --frozen
