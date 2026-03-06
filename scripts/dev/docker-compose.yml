@@ -16,7 +16,7 @@ services:
       - GS_DATABASE_LOCATION=host.docker.internal
   keycloak:
     image: quay.io/keycloak/keycloak:latest
-    command: start-dev
+    command: start-dev --import-realm
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: mcc-admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: uworbital
@@ -24,6 +24,7 @@ services:
       - "8080:8080"
     volumes:
     - keycloak_data:/opt/keycloak/data
+    - ../../backend/mcc-realm.json:/opt/keycloak/data/import/mcc-realm.json
   aro-frontend:
     build:
       context: ../../frontend/aro
