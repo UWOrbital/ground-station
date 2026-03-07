@@ -47,7 +47,7 @@ dependencies = [
 ]
 
 [tool.setuptools]
-packages = []
+packages = ["backend"]
 
 [tool.pytest.ini_options]
 addopts = "-v"
@@ -76,7 +76,7 @@ ignore_missing_imports = true
 
 [tool.ruff]
 include = ["pyproject.toml", "backend/*.py"]
-exclude = ["frontend/*", "python_test"]
+exclude = ["frontend/*", "python_test", "migrations"]
 target-version = "py311"
 line-length = 120
 indent-width = 4
