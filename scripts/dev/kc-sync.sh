@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# to use, first run `chmod a+x kc-sync.sh` to grant permissions
+
 # get token
 TOKEN=$(curl -s -X POST http://localhost:8080/realms/master/protocol/openid-connect/token \
   -d "client_id=admin-cli" \
@@ -29,5 +31,5 @@ realm = json.load(open('/tmp/realm.json'))
 realm['clients'] = json.load(open('/tmp/clients.json'))
 realm['roles'] = {'realm': json.load(open('/tmp/roles.json'))}
 json.dump(realm, open('../../backend/mcc-realm.json', 'w'), indent=2)
-print('Done')
+print('Keycloak is synced!')
 "
