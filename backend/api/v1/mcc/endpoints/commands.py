@@ -6,7 +6,7 @@ from data.resources.commands_pipeline import CommandsPipeline
 from fastapi import APIRouter
 
 from api.v1.mcc.models.requests import CreateCommandRequest, DeleteCommandRequest, QueueCommandRequest
-from api.v1.mcc.models.responses import CommandsResponse, MainCommandsResponse
+from api.v1.mcc.models.responses import CommandsResponse
 
 commands_router = APIRouter(tags=["MCC", "Commands"])
 COMMANDS_PIPELINE = CommandsPipeline()
@@ -39,7 +39,7 @@ async def delete_command(request: DeleteCommandRequest) -> dict[str, Any]:
 @commands_router.get("/get_command_queue")
 async def get_command_queue() -> CommandsResponse:
     """
-    :return: A list containing all current commands in the commands pipeline queue as a list of MainCommand objects.
+    :return: A list containing all current commands in the commands pipeline queue as a list of Command objects.
     """
     commands_queue = COMMANDS_PIPELINE.commands_queue
     commands = [cli_command.command for cli_command in commands_queue]
@@ -48,7 +48,7 @@ async def get_command_queue() -> CommandsResponse:
 
 
 @commands_router.post("/queue_command")
-async def queue_command(request: QueueCommandRequest) -> MainCommandsResponse:
+async def queue_command(request: QueueCommandRequest) -> CommandsResponse:
     """
     Creates a cli command and adds it to command queue. Also creates a command
     and stores it into the commands table.
@@ -56,7 +56,7 @@ async def queue_command(request: QueueCommandRequest) -> MainCommandsResponse:
     :request.params: params for CLI Command
     :request.cmd_id: command id
     :request.prio: command priority
-    :response: A list containing MainCommand objects.
+    :response: A list containing Command objects.
     """
     cli_command = CLICommand(params=request.params, cmd_id=request.cmd_id, prio=request.prio)
     command = CommandsWrapper().create(
