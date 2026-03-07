@@ -3,18 +3,18 @@ from os import urandom
 from typing import Final
 from uuid import UUID, uuid4
 
-from pydantic import EmailStr
-from sqlalchemy import Enum
-from sqlalchemy.dialects.postgresql import UUID as DB_UUID
-from sqlalchemy.schema import Column, ForeignKey
-from sqlmodel import Field
-
 from config.data_config import (
     CALL_SIGN_MAX_LENGTH,
     CALL_SIGN_MIN_LENGTH,
     DEFAULT_MAX_LENGTH,
     EMAIL_MIN_LENGTH,
 )
+from pydantic import EmailStr
+from sqlalchemy import Enum
+from sqlalchemy.dialects.postgresql import UUID as DB_UUID
+from sqlalchemy.schema import Column, ForeignKey
+from sqlmodel import Field
+
 from data.enums.aro_auth_token import AROAuthToken
 from data.tables.base_model import BaseSQLModel
 

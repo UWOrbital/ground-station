@@ -1,10 +1,10 @@
 from uuid import UUID
 
+from data.data_wrappers.wrappers import AROUsersWrapper
 from fastapi import APIRouter
 
 from api.v1.aro.models.requests import UserRequest
 from api.v1.aro.models.responses import AllUsersResponse, UserResponse
-from data.data_wrappers.wrappers import AROUsersWrapper
 
 aro_user_router = APIRouter(tags=["ARO", "User Information"])
 
