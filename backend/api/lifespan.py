@@ -1,11 +1,10 @@
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
+from data.database.engine import get_db_session, setup_database
 from fastapi import FastAPI
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.inmemory import InMemoryBackend
-
-from data.database.engine import get_db_session, setup_database
 
 
 @asynccontextmanager

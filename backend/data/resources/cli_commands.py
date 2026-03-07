@@ -1,8 +1,8 @@
 from datetime import datetime
 
+from data.tables.transactional_tables import Commands
 from interfaces.obc_gs_interface.commands.python import CmdCallbackId
 from interfaces.obc_gs_interface.commands.python.command_factories import COMMAND_FACTORIES
-from data.tables.transactional_tables import Commands
 
 
 class CLICommand:
@@ -30,7 +30,7 @@ class CLICommand:
 
         try:
             self.command_id = CmdCallbackId(cmd_id)
-        except KeyError:    
+        except KeyError:
             # TODO: Find a better way of logging this
             print("Invalid Command Id", cmd_id)
 
@@ -50,4 +50,3 @@ class CLICommand:
 
         self.prio = prio
         self.time = datetime.now()
-        

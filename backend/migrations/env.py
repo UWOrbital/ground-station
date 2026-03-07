@@ -2,11 +2,10 @@ import os
 from logging.config import fileConfig
 
 from alembic import context
+from data.tables import aro_user_tables, main_tables, transactional_tables  # noqa: F401
 from dotenv import load_dotenv
 from sqlalchemy import engine_from_config, pool
 from sqlmodel import SQLModel
-
-from data.tables import aro_user_tables, main_tables, transactional_tables  # noqa: F401
 
 load_dotenv()
 

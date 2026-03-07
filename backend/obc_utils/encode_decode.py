@@ -1,5 +1,4 @@
 from ax25 import Frame, FrameType
-
 from interfaces import (
     CUBE_SAT_CALLSIGN,
     GROUND_STATION_CALLSIGN,
