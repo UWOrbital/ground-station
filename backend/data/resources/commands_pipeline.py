@@ -1,10 +1,10 @@
 import warnings
 
-from backend.obc_utils.command_packaging import CommandPackaging
-from backend.data.resources.cli_commands import CLICommand
+from data.resources.cli_commands import CLICommand
 from interfaces import PADDING_REQUIRED
 from interfaces.obc_gs_interface.commands.python import CmdMsg
 from interfaces.obc_gs_interface.commands.python.command_framing import command_multi_pack
+from obc_utils.command_packaging import CommandPackaging
 
 
 class CommandsPipeline:
@@ -67,19 +67,11 @@ class CommandsPipeline:
         self.commands_queue.sort(key=lambda x: x.prio)
         return self.commands_queue
 
-    def apply_rule(self) -> list[CLICommand]:
-        """
-        There are certain rules which commands must follow.
-        For example, some commands CANNOT come before other commands.
-        These rules can be defined and applied to the current queue
-        """
-        # TODO Complete rule application
-        return self.commands_queue
-
     def clear_queue(self) -> list[CLICommand]:
         """
         Clears the current queue
         """
+        # TODO this should also set all of the command status in the thing to sent
         self.commands_queue = []
         return self.commands_queue
 
