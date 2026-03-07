@@ -1,5 +1,6 @@
 import logging
 
+from config.config import settings
 from fastapi import FastAPI
 from loguru import logger
 
@@ -12,7 +13,6 @@ from api.v1.mcc.endpoints.aro_requests import aro_requests_router
 from api.v1.mcc.endpoints.commands import commands_router
 from api.v1.mcc.endpoints.main_commands import main_commands_router
 from api.v1.mcc.endpoints.telemetry import telemetry_router
-from config.config import settings
 
 
 def setup_routes(app: FastAPI) -> None:

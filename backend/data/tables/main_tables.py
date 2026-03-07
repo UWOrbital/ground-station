@@ -1,11 +1,11 @@
 from typing import Final, TypeAlias
 
+from exceptions.exceptions import DatabaseError
 from pydantic import model_validator
 from sqlalchemy import Integer
 from sqlmodel import Field
 
 from data.tables.base_model import BaseSQLModel
-from exceptions.exceptions import DatabaseError
 
 # Schema information
 MAIN_SCHEMA_NAME: Final[str] = "main"

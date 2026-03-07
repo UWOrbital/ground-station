@@ -2,10 +2,9 @@ from abc import ABC
 from typing import Any, Generic, TypeVar
 from uuid import UUID
 
-from sqlmodel import select
-
 from data.database.engine import get_db_session
 from data.tables.base_model import BaseSQLModel
+from sqlmodel import select
 
 T = TypeVar("T", bound=BaseSQLModel)
 PK = TypeVar("PK", int, UUID)
