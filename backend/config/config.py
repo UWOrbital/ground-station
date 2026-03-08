@@ -2,6 +2,7 @@
 
 from config.cors_config import CORSConfig
 from config.database_config import DatabaseConfig
+from config.keycloak_config import KeycloakConfig
 from config.logger_config import LoggerConfig
 
 
@@ -14,6 +15,7 @@ class BackendConfiguration:
         self.cors = CORSConfig()
         self.logger = LoggerConfig()
         self.db = DatabaseConfig()
+        self.keycloak = KeycloakConfig()
 
 
 settings = BackendConfiguration()
