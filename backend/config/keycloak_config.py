@@ -12,6 +12,7 @@ class KeycloakConfig(BaseSettings):
     realm: str
     client_id: str
     client_secret: str
+    callback_url: str
 
     model_config = SettingsConfigDict(
         env_prefix="KEYCLOAK_",
