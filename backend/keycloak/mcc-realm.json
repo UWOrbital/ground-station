@@ -26,8 +26,8 @@
   "oauth2DeviceCodeLifespan": 600,
   "oauth2DevicePollingInterval": 5,
   "enabled": true,
-  "sslRequired": "external",
-  "registrationAllowed": false,
+  "sslRequired": "none",
+  "registrationAllowed": true,
   "registrationEmailAsUsername": false,
   "rememberMe": false,
   "verifyEmail": false,
@@ -372,9 +372,10 @@
       "clientAuthenticatorType": "client-secret",
       "secret": "Wms4pzXmuWSuwrDc2QoGhvirxiIqvNxw",
       "redirectUris": [
-        "http://localhost:8000/callback"
+        "http://localhost:8000/api/v1/mcc/auth/callback"
       ],
       "webOrigins": [
+        "http://localhost:8000",
         "http://localhost:3000"
       ],
       "notBefore": 0,
@@ -390,12 +391,15 @@
       "protocol": "openid-connect",
       "attributes": {
         "realm_client": "false",
+        "logout.confirmation.enabled": "false",
         "oidc.ciba.grant.enabled": "false",
         "client.secret.creation.time": "1772838347",
         "backchannel.logout.session.required": "true",
         "standard.token.exchange.enabled": "false",
         "post.logout.redirect.uris": "http://localhost:8000/login",
+        "frontchannel.logout.session.required": "true",
         "oauth2.device.authorization.grant.enabled": "false",
+        "display.on.consent.screen": "false",
         "backchannel.logout.revoke.offline.tokens": "false",
         "dpop.bound.access.tokens": "false"
       },
@@ -567,7 +571,7 @@
   "roles": {
     "realm": [
       {
-        "id": "253d957a-98cb-4437-82c7-642c3eec6a7d",
+        "id": "38ac342b-497f-4086-b479-466463369f21",
         "name": "offline_access",
         "description": "${role_offline-access}",
         "composite": false,

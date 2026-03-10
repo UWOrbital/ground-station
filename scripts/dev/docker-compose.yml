@@ -16,7 +16,18 @@ services:
       - GS_DATABASE_LOCATION=host.docker.internal
   keycloak:
     image: quay.io/keycloak/keycloak:latest
-    command: start-dev --import-realm
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+    - |
+      /opt/keycloak/bin/kc.sh start-dev --import-realm &
+      sleep 10
+      /opt/keycloak/bin/kcadm.sh config credentials \
+        --server http://localhost:8080 \
+        --realm master \
+        --user mcc-admin \
+        --password uworbital
+      /opt/keycloak/bin/kcadm.sh update realms/master -s sslRequired=NONE
+      wait
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: mcc-admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: uworbital
