@@ -9,7 +9,7 @@ from jose import jwt
 
 class KeycloakClient:
     """
-    Encapsulating class for MCC authentication/authorization variables andfunctions.
+    Encapsulating class for MCC authentication/authorization variables and functions.
     """
 
     def __init__(self, config: KeycloakConfig) -> None:
@@ -57,7 +57,7 @@ class KeycloakClient:
         """
         Decodes user id token to get user information
         """
-        return jwt.decode(  # type: ignore[no-any-return]
+        return jwt.decode(
             id_token,
             key="",
             options={
