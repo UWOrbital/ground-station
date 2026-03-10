@@ -29,12 +29,26 @@ class KeycloakClient:
             }
         )
 
+    # TODO: Put keycloak CDN location and post logout redirect URI in .env
     @property
     def login_url(self) -> str:
         """
         Returns keycloak login URL.
         """
         return f"http://localhost:8080/realms/{self.config.realm}/protocol/openid-connect/auth?{self._params}"
+
+    def logout_url(self, id_token: str) -> str:
+        """
+        Returns keycloak logout URL, requiring the user's id token for hinting purposes
+        """
+        params = urlencode(
+            {
+                "client_id": self.config.client_id,
+                "post_logout_redirect_uri": "http://localhost:8000/docs",
+                "id_token_hint": id_token,
+            }
+        )
+        return f"http://localhost:8080/realms/{self.config.realm}/protocol/openid-connect/logout?{params}"
 
     def get_tokens(self, code: str) -> dict[str, Any]:
         """

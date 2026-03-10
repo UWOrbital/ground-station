@@ -11,7 +11,6 @@ def login() -> None:
     """
     Login endpoint
     """
-    print(keycloak.login_url)
     RedirectResponse(url=keycloak.login_url)
 
 
@@ -27,3 +26,11 @@ def callback(code: str) -> dict[str, str]:
     except ValueError:
         MCCUsersWrapper().create({"id": user_info["sub"], "email": user_info["email"], "phone_number": ""})
     return {"id_token": tokens["id_token"], "access_token": tokens["access_token"]}
+
+
+@mcc_auth_router.get("/logout")
+def logout(id_token: str) -> None:
+    """
+    Logout endpoint
+    """
+    RedirectResponse(url=keycloak.logout_url(id_token))

@@ -396,7 +396,7 @@
         "client.secret.creation.time": "1772838347",
         "backchannel.logout.session.required": "true",
         "standard.token.exchange.enabled": "false",
-        "post.logout.redirect.uris": "http://localhost:8000/login",
+        "post.logout.redirect.uris": "http://localhost:8000/docs",
         "frontchannel.logout.session.required": "true",
         "oauth2.device.authorization.grant.enabled": "false",
         "display.on.consent.screen": "false",
