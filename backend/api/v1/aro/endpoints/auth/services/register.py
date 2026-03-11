@@ -1,9 +1,6 @@
 from os import urandom
 from uuid import uuid4
 
-from fastapi import HTTPException, status
-from pydantic import EmailStr
-
 from api.v1.aro.endpoints.auth.services.password import (
     hash_password,
     verify_password,
@@ -19,6 +16,8 @@ from data.tables.aro_user_tables import (
     AROUserAuthToken,
     AROUsers,
 )
+from fastapi import HTTPException, status
+from pydantic import EmailStr
 
 HASH_ALGORITHM = "sha256"
 

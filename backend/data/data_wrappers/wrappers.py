@@ -1,10 +1,11 @@
 from uuid import UUID
 
+from sqlmodel import select
+
 from data.data_wrappers.abstract_wrapper import AbstractWrapper  # SEE abstract_wrapper.py FOR LOGIC
+from data.database.engine import get_db_session
 from data.tables.aro_user_tables import AROUserAuthToken, AROUserLogin, AROUsers
 from data.tables.main_tables import MainCommand, MainTelemetry
-from sqlmodel import select
-from data.database.engine import get_db_session
 from data.tables.transactional_tables import (
     ARORequest,
     Commands,
@@ -32,10 +33,12 @@ class AROUserAuthTokenWrapper(AbstractWrapper[AROUserAuthToken, UUID]):
     model = AROUserAuthToken
 
     def get_by_token(self, token: str) -> AROUserAuthToken | None:
+        """
+        :token str
+        returns AROUserAuthToken | None
+        """
         with get_db_session() as session:
-            return session.exec(
-                select(self.model).where(self.model.token == token)
-            ).first()
+            return session.exec(select(self.model).where(self.model.token == token)).first()
 
 
 class AROUserLoginWrapper(AbstractWrapper[AROUserLogin, UUID]):

@@ -5,11 +5,10 @@ Helper functions for our endpoints.
 
 1. Authentication
 """
-from pydantic import EmailStr
-from sqlmodel import select
-
 from data.database.engine import get_db_session
 from data.tables.aro_user_tables import AROUsers
+from pydantic import EmailStr
+from sqlmodel import select
 
 
 def get_user_by_email(email: EmailStr) -> AROUsers | None:

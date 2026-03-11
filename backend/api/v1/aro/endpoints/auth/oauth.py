@@ -9,12 +9,17 @@ Supports two authentication methods.
 After initial authentication, the user will need to additionally verify with their callsign.
 """
 
-from typing import Any
-from authlib.integrations.starlette_client import OAuth, OAuthError # type: ignore
+
+from authlib.integrations.starlette_client import OAuth, OAuthError  # type: ignore
+from config.config import (
+    GOOGLE_CLIENT_ID,
+    GOOGLE_CLIENT_SECRET,
+)
+from data.tables.aro_user_tables import AROUsers
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import RedirectResponse
 from starlette.config import Config
 from starlette.requests import Request
-from starlette.responses import RedirectResponse
 
 from api.v1.aro.endpoints.auth.auth_schemas import (
     CallsignRequest,
@@ -31,11 +36,6 @@ from api.v1.aro.endpoints.auth.services.register import (
     logout_user,
     register_user,
 )
-from config.config import (
-    GOOGLE_CLIENT_ID,
-    GOOGLE_CLIENT_SECRET,
-)
-from data.tables.aro_user_tables import AROUsers
 
 # -----------------------------------------------------------------------
 # CONFIG
@@ -64,7 +64,7 @@ oauth.register(
 
 
 @router.get("/google/login")
-async def google_login(request: Request) -> Any:
+async def google_login(request: Request) -> RedirectResponse:
     """
     google_login 的 Docstring
 
@@ -78,7 +78,7 @@ async def google_login(request: Request) -> Any:
     """
     # The callback URL must match what's configured on Google Cloud Console
     redirect_uri = request.url_for("google_callback")
-    return await oauth.google.authorize_redirect(request, redirect_uri)
+    return await RedirectResponse(oauth.google.authorize_redirect(request, redirect_uri))
 
 
 @router.get("/google/callback")

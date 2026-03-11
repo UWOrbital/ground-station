@@ -1,7 +1,5 @@
 from uuid import uuid4
 
-from pydantic import EmailStr
-
 from api.v1.aro.endpoints.auth.services.tokens import create_auth_token
 from data.data_wrappers.wrappers import (
     AROUserLoginWrapper,
@@ -12,6 +10,7 @@ from data.tables.aro_user_tables import (
     AROUserAuthToken,
     AROUsers,
 )
+from pydantic import EmailStr
 
 
 def google_auth(google_id: str, email: EmailStr, first_name: str, last_name: str) -> tuple[AROUserAuthToken, AROUsers]:

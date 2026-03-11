@@ -1,8 +1,6 @@
 from datetime import datetime, timedelta
 from uuid import UUID, uuid4
 
-from pydantic import EmailStr
-
 from data.data_wrappers.wrappers import (
     AROUserAuthTokenWrapper,
     AROUsersWrapper,
@@ -12,6 +10,7 @@ from data.tables.aro_user_tables import (
     AROUserAuthToken,
     AROUsers,
 )
+from pydantic import EmailStr
 
 TOKEN_EXPIRY_HOURS = 6.7
 

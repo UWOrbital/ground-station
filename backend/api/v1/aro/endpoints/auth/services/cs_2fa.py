@@ -1,7 +1,6 @@
-from fastapi import HTTPException, status
-
 from data.data_wrappers.wrappers import AROUsersWrapper
 from data.tables.aro_user_tables import AROUserCallsigns, AROUsers
+from fastapi import HTTPException, status
 from resources.callsigns import callsigns
 
 
@@ -30,7 +29,7 @@ def search_callsign(callsign: str, callsigns: list[AROUserCallsigns]) -> tuple[b
     return (False, -1)
 
 
-def callsign_verified(qual_levels: tuple[bool,...], call_sign: str) -> bool:
+def callsign_verified(qual_levels: tuple[bool, ...], call_sign: str) -> bool:
     """
     callsign_verified 的 Docstring
 
@@ -51,7 +50,7 @@ def callsign_verified(qual_levels: tuple[bool,...], call_sign: str) -> bool:
     ]
 
     for i, expected in enumerate(expected_levels):
-        if (qual_levels[i] != expected):
+        if qual_levels[i] != expected:
             print(
                 "\033[1;31m" + "WARNING!" + "\033[0m" + "Mismatch at qual_level_" + chr(ord("a") + i) + ", index",
                 callsign_index,

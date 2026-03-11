@@ -1,8 +1,5 @@
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, status
-
-from api.v1.aro.endpoints.auth.auth_schemas import UserResponse
 from data.data_wrappers.wrappers import (
     AROUserAuthTokenWrapper,
     AROUsersWrapper,
@@ -10,6 +7,9 @@ from data.data_wrappers.wrappers import (
 from data.tables.aro_user_tables import (
     AROUsers,
 )
+from fastapi import APIRouter, Depends, HTTPException, status
+
+from api.v1.aro.endpoints.auth.auth_schemas import UserResponse
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 

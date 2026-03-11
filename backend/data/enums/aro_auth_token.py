@@ -8,10 +8,10 @@ class AROAuthToken(StrEnum):
 
     # Email/password authentication
     EMAIL_PASSWORD = auto()
-    
+
     # Google OAuth authentication
     GOOGLE_OAUTH = auto()
-    
+
     # Legacy/placeholder states (can be removed if unused)
     DUMMY = auto()
     ANOTHERDUMMY = auto()
