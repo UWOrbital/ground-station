@@ -11,7 +11,7 @@ def login() -> None:
     """
     Login endpoint for redirecting to keycloak's login/registration page
     """
-    return RedirectResponse(url=keycloak.login_url)
+    return RedirectResponse(url=keycloak.login_url)  # type: ignore[return-value]
 
 
 @mcc_auth_router.get("/callback")
@@ -33,4 +33,4 @@ def logout(id_token: str) -> None:
     """
     Logout endpoint for redirecting to keycloak's logout handler
     """
-    return RedirectResponse(url=keycloak.logout_url(id_token))
+    return RedirectResponse(url=keycloak.logout_url(id_token))  # type: ignore[return-value]
