@@ -9,32 +9,33 @@ Supports two authentication methods.
 After initial authentication, the user will need to additionally verify with their callsign.
 """
 
-from authlib.integrations.starlette_client import OAuth, OAuthError
+from typing import Any
+from authlib.integrations.starlette_client import OAuth, OAuthError # type: ignore
 from fastapi import APIRouter, Depends, HTTPException, status
 from starlette.config import Config
 from starlette.requests import Request
 from starlette.responses import RedirectResponse
 
-from backend.api.v1.aro.endpoints.auth.auth_schemas import (
+from api.v1.aro.endpoints.auth.auth_schemas import (
     CallsignRequest,
     LoginRequest,
     RegisterRequest,
     TokenResponse,
     UserResponse,
 )
-from backend.api.v1.aro.endpoints.auth.dependencies import get_current_user
-from backend.api.v1.aro.endpoints.auth.services.cs_2fa import verify_user_callsign
-from backend.api.v1.aro.endpoints.auth.services.google import google_auth
-from backend.api.v1.aro.endpoints.auth.services.register import (
+from api.v1.aro.endpoints.auth.dependencies import get_current_user
+from api.v1.aro.endpoints.auth.services.cs_2fa import verify_user_callsign
+from api.v1.aro.endpoints.auth.services.google import google_auth
+from api.v1.aro.endpoints.auth.services.register import (
     login_user,
     logout_user,
     register_user,
 )
-from backend.config.config import (
+from config.config import (
     GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET,
 )
-from backend.data.tables.aro_user_tables import AROUsers
+from data.tables.aro_user_tables import AROUsers
 
 # -----------------------------------------------------------------------
 # CONFIG
@@ -63,7 +64,7 @@ oauth.register(
 
 
 @router.get("/google/login")
-async def google_login(request: Request) -> RedirectResponse:
+async def google_login(request: Request) -> Any:
     """
     google_login 的 Docstring
 
@@ -193,13 +194,13 @@ async def verify_callsign(request: CallsignRequest, user: AROUsers = Depends(get
     """
     if not user.is_callsign_verified:
         user = verify_user_callsign(
-            request.call_sign,
             request.qual_level_a,
             request.qual_level_b,
             request.qual_level_c,
             request.qual_level_d,
             request.qual_level_e,
-            user,
+            call_sign=request.call_sign,
+            user=user,
         )
 
     return UserResponse(

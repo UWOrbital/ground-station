@@ -2,12 +2,12 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from backend.api.v1.aro.endpoints.auth.auth_schemas import UserResponse
-from backend.data.data_wrappers.wrappers import (
+from api.v1.aro.endpoints.auth.auth_schemas import UserResponse
+from data.data_wrappers.wrappers import (
     AROUserAuthTokenWrapper,
     AROUsersWrapper,
 )
-from backend.data.tables.aro_user_tables import (
+from data.tables.aro_user_tables import (
     AROUsers,
 )
 

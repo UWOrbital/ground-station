@@ -2,13 +2,13 @@ from uuid import uuid4
 
 from pydantic import EmailStr
 
-from backend.api.v1.aro.endpoints.auth.services.tokens import create_auth_token
-from backend.data.data_wrappers.wrappers import (
+from api.v1.aro.endpoints.auth.services.tokens import create_auth_token
+from data.data_wrappers.wrappers import (
     AROUserLoginWrapper,
     AROUsersWrapper,
 )
-from backend.data.enums.aro_auth_token import AROAuthToken
-from backend.data.tables.aro_user_tables import (
+from data.enums.aro_auth_token import AROAuthToken
+from data.tables.aro_user_tables import (
     AROUserAuthToken,
     AROUsers,
 )

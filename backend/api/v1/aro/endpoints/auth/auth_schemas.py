@@ -91,8 +91,8 @@ class CallsignRequest(BaseModel):
     """
 
     call_sign: str
-    qual_level_a: str
-    qual_level_b: str
-    qual_level_c: str
-    qual_level_d: str
-    qual_level_e: str
+    qual_level_a: bool
+    qual_level_b: bool
+    qual_level_c: bool
+    qual_level_d: bool
+    qual_level_e: bool

@@ -1,11 +1,11 @@
 from fastapi import HTTPException, status
 
-from backend.data.data_wrappers.wrappers import AROUsersWrapper
-from backend.data.tables.aro_user_tables import AROUserCallsigns, AROUsers
-from backend.resources.callsigns import callsigns
+from data.data_wrappers.wrappers import AROUsersWrapper
+from data.tables.aro_user_tables import AROUserCallsigns, AROUsers
+from resources.callsigns import callsigns
 
 
-def search_callsign(callsign: str, callsigns: list[AROUserCallsigns]) -> bool | int:
+def search_callsign(callsign: str, callsigns: list[AROUserCallsigns]) -> tuple[bool, int]:
     """
     Uses binary search to find if the callsign exists.
 
@@ -20,17 +20,17 @@ def search_callsign(callsign: str, callsigns: list[AROUserCallsigns]) -> bool | 
     while start <= end:
         mid = (start + end) // 2
         if callsign == callsigns[mid].call_sign:
-            return [True, mid]
+            return (True, mid)
 
         if callsign < callsigns[mid].call_sign:
             end = mid - 1
         else:
             start = mid + 1
 
-    return [False, -1]
+    return (False, -1)
 
 
-def callsign_verified(*callsign_args: tuple[str]) -> bool:
+def callsign_verified(qual_levels: tuple[bool,...], call_sign: str) -> bool:
     """
     callsign_verified 的 Docstring
 
@@ -40,7 +40,7 @@ def callsign_verified(*callsign_args: tuple[str]) -> bool:
     TODO: Use % matching on callsigns instead of hardcoded methods
     """
     callsign_csv = callsigns()
-    callsign_found, callsign_index = search_callsign(callsign_args[0], callsign_csv)
+    callsign_found, callsign_index = search_callsign(call_sign, callsign_csv)
 
     expected_levels = [
         callsign_csv[callsign_index].qual_level_a,
@@ -51,7 +51,7 @@ def callsign_verified(*callsign_args: tuple[str]) -> bool:
     ]
 
     for i, expected in enumerate(expected_levels):
-        if callsign_args[i + 1] != expected:
+        if (qual_levels[i] != expected):
             print(
                 "\033[1;31m" + "WARNING!" + "\033[0m" + "Mismatch at qual_level_" + chr(ord("a") + i) + ", index",
                 callsign_index,
@@ -61,20 +61,20 @@ def callsign_verified(*callsign_args: tuple[str]) -> bool:
     return callsign_found
 
 
-def verify_user_callsign(*callsign_args: tuple[str], user: AROUsers) -> AROUsers:
+def verify_user_callsign(*qual_levels: bool, call_sign: str, user: AROUsers) -> AROUsers:
     """Verify a user's callsign and update their verification status if valid."""
-    # callsign_args is a tuple!
-    # -> (callsign, qual_level_a, qual_level_b, qual_level_c, qual_level_d, qual_level_e, user)
+    # qual_levels is a tuple!
+    # -> (qual_level_a, qual_level_b, qual_level_c, qual_level_d, qual_level_e)
 
     # I do not expect any keyword arguments, we should NOT be editing these variables anyways
-    if not callsign_verified(callsign_args):
+    if not callsign_verified(qual_levels=qual_levels, call_sign=call_sign):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Callsign unable to be verified.")
 
     users = AROUsersWrapper()
     updated_user = users.update(
         user.id,
         {
-            "callsign": callsign_args[0],
+            "callsign": call_sign,
             "is_callsign_verified": True,
         },
     )
