@@ -9,9 +9,9 @@ mcc_auth_router = APIRouter(tags=["MCC", "Authentication"])
 @mcc_auth_router.get("/login")
 def login() -> None:
     """
-    Login endpoint
+    Login endpoint for redirecting to keycloak's login/registration page
     """
-    RedirectResponse(url=keycloak.login_url)
+    return RedirectResponse(url=keycloak.login_url)
 
 
 @mcc_auth_router.get("/callback")
@@ -31,6 +31,6 @@ def callback(code: str) -> dict[str, str]:
 @mcc_auth_router.get("/logout")
 def logout(id_token: str) -> None:
     """
-    Logout endpoint
+    Logout endpoint for redirecting to keycloak's logout handler
     """
-    RedirectResponse(url=keycloak.logout_url(id_token))
+    return RedirectResponse(url=keycloak.logout_url(id_token))
