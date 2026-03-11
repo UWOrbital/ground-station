@@ -1,20 +1,18 @@
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, status, Depends
 
+from fastapi import APIRouter, Depends, HTTPException, status
+
+from backend.api.v1.aro.endpoints.auth.auth_schemas import UserResponse
 from backend.data.data_wrappers.wrappers import (
     AROUserAuthTokenWrapper,
     AROUsersWrapper,
 )
 from backend.data.tables.aro_user_tables import (
-    AROUserAuthToken,
-    AROUserCallsigns,
-    AROUserLogin,
     AROUsers,
 )
-from backend.data.enums.aro_auth_token import AROAuthToken
-from backend.api.v1.aro.endpoints.auth.auth_schemas import UserResponse
 
-router = APIRouter(prefix='/auth', tags=['authentication'])
+router = APIRouter(prefix="/auth", tags=["authentication"])
+
 
 @router.get("/currentuser")
 async def get_current_user(token: str) -> UserResponse:
@@ -38,19 +36,16 @@ async def get_current_user(token: str) -> UserResponse:
         )
 
     # Check for expiracy
-    if (auth_token.expiry < datetime.now()):
+    if auth_token.expiry < datetime.now():
         token_wrapper.delete_by_id(auth_token.id)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Your login expired.",
         )
-    
+
     user = user_wrapper.get_by_id(auth_token.user_data_id)
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Couldn't find the user from ID."
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Couldn't find the user from ID.")
 
     return UserResponse(
         id=user.id,
@@ -60,12 +55,10 @@ async def get_current_user(token: str) -> UserResponse:
         is_callsign_verified=user.is_callsign_verified,
     )
 
+
 @router.post("/isverified")
 def require_verified_user(user: AROUsers = Depends(get_current_user)) -> AROUsers:
-
+    """Check if the user's callsign is verified, otherwise raise an error."""
     if not user.is_callsign_verified:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, 
-            detail="Callsign verification required"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Callsign verification required")
     return user

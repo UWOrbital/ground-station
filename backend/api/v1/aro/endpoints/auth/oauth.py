@@ -9,26 +9,32 @@ Supports two authentication methods.
 After initial authentication, the user will need to additionally verify with their callsign.
 """
 
-from typing import Any
+from authlib.integrations.starlette_client import OAuth, OAuthError
+from fastapi import APIRouter, Depends, HTTPException, status
 from starlette.config import Config
 from starlette.requests import Request
-from fastapi import APIRouter, HTTPException, status, Depends
-from authlib.integrations.starlette_client import OAuth, OAuthError
+from starlette.responses import RedirectResponse
 
-from backend.api.v1.aro.endpoints.auth.services.cs_2fa import verify_user_callsign
+from backend.api.v1.aro.endpoints.auth.auth_schemas import (
+    CallsignRequest,
+    LoginRequest,
+    RegisterRequest,
+    TokenResponse,
+    UserResponse,
+)
 from backend.api.v1.aro.endpoints.auth.dependencies import get_current_user
+from backend.api.v1.aro.endpoints.auth.services.cs_2fa import verify_user_callsign
 from backend.api.v1.aro.endpoints.auth.services.google import google_auth
-from backend.data.tables.aro_user_tables import AROUsers
 from backend.api.v1.aro.endpoints.auth.services.register import (
-    register_user,
     login_user,
     logout_user,
+    register_user,
 )
-
 from backend.config.config import (
     GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET,
 )
+from backend.data.tables.aro_user_tables import AROUsers
 
 # -----------------------------------------------------------------------
 # CONFIG
@@ -38,7 +44,7 @@ TOKEY_EXPIRY_HOURS = 6.7
 HASH_ALGORITHM = "sha256"
 HASH_ITERATIONS = 100_000
 
-router = APIRouter(prefix='/auth', tags=['authentication'])
+router = APIRouter(prefix="/auth", tags=["authentication"])
 
 # Auth Setup
 config = Config(".env")
@@ -48,30 +54,19 @@ oauth.register(
     client_id=GOOGLE_CLIENT_ID,
     client_secret=GOOGLE_CLIENT_SECRET,
     server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
-    client_kwargs={ "scope": "openid email profile" },
-)
-
-# -----------------------------------------------------------------------
-# Request & Responses
-# -----------------------------------------------------------------------
-
-from backend.api.v1.aro.endpoints.auth.auth_schemas import (
-    RegisterRequest,
-    LoginRequest,
-    TokenResponse,
-    UserResponse,
-    CallsignRequest,
+    client_kwargs={"scope": "openid email profile"},
 )
 
 # -----------------------------------------------------------------------
 # Google OAuth Endpoints
 # -----------------------------------------------------------------------
 
-@router.get('/google/login')
-async def google_login(request: Request) -> Any:
+
+@router.get("/google/login")
+async def google_login(request: Request) -> RedirectResponse:
     """
     google_login 的 Docstring
-    
+
     :param request: 说明
     :type request: Request
     :return: 说明
@@ -84,23 +79,24 @@ async def google_login(request: Request) -> Any:
     redirect_uri = request.url_for("google_callback")
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
+
 @router.get("/google/callback")
 async def google_callback(request: Request) -> TokenResponse:
     """
     google_callback
 
     Handle Google OAuth callback.
-   
+
     Creates a new user if first login, otherwise finds existing user.
     Returns an auth token for the session.
     """
     try:
-       token = await oauth.google.authorize_access_token(request)
+        token = await oauth.google.authorize_access_token(request)
     except OAuthError as e:
-        raise HTTPException (
+        raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"OAuth authentication failed: {e.error}",
-        )
+        ) from e
 
     # Extract user info from the ID token
     user_info = token.get("userinfo")
@@ -109,13 +105,13 @@ async def google_callback(request: Request) -> TokenResponse:
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Could not retrieve user data from Google.",
         )
-    
+
     # Extract the rest of the data
     auth_token, user = google_auth(
         google_id=user_info.get("sub"),
         email=user_info.get("email"),
         first_name=user_info.get("given_name", ""),
-        last_name=user_info.get("family_name")
+        last_name=user_info.get("family_name"),
     )
 
     return TokenResponse(
@@ -124,9 +120,11 @@ async def google_callback(request: Request) -> TokenResponse:
         expires_at=auth_token.expiry,
     )
 
+
 # -----------------------------------------------------------------------
 # Email / Password Endpoints
 # -----------------------------------------------------------------------
+
 
 @router.post("/register", response_model=TokenResponse)
 async def register(request: RegisterRequest) -> TokenResponse:
@@ -134,7 +132,7 @@ async def register(request: RegisterRequest) -> TokenResponse:
     register
 
     Register a new user with email and password.
-   
+
     Creates both AROUsers and AROUserLogin records.
     Returns an auth token for immediate login.
     """
@@ -153,6 +151,7 @@ async def register(request: RegisterRequest) -> TokenResponse:
         expires_at=auth_token.expiry,
     )
 
+
 @router.post("/login", response_model=TokenResponse)
 async def login(request: LoginRequest) -> TokenResponse:
     """
@@ -161,7 +160,7 @@ async def login(request: LoginRequest) -> TokenResponse:
     Validates credentials and returns an auth token.
     If unsuccessful, gives appropriate errors.
     """
-    
+
     auth_token, user = login_user(request.email, request.password)
 
     return TokenResponse(
@@ -169,6 +168,7 @@ async def login(request: LoginRequest) -> TokenResponse:
         user_id=user.id,
         expires_at=auth_token.expiry,
     )
+
 
 @router.post("/logout")
 async def logout(token: str) -> dict[str, str]:
@@ -180,9 +180,8 @@ async def logout(token: str) -> dict[str, str]:
     """
     logout_user(token)
 
-    return {
-        "message" : "Logged out successfully."
-    }
+    return {"message": "Logged out successfully."}
+
 
 @router.post("/verifycs", response_model=UserResponse)
 async def verify_callsign(request: CallsignRequest, user: AROUsers = Depends(get_current_user)) -> UserResponse:
@@ -194,7 +193,7 @@ async def verify_callsign(request: CallsignRequest, user: AROUsers = Depends(get
     """
     if not user.is_callsign_verified:
         user = verify_user_callsign(
-            request.call_sign, 
+            request.call_sign,
             request.qual_level_a,
             request.qual_level_b,
             request.qual_level_c,
@@ -202,7 +201,7 @@ async def verify_callsign(request: CallsignRequest, user: AROUsers = Depends(get
             request.qual_level_e,
             user,
         )
-    
+
     return UserResponse(
         id=user.id,
         email=user.email,
@@ -210,4 +209,3 @@ async def verify_callsign(request: CallsignRequest, user: AROUsers = Depends(get
         last_name=user.last_name,
         is_callsign_verified=user.is_callsign_verified,
     )
-    

@@ -1,17 +1,21 @@
+from uuid import uuid4
+
+from pydantic import EmailStr
+
+from backend.api.v1.aro.endpoints.auth.services.tokens import create_auth_token
 from backend.data.data_wrappers.wrappers import (
-    AROUsersWrapper,
     AROUserLoginWrapper,
+    AROUsersWrapper,
 )
+from backend.data.enums.aro_auth_token import AROAuthToken
 from backend.data.tables.aro_user_tables import (
     AROUserAuthToken,
     AROUsers,
 )
-from backend.data.enums.aro_auth_token import AROAuthToken
-from backend.api.v1.aro.endpoints.auth.services.tokens import create_auth_token
-from pydantic import EmailStr
-from uuid import uuid4
+
 
 def google_auth(google_id: str, email: EmailStr, first_name: str, last_name: str) -> tuple[AROUserAuthToken, AROUsers]:
+    """Authenticate a user via Google OAuth, creating a new account if necessary."""
     users = AROUsersWrapper()
     logins = AROUserLoginWrapper()
 
@@ -27,17 +31,19 @@ def google_auth(google_id: str, email: EmailStr, first_name: str, last_name: str
             # Link user account
             user = users.update(
                 user.id,
-                {"google_id" : google_id},
+                {"google_id": google_id},
             )
         else:
             # Create a new account
-            user = users.create({
-                "email": email,
-                "first_name": first_name,
-                "last_name": last_name,
-                "google_id": google_id,
-                "is_callsign_verified": False,
-            })
+            user = users.create(
+                {
+                    "email": email,
+                    "first_name": first_name,
+                    "last_name": last_name,
+                    "google_id": google_id,
+                    "is_callsign_verified": False,
+                }
+            )
 
             logins.create(
                 {
@@ -49,6 +55,5 @@ def google_auth(google_id: str, email: EmailStr, first_name: str, last_name: str
 
     # 3. Create auth token
     auth_token = create_auth_token(user.id, AROAuthToken.GOOGLE_OAUTH)
-    
+
     return (auth_token, user)
-        

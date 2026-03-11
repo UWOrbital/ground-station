@@ -1,10 +1,12 @@
 from datetime import datetime
 from uuid import UUID
+
 from pydantic import BaseModel, EmailStr
 
 # -----------------------------------------------------------------------
 # Request & Responses
 # -----------------------------------------------------------------------
+
 
 class RegisterRequest(BaseModel):
     """
@@ -25,6 +27,7 @@ class RegisterRequest(BaseModel):
     last_name: str | None = None
     phone_number: str | None = None
 
+
 class LoginRequest(BaseModel):
     """
     LoginRequest
@@ -34,8 +37,10 @@ class LoginRequest(BaseModel):
     :param email EmailStr
     :param password str
     """
+
     email: EmailStr
     password: str
+
 
 class TokenResponse(BaseModel):
     """
@@ -47,9 +52,11 @@ class TokenResponse(BaseModel):
     :param user_id UUID
     :param expires_at datetime
     """
+
     token: str
     user_id: UUID
     expires_at: datetime
+
 
 class UserResponse(BaseModel):
     """
@@ -63,6 +70,7 @@ class UserResponse(BaseModel):
     :param last_name str
     :param is_callsigned-
     """
+
     id: UUID
     email: EmailStr
     first_name: str
@@ -72,18 +80,19 @@ class UserResponse(BaseModel):
     class Config:
         from_attributes = True
 
+
 class CallsignRequest(BaseModel):
     """
     CallsignRequest
 
     Response containing callsign data of a user.
 
-    
+
     """
+
     call_sign: str
     qual_level_a: str
     qual_level_b: str
     qual_level_c: str
     qual_level_d: str
     qual_level_e: str
-
