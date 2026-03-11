@@ -1,22 +1,21 @@
 from datetime import datetime
-from os import urandom
 from typing import Final
 from uuid import UUID, uuid4
 
-from config.data_config import (
-    CALL_SIGN_MAX_LENGTH,
-    CALL_SIGN_MIN_LENGTH,
-    DEFAULT_MAX_LENGTH,
-    EMAIL_MIN_LENGTH,
-)
 from pydantic import EmailStr
 from sqlalchemy import Enum
 from sqlalchemy.dialects.postgresql import UUID as DB_UUID
 from sqlalchemy.schema import Column, ForeignKey
 from sqlmodel import Field
 
-from data.enums.aro_auth_token import AROAuthToken
-from data.tables.base_model import BaseSQLModel
+from backend.config.data_config import (
+    CALL_SIGN_MAX_LENGTH,
+    CALL_SIGN_MIN_LENGTH,
+    DEFAULT_MAX_LENGTH,
+    EMAIL_MIN_LENGTH,
+)
+from backend.data.enums.aro_auth_token import AROAuthToken
+from backend.data.tables.base_model import BaseSQLModel
 
 # Schema information
 ARO_USER_SCHEMA_NAME: Final[str] = "aro_users"
@@ -36,6 +35,8 @@ class AROUsers(BaseSQLModel, table=True):
     :type id: UUID
     :param call_sign: ARO User's call sign that we will use to communicate with them
     :type call_sign: str
+    :param is_callsign_verified: ARO User's callsign verification status
+    :type is_callsign_verified: bool
     :param email: Valid email
     :type email: EmailStr
     :param first_name: First name of ARO user
@@ -47,11 +48,22 @@ class AROUsers(BaseSQLModel, table=True):
     """
 
     id: UUID = Field(default_factory=uuid4, primary_key=True, index=True)
-    call_sign: str = Field(min_length=CALL_SIGN_MIN_LENGTH, max_length=CALL_SIGN_MAX_LENGTH)
+    call_sign: str | None = Field(
+        min_length=CALL_SIGN_MIN_LENGTH, 
+        max_length=CALL_SIGN_MAX_LENGTH,
+        default=None,
+        nullable=True,
+    )
+
+    # Critical 2FA variable
+    google_id: str | None = Field(default=None, unique=True, index=True)
+    is_callsign_verified: bool = Field(default=False)
+
+    # We are currently verifying with email + pwd
     email: EmailStr = Field(min_length=EMAIL_MIN_LENGTH, max_length=DEFAULT_MAX_LENGTH, unique=True)
     first_name: str = Field(max_length=DEFAULT_MAX_LENGTH)
     last_name: str | None = Field(max_length=DEFAULT_MAX_LENGTH, nullable=True, default=None)
-    phone_number: str
+    phone_number: str | None = Field(default=None)
 
     # table information
     __tablename__ = ARO_USER_TABLE_NAME
@@ -105,8 +117,8 @@ class AROUserLogin(BaseSQLModel, table=True):
 
     id: UUID = Field(default_factory=uuid4, primary_key=True, index=True)  # unique id for logins
     email: EmailStr = Field(min_length=EMAIL_MIN_LENGTH, max_length=DEFAULT_MAX_LENGTH, unique=True)
-    password: str = Field(max_length=20)
-    salt: bytes = urandom(16)
+    password: str = Field(max_length=128)
+    password_salt: str = Field(max_length=32)
     created_on: datetime = Field(default_factory=datetime.now)
     hashing_algorithm_name: str = Field(min_length=1, max_length=20)
     user_data_id: UUID = Column(DB_UUID, ForeignKey(AROUsers.id))  # type: ignore
@@ -114,7 +126,6 @@ class AROUserLogin(BaseSQLModel, table=True):
 
     __tablename__ = ARO_USER_LOGIN
     __table_args__ = {"schema": ARO_USER_SCHEMA_NAME}
-
 
 class AROUserAuthToken(BaseSQLModel, table=True):
     """
