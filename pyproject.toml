@@ -71,6 +71,10 @@ module = "tinyaes.*"
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
+module = "authlib.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
 module = "pyStuffing.*"
 ignore_missing_imports = true
 

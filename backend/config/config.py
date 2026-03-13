@@ -1,10 +1,10 @@
 # TODO:(335) Improve loading the configuration
-import contextlib
 from os import environ
 from typing import Final
 
 from dotenv import load_dotenv
 
+from config.aro_auth_config import AROAuthConfig
 from config.cors_config import CORSConfig
 from config.database_config import DatabaseConfig
 from config.logger_config import LoggerConfig
@@ -21,6 +21,7 @@ class BackendConfiguration:
         self.cors = CORSConfig()
         self.logger = LoggerConfig()
         self.db = DatabaseConfig()
+        self.auth = AROAuthConfig()
 
 
 settings = BackendConfiguration()
@@ -40,12 +41,6 @@ def get_required_env(config: str) -> str:
         raise ValueError(f"{config} is missing from .env.")
     return value
 
-
-contextlib.suppress(ValueError)
-GOOGLE_CLIENT_ID = get_required_env("GOOGLE_CLIENT_ID")
-
-GOOGLE_CLIENT_SECRET = get_required_env("GOOGLE_CLIENT_SECRET")
-JWT_SECRET_KEY = get_required_env("JWT_SECRET_KEY")
 
 GS_DATABASE_USER = get_required_env("GS_DATABASE_USER")
 GS_DATABASE_PASSWORD = get_required_env("GS_DATABASE_PASSWORD")

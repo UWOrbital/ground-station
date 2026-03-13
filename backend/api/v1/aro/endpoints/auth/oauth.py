@@ -10,11 +10,10 @@ After initial authentication, the user will need to additionally verify with the
 """
 
 
-from authlib.integrations.starlette_client import OAuth, OAuthError  # type: ignore
-from config.config import (
-    GOOGLE_CLIENT_ID,
-    GOOGLE_CLIENT_SECRET,
-)
+from typing import cast
+
+from authlib.integrations.starlette_client import OAuth, OAuthError
+from config.config import settings
 from data.tables.aro_user_tables import AROUsers
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import RedirectResponse
@@ -52,8 +51,8 @@ config = Config(".env")
 oauth = OAuth(config)
 oauth.register(
     name="google",
-    client_id=GOOGLE_CLIENT_ID,
-    client_secret=GOOGLE_CLIENT_SECRET,
+    client_id=settings.auth.google_client_id,
+    client_secret=settings.auth.google_client_secret,
     server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
     client_kwargs={"scope": "openid email profile"},
 )
@@ -78,7 +77,7 @@ async def google_login(request: Request) -> RedirectResponse:
     """
     # The callback URL must match what's configured on Google Cloud Console
     redirect_uri = request.url_for("google_callback")
-    return await RedirectResponse(oauth.google.authorize_redirect(request, redirect_uri))
+    return cast(RedirectResponse, await oauth.google.authorize_redirect(request, redirect_uri))
 
 
 @router.get("/google/callback")
