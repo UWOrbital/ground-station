@@ -50,7 +50,7 @@ def upgrade() -> None:
         sa.Column("password", sqlmodel.sql.sqltypes.AutoString(length=20), nullable=False),
         sa.Column("salt", sa.LargeBinary(), nullable=False),
         sa.Column("created_on", sa.DateTime(), nullable=False),
-        sa.Column("hashing_algorithm_name", sqlmodel.sql.sqltypes.AutoString(length=20), nullable=False),
+        sa.Column("hashing_algorithm_name", sqlmodel.sql.sqltypes.AutoString(length=128), nullable=False),
         sa.Column("user_data_id", sa.Uuid(), nullable=False),
         sa.Column("email_verification_token", sqlmodel.sql.sqltypes.AutoString(length=200), nullable=False),
         sa.PrimaryKeyConstraint("id"),
