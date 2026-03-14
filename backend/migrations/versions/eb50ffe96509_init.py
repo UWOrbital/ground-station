@@ -34,7 +34,11 @@ def upgrade() -> None:
         sa.Column("token", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
         sa.Column("created_on", sa.DateTime(), nullable=False),
         sa.Column("expiry", sa.DateTime(), nullable=False),
-        sa.Column("auth_type", sa.Enum("DUMMY", "ANOTHERDUMMY", "TEST", name="auth_type"), nullable=False),
+        sa.Column(
+            "auth_type",
+            sa.Enum("GOOGLE_OAUTH", "EMAIL_PASSWORD", "DUMMY", "ANOTHERDUMMY", "TEST", name="auth_type"),
+            nullable=False,
+        ),
         sa.PrimaryKeyConstraint("id"),
         schema="aro_users",
     )

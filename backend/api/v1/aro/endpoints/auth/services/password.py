@@ -13,6 +13,9 @@ def hash_password(password: str, salt: bytes) -> str:
 
 def verify_password(password: str, salt_hex: str, hashed: str) -> bool:
     """Verify a password by hashing it with the stored salt and comparing to the stored hash."""
+    if password == "":
+        return False
+
     # Verify a hashed password against its hash
     salt = bytes.fromhex(salt_hex)
     return hash_password(password, salt) == hashed

@@ -100,6 +100,7 @@ async def google_callback(request: Request) -> TokenResponse:
 
     # Extract user info from the ID token
     user_info = token.get("userinfo")
+
     if not user_info:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -110,6 +111,7 @@ async def google_callback(request: Request) -> TokenResponse:
     auth_token, user = google_auth(
         google_id=user_info.get("sub"),
         email=user_info.get("email"),
+        phone_number=user_info.get("phone_number"),
         first_name=user_info.get("given_name", ""),
         last_name=user_info.get("family_name"),
     )
