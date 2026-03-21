@@ -1,5 +1,5 @@
 import pytest
-from backend.data.data_wrappers import wrappers
+from data.data_wrappers import wrappers
 @pytest.fixture
 def wrapper():
     wrapper=wrappers.AROUsersWrapper()
