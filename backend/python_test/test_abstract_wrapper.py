@@ -1,5 +1,6 @@
 import pytest
 from data.data_wrappers import wrappers
+from uuid import uuid4
 @pytest.fixture
 def wrapper():
     wrapper=wrappers.AROUsersWrapper()
@@ -46,15 +47,35 @@ def test_get_all(wrapper,obj1,obj2):
         assert arr[1].email==obj2["email"]
     else:
         assert arr[1].email==obj1["email"]
+
 def test_get_by_id(wrapper,obj1):
     get=wrapper.create(obj1)
     obj=wrapper.get_by_id(get.id)
     assert obj.id==get.id
+    random_id=uuid4()
+    err=None
+    try:
+        obj=wrapper.get_by_id(random_id)
+    except ValueError as e:
+        err=type(e)
+    finally:
+        assert err==ValueError
+
+
 def test_delete_by_id(wrapper,obj1):
     delete=wrapper.create(obj1)
     obj=wrapper.delete_by_id(delete.id)
     assert obj.id==delete.id
     assert not wrapper.get_all()
+    random_id=uuid4()
+    err=None
+    try:
+        obj=wrapper.delete_by_id(random_id)
+    except ValueError as e:
+        err=type(e)
+    finally:
+        assert err==ValueError
+
 def test_update(wrapper,obj1):
     obj=wrapper.create(obj1)
     assert obj.email==obj1["email"]
@@ -62,3 +83,30 @@ def test_update(wrapper,obj1):
     new_info["email"]="new_email@gmail.com"
     new_obj=wrapper.update(obj.id,new_info)
     assert new_obj.email==new_info["email"]
+    new_info=obj1.copy()
+    new_info["random_field"]="random"
+    err=None
+    try:
+        new_obj=wrapper.update(obj.id,new_info)
+    except Exception as e:
+        err=type(e)
+    finally:
+        assert err==ValueError
+    new_info=obj1.copy()
+    new_info["id"]=uuid4()
+    err=None
+    try:
+        new_obj=wrapper.update(obj.id,new_info)
+    except Exception as e:
+        err=type(e)
+    finally:
+        assert err==ValueError
+    err=None
+    new_info=obj1.copy()
+    new_info["email"]=4
+    try:
+        new_obj=wrapper.update(obj.id,new_info)
+    except Exception as e:
+        err=type(e)
+    finally:
+        assert err==TypeError
