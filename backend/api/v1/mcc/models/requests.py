@@ -4,16 +4,6 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 
-class QueueCommandRequest(BaseModel):
-    """
-    The request params to queue a command into the commands queue.
-    """
-
-    params: Annotated[dict[str, int | bool], Field(description="Params for commands.")]
-    cmd_id: Annotated[int, Field(description="Command ID, references obc_gs_command_id.h")]
-    prio: Annotated[int, Field(description="The priority of the command")]
-
-
 class DeleteCommandRequest(BaseModel):
     """
     Deletes a command from the commands table.

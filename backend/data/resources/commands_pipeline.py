@@ -1,6 +1,9 @@
-import warnings
+import contextlib
 
+from data.data_wrappers.wrappers import CommandsWrapper, MainCommandWrapper
+from data.enums.transactional import CommandStatus
 from data.resources.cli_commands import CLICommand
+from data.tables.transactional_tables import Commands
 from interfaces import PADDING_REQUIRED
 from interfaces.obc_gs_interface.commands.python import CmdMsg
 from interfaces.obc_gs_interface.commands.python.command_framing import command_multi_pack
@@ -11,6 +14,8 @@ class CommandsPipeline:
     """
     Recieves, sorts, and packets commands such that they may be sent to the
     satellite.
+
+    This is basically another abstraction layer for the database.
     """
 
     def __init__(self) -> None:
@@ -22,10 +27,14 @@ class CommandsPipeline:
         self.commands_queue: list[CLICommand] = []
         self.packet_list: list[bytes] = []
 
-    def queue_to_packet(self) -> None:
+    def queue_to_packet(self) -> list[bytes]:
         """
         Converts all commands in the queue into packets.
         """
+
+        if len(self.commands_queue) == 0:
+            self.build_queue()
+
         command_messages: list[CmdMsg] = []
         command_bytes: list[bytes] = []
         comms = CommandPackaging()
@@ -38,24 +47,52 @@ class CommandsPipeline:
         for byte_string in command_bytes:
             self.packet_list.append(comms.encode_frame(byte_string).ljust(PADDING_REQUIRED, b"\x00"))
 
-    def add_to_queue(self, command: CLICommand) -> tuple[bool, list[CLICommand]]:
+        for cli_command in self.commands_queue:
+            cli_command.command.status = CommandStatus.PACKETED
+            CommandsWrapper().update(cli_command.command)
+
+        return self.packet_list
+
+    def build_queue(self) -> list[Commands]:
         """
-        Inserts a command into queue, and then sorts it by priority and then by time.
-
-
-        :command: CLICommand which has been rehydrated with the relevant infromation
-        :return: tuple containing a status which is True if command has been inserted and
-                 False otherwise and the command queue
+        Builds the queue from the database based on status.
         """
 
-        if self.lockout:
-            warnings.warn("Commands queue lockout active. Returned current queue", stacklevel=2)
-            return False, self.commands_queue
+        commands = CommandsWrapper().get_all_by(status=CommandStatus.PENDING)
 
-        self.commands_queue.append(command)
+        for command in commands:
+            raw_param_string = command.params.split(",") if command.params else []
+            processed_param = {}
+
+            for i in range(0, len(raw_param_string) - 1, 2):
+                val = raw_param_string[i + 1]
+
+                if val.lower() in ["true", "false"]:
+                    val = val.lower() == "true"
+                else:
+                    with contextlib.suppress(ValueError):
+                        val = int(val)
+
+                    if isinstance(val, str):
+                        with contextlib.suppress(ValueError):
+                            val = float(val)
+
+                processed_param[raw_param_string[i]] = val
+
+            main_cmd = MainCommandWrapper().get_by_id(command.type_)
+            priority = main_cmd.priority if main_cmd else 0
+
+            cli_command = CLICommand(params=processed_param, cmd_id=command.type_, prio=priority)
+            cli_command.command = command
+            cli_command.time = command.created_at
+            self.commands_queue.append(cli_command)
+
+            # future task UPDATE TO USE ABSTRACTED UPDATE METHOD
+            command.status = CommandStatus.SCHEDULED
+            CommandsWrapper().update(command)
+
         self.sort_queue()
-
-        return True, self.commands_queue
+        return commands
 
     def sort_queue(self) -> list[CLICommand]:
         """
@@ -67,22 +104,19 @@ class CommandsPipeline:
         self.commands_queue.sort(key=lambda x: x.prio)
         return self.commands_queue
 
-    def clear_queue(self) -> list[CLICommand]:
+    def clear_queue(self) -> None:
         """
-        Clears the current queue
+        Sets all command status to completed and clears queue (please note that we should have a seperate
+        enum for aborted)
         """
-        # TODO this should also set all of the command status in the thing to sent
+        for cli_command in self.commands_queue:
+            cli_command.command.status = CommandStatus.COMPLETED
+            CommandsWrapper().update(cli_command.command)
+
         self.commands_queue = []
-        return self.commands_queue
 
-    def enable_lockout(self) -> None:
+    def clear_packets(self) -> None:
         """
-        Prevents more commands from being recieved.
+        Clears the packet list so that a new set of commands can be queued.
         """
-        self.lockout = True
-
-    def disable_lockout(self) -> None:
-        """
-        Allows more commands to be recieved
-        """
-        self.lockout = False
+        self.packet_list = []

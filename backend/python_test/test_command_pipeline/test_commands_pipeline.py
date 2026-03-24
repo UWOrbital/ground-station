@@ -17,30 +17,10 @@ def create_mock_command(prio: int, time_offset_seconds: int = 0):
     return cmd
 
 def test_initialization(pipeline):
-    assert pipeline.lockout is False
     assert pipeline.commands_queue == []
     assert pipeline.packet_list == []
 
-def test_add_to_queue_success(pipeline):
-    cmd = create_mock_command(prio=1)
-    status, queue = pipeline.add_to_queue(cmd)
 
-    assert status is True
-    assert len(queue) == 1
-    assert queue[0] == cmd
-    assert pipeline.commands_queue == queue
-
-def test_add_to_queue_lockout(pipeline):
-    pipeline.enable_lockout()
-    assert pipeline.lockout is True
-
-    cmd = create_mock_command(prio=1)
-    with pytest.warns(UserWarning, match="Commands queue lockout active"):
-        status, queue = pipeline.add_to_queue(cmd)
-
-    assert status is False
-    assert len(queue) == 0
-    assert pipeline.commands_queue == []
 
 def test_sort_queue_by_priority(pipeline):
     cmd_low_prio = create_mock_command(prio=2)
@@ -71,26 +51,25 @@ def test_sort_queue_mixed(pipeline):
 
     assert sorted_queue == [cmd_prio1_old, cmd_prio1_new, cmd_prio2_old, cmd_prio2_new]
 
-def test_clear_queue(pipeline):
+@patch("data.resources.commands_pipeline.CommandsWrapper")
+def test_clear_queue(mock_wrapper, pipeline):
     cmd = create_mock_command(prio=1)
     pipeline.commands_queue = [cmd]
 
-    cleared_queue = pipeline.clear_queue()
-    assert cleared_queue == []
+    pipeline.clear_queue()
     assert pipeline.commands_queue == []
 
-
-def test_disable_lockout(pipeline):
-    pipeline.enable_lockout()
-    assert pipeline.lockout is True
-    pipeline.disable_lockout()
-    assert pipeline.lockout is False
+def test_clear_packets(pipeline):
+    pipeline.packet_list = [b"pack1"]
+    pipeline.clear_packets()
+    assert pipeline.packet_list == []
 
 
+@patch("data.resources.commands_pipeline.CommandsWrapper")
 @patch("data.resources.commands_pipeline.PADDING_REQUIRED", 20)
 @patch("data.resources.commands_pipeline.command_multi_pack")
 @patch("data.resources.commands_pipeline.CommandPackaging")
-def test_queue_to_packet(mock_command_packaging_class, mock_command_multi_pack, pipeline):
+def test_queue_to_packet(mock_command_packaging_class, mock_command_multi_pack, mock_wrapper, pipeline):
     cmd1 = create_mock_command(prio=1)
     cmd2 = create_mock_command(prio=2)
     pipeline.commands_queue = [cmd1, cmd2]
@@ -101,7 +80,7 @@ def test_queue_to_packet(mock_command_packaging_class, mock_command_multi_pack, 
     mock_comms_instance.encode_frame.side_effect = lambda x: b"HEAD_" + x
     mock_command_packaging_class.return_value = mock_comms_instance
 
-    pipeline.queue_to_packet()
+    packets = pipeline.queue_to_packet()
 
     mock_command_multi_pack.assert_called_once_with([cmd1.cmd_msg, cmd2.cmd_msg])
     assert mock_comms_instance.encode_frame.call_count == 2
@@ -110,3 +89,4 @@ def test_queue_to_packet(mock_command_packaging_class, mock_command_multi_pack, 
     expected_packet2 = b"HEAD_pack2".ljust(20, b"\x00")
 
     assert pipeline.packet_list == [expected_packet1, expected_packet2]
+    assert packets == [expected_packet1, expected_packet2]

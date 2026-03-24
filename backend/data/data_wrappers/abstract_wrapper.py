@@ -26,6 +26,16 @@ class AbstractWrapper(ABC, Generic[T, PK]):
         with get_db_session() as session:
             return list(session.exec(select(self.model)).all())
 
+    def get_all_by(self, **kwargs: object) -> list[T]:
+        """
+        Get all data wrapper for the unspecified model by fields
+
+        :param kwargs: fields to search by
+        :return: a list of all model instances matching the fields
+        """
+        with get_db_session() as session:
+            return list(session.exec(select(self.model).filter_by(**kwargs)).all())
+
     def get_by_id(self, obj_id: PK) -> T:
         """
         Retrieve data wrapper for the unspecified model
@@ -66,4 +76,17 @@ class AbstractWrapper(ABC, Generic[T, PK]):
                 raise ValueError(f"{self.model.__name__} with ID {obj_id} not found.")
             session.delete(obj)
             session.commit()
+            return obj
+
+    def update(self, obj: T) -> T:
+        """
+        Update data wrapper for the unspecified model
+
+        :param obj: the model instance to be updated
+        :return: the updated instance
+        """
+        with get_db_session() as session:
+            session.add(obj)
+            session.commit()
+            session.refresh(obj)
             return obj

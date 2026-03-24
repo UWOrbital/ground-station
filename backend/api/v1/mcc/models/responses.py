@@ -7,10 +7,10 @@ from pydantic import BaseModel, Field
 
 class MainCommandsResponse(BaseModel):
     """
-    The main commands response model.
+    The main command response model
     """
 
-    data: Annotated[list[MainCommand], Field(description="A list comtaining MainCommand objects")]
+    data: Annotated[list[MainCommand], Field(description="A list containing MainCommand objects")]
 
 
 class CommandsResponse(BaseModel):
