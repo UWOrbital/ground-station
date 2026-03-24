@@ -70,20 +70,14 @@ class LoginRequest(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def sanitize_inputs(cls, data: dict[str, Any]) -> dict[str, Any]:
-<<<<<<< HEAD
-=======
         """Normalize email to lowercase before validation."""
->>>>>>> 0942a8ff (fix: updated env variables prefixes and docstrings for model sanitizers)
         if isinstance(data.get("email"), str):
             data["email"] = data["email"].strip().lower()
         return data
 
     @model_validator(mode="after")
     def validate_no_spaces_in_password(self) -> Self:
-<<<<<<< HEAD
-=======
         """Reject passwords containing spaces."""
->>>>>>> 0942a8ff (fix: updated env variables prefixes and docstrings for model sanitizers)
         if " " in self.password:
             raise ValueError("Password must not contain spaces.")
         return self
@@ -111,10 +105,7 @@ class GoogleRequest(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def sanitize_inputs(cls, data: dict[str, Any]) -> dict[str, Any]:
-<<<<<<< HEAD
-=======
         """Strip whitespace from all string fields and normalize email to lowercase."""
->>>>>>> 0942a8ff (fix: updated env variables prefixes and docstrings for model sanitizers)
         if isinstance(data.get("google_id"), str):
             data["google_id"] = data["google_id"].strip()
         if isinstance(data.get("email"), str):
@@ -159,10 +150,7 @@ class CallsignRequest(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def normalize_callsign(cls, data: dict[str, Any]) -> dict[str, Any]:
-<<<<<<< HEAD
-=======
         """Normalize callsign to uppercase and strip surrounding whitespace."""
->>>>>>> 0942a8ff (fix: updated env variables prefixes and docstrings for model sanitizers)
         if isinstance(data.get("call_sign"), str):
             data["call_sign"] = data["call_sign"].strip().upper()
         return data
