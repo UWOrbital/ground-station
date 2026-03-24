@@ -4,30 +4,23 @@ from data.data_wrappers.wrappers import (
     AROUserAuthTokenWrapper,
     AROUsersWrapper,
 )
-from data.tables.aro_user_tables import (
-    AROUsers,
-)
+from data.tables.aro_user_tables import AROUsers
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from api.v1.aro.endpoints.auth.auth_schemas import UserResponse
+from api.v1.aro.models.responses import UserResponse
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
 
-@router.get("/currentuser")
-async def get_current_user(token: str) -> UserResponse:
+async def get_current_user(token: str) -> AROUsers:
     """
-    get_current_user
-
-    Get the current user's information from their auth token.
+    Dependency: resolve a token string to the authenticated AROUsers record.
+    Raises HTTP 401/404 on invalid or expired tokens.
     """
     token_wrapper = AROUserAuthTokenWrapper()
     user_wrapper = AROUsersWrapper()
 
-    auth_token = next(
-        (t for t in token_wrapper.get_all() if t.token == token),
-        None,
-    )
+    auth_token = token_wrapper.get_by_token(token)
 
     if not auth_token:
         raise HTTPException(
@@ -35,7 +28,6 @@ async def get_current_user(token: str) -> UserResponse:
             detail="Couldn't find your login credentials. How did you even log in?",
         )
 
-    # Check for expiracy
     if auth_token.expiry < datetime.now():
         token_wrapper.delete_by_id(auth_token.id)
         raise HTTPException(
@@ -43,20 +35,21 @@ async def get_current_user(token: str) -> UserResponse:
             detail="Your login expired.",
         )
 
-    user = user_wrapper.get_by_id(auth_token.user_data_id)
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Couldn't find the user from ID.")
+    try:
+        user = user_wrapper.get_by_id(auth_token.user_data_id)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Couldn't find the user from ID.") from e
 
-    return UserResponse(
-        id=user.id,
-        email=user.email,
-        first_name=user.first_name,
-        last_name=user.last_name,
-        is_callsign_verified=user.is_callsign_verified,
-    )
+    return user
 
 
-@router.post("/isverified")
+@router.get("/current_user")
+async def current_user_endpoint(user: AROUsers = Depends(get_current_user)) -> UserResponse:
+    """Get the current user's information from their auth token."""
+    return UserResponse(data=user)
+
+
+@router.post("/verify_callsign")
 def require_verified_user(user: AROUsers = Depends(get_current_user)) -> AROUsers:
     """Check if the user's callsign is verified, otherwise raise an error."""
     if not user.is_callsign_verified:

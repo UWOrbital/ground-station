@@ -1,10 +1,11 @@
 from uuid import UUID
 
+from pydantic import EmailStr
 from sqlmodel import select
 
 from data.data_wrappers.abstract_wrapper import AbstractWrapper  # SEE abstract_wrapper.py FOR LOGIC
 from data.database.engine import get_db_session
-from data.tables.aro_user_tables import AROUserAuthToken, AROUserLogin, AROUsers
+from data.tables.aro_user_tables import AROUserAuthToken, AROUserCallsigns, AROUserLogin, AROUsers
 from data.tables.main_tables import MainCommand, MainTelemetry
 from data.tables.transactional_tables import (
     ARORequest,
@@ -24,6 +25,29 @@ class AROUsersWrapper(AbstractWrapper[AROUsers, UUID]):
 
     model = AROUsers
 
+    def get_user_by_email(self, email: EmailStr) -> AROUsers | None:
+        """
+        Find and return a user by their email address.
+
+        :email pydantic.EmailStr
+        :returns AROUsers | None
+        """
+        with get_db_session() as session:
+            found_user = session.exec(select(AROUsers).where(AROUsers.email == email)).first()
+        return found_user
+
+    def get_user_by_google_id(self, google_id: str) -> AROUsers | None:
+        """
+        Find and return a user by their Google ID.
+
+        :google_id str
+        :returns AROUsers | None
+        """
+        # Find a user from their Google ID.
+        with get_db_session() as session:
+            found_user = session.exec(select(AROUsers).where(AROUsers.google_id == google_id)).first()
+        return found_user
+
 
 class AROUserAuthTokenWrapper(AbstractWrapper[AROUserAuthToken, UUID]):
     """
@@ -39,6 +63,22 @@ class AROUserAuthTokenWrapper(AbstractWrapper[AROUserAuthToken, UUID]):
         """
         with get_db_session() as session:
             return session.exec(select(self.model).where(self.model.token == token)).first()
+
+
+class AROUserCallsignWrapper(AbstractWrapper[AROUserCallsigns, UUID]):
+    """
+    Data wrapper for the AROUserCallsigns table.
+    """
+
+    model = AROUserCallsigns
+
+    def find_callsign(self, user_cs: str) -> AROUserCallsigns | None:
+        """
+        :user_cs str
+        return AROUserCallsigns | None
+        """
+        with get_db_session() as session:
+            return session.exec(select(AROUserCallsigns).where(AROUserCallsigns.call_sign == user_cs)).first()
 
 
 class AROUserLoginWrapper(AbstractWrapper[AROUserLogin, UUID]):

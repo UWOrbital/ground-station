@@ -58,7 +58,7 @@ def delete_user(userid: str) -> UserResponse:
     """
     Deletes a user based on the user ID
     :param userid: The unique identifier of the user to be deleted
-    :return: returns the deleted user
+    :return: returns the deleted users
     """
     deleted_user = AROUsersWrapper().delete_by_id(UUID(userid))
     return UserResponse(data=deleted_user)

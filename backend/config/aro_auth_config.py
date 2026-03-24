@@ -9,5 +9,7 @@ class AROAuthConfig(BaseSettings):
     jwt_secret_key: str
 
     model_config = SettingsConfigDict(
-        env_prefix="",  # no prefix, maps directly
+        env_prefix="ARO_AUTH_",
+        env_file=".env",
+        extra="ignore",
     )

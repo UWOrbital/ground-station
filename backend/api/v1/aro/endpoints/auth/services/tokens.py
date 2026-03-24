@@ -16,14 +16,21 @@ TOKEN_EXPIRY_HOURS = 6.7
 
 
 def create_auth_token(user_id: UUID, auth_type: AROAuthToken) -> AROUserAuthToken:
-    """Create and persist an authentication token for a user with the specified auth type."""
-    # Create and persist an authentication token for a user.
+    """Return an existing valid token for the user, or create and persist a new one."""
+    token_wrapper = AROUserAuthTokenWrapper()
+
+    existing = next(
+        (t for t in token_wrapper.get_all() if t.user_data_id == user_id and t.expiry > datetime.now()),
+        None,
+    )
+    if existing:
+        return existing
+
     created_time = datetime.now()
     expiry = created_time + timedelta(hours=TOKEN_EXPIRY_HOURS)
     token_value = str(uuid4())
 
-    token = AROUserAuthTokenWrapper()
-    auth_token = token.create(
+    auth_token = token_wrapper.create(
         {
             "user_data_id": user_id,
             "token": token_value,

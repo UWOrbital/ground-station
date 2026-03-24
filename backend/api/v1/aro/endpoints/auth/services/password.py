@@ -5,15 +5,20 @@ HASH_ITERATIONS = 100_000
 
 
 def hash_password(password: str, salt: bytes) -> str:
-    """Hash a password using PBKDF2 with the given salt."""
+    """
+    Hash a password using PBKDF2 with the given salt.
+    """
     # Hash a password using PBKDF2
     hashed = pbkdf2_hmac(HASH_ALGORITHM, password.encode(), salt, HASH_ITERATIONS)
     return hashed.hex()
 
 
 def verify_password(password: str, salt_hex: str, hashed: str) -> bool:
-    """Verify a password by hashing it with the stored salt and comparing to the stored hash."""
-    if password == "":
+    """
+    Verify a password by hashing it with the stored salt and comparing to the stored hash.
+    """
+
+    if len(password.replace(" ", "")) < 9:
         return False
 
     # Verify a hashed password against its hash

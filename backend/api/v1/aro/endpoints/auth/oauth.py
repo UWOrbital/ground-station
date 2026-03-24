@@ -17,16 +17,8 @@ from config.config import settings
 from data.tables.aro_user_tables import AROUsers
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import RedirectResponse
-from starlette.config import Config
 from starlette.requests import Request
 
-from api.v1.aro.endpoints.auth.auth_schemas import (
-    CallsignRequest,
-    LoginRequest,
-    RegisterRequest,
-    TokenResponse,
-    UserResponse,
-)
 from api.v1.aro.endpoints.auth.dependencies import get_current_user
 from api.v1.aro.endpoints.auth.services.cs_2fa import verify_user_callsign
 from api.v1.aro.endpoints.auth.services.google import google_auth
@@ -35,20 +27,23 @@ from api.v1.aro.endpoints.auth.services.register import (
     logout_user,
     register_user,
 )
+from api.v1.aro.models.auth_requests import (
+    CallsignRequest,
+    GoogleRequest,
+    LoginRequest,
+    RegisterRequest,
+)
+from api.v1.aro.models.auth_responses import TokenResponse
+from api.v1.aro.models.responses import UserResponse
 
 # -----------------------------------------------------------------------
 # CONFIG
 # -----------------------------------------------------------------------
 
-TOKEY_EXPIRY_HOURS = 6.7
-HASH_ALGORITHM = "sha256"
-HASH_ITERATIONS = 100_000
-
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
 # Auth Setup
-config = Config(".env")
-oauth = OAuth(config)
+oauth = OAuth()
 oauth.register(
     name="google",
     client_id=settings.auth.google_client_id,
@@ -98,23 +93,22 @@ async def google_callback(request: Request) -> TokenResponse:
             detail=f"OAuth authentication failed: {e.error}",
         ) from e
 
-    # Extract user info from the ID token
     user_info = token.get("userinfo")
-
     if not user_info:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Could not retrieve user data from Google.",
         )
 
-    # Extract the rest of the data
-    auth_token, user = google_auth(
+    google_request = GoogleRequest(
         google_id=user_info.get("sub"),
         email=user_info.get("email"),
-        phone_number=user_info.get("phone_number"),
         first_name=user_info.get("given_name", ""),
         last_name=user_info.get("family_name"),
+        phone_number=user_info.get("phone_number"),
     )
+
+    auth_token, user = google_auth(google_request)
 
     return TokenResponse(
         token=auth_token.token,
@@ -138,14 +132,7 @@ async def register(request: RegisterRequest) -> TokenResponse:
     Creates both AROUsers and AROUserLogin records.
     Returns an auth token for immediate login.
     """
-    # Check if email exists
-    auth_token, user = register_user(
-        email=request.email,
-        password=request.password,
-        first_name=request.first_name,
-        last_name=request.last_name,
-        phone_number=request.phone_number,
-    )
+    auth_token, user = register_user(request)
 
     return TokenResponse(
         token=auth_token.token,
@@ -163,7 +150,7 @@ async def login(request: LoginRequest) -> TokenResponse:
     If unsuccessful, gives appropriate errors.
     """
 
-    auth_token, user = login_user(request.email, request.password)
+    auth_token, user = login_user(request)
 
     return TokenResponse(
         token=auth_token.token,
@@ -172,7 +159,7 @@ async def login(request: LoginRequest) -> TokenResponse:
     )
 
 
-@router.post("/logout")
+@router.post("/logout/{token}")
 async def logout(token: str) -> dict[str, str]:
     """
     logout
@@ -185,7 +172,7 @@ async def logout(token: str) -> dict[str, str]:
     return {"message": "Logged out successfully."}
 
 
-@router.post("/verifycs", response_model=UserResponse)
+@router.post("/callsign_callback", response_model=UserResponse)
 async def verify_callsign(request: CallsignRequest, user: AROUsers = Depends(get_current_user)) -> UserResponse:
     """
     verify_callsign
@@ -194,20 +181,6 @@ async def verify_callsign(request: CallsignRequest, user: AROUsers = Depends(get
     Verifies a user's callsign and grants them admin access.
     """
     if not user.is_callsign_verified:
-        user = verify_user_callsign(
-            request.qual_level_a,
-            request.qual_level_b,
-            request.qual_level_c,
-            request.qual_level_d,
-            request.qual_level_e,
-            call_sign=request.call_sign,
-            user=user,
-        )
+        user = verify_user_callsign(request, user=user)
 
-    return UserResponse(
-        id=user.id,
-        email=user.email,
-        first_name=user.first_name,
-        last_name=user.last_name,
-        is_callsign_verified=user.is_callsign_verified,
-    )
+    return UserResponse(data=user)

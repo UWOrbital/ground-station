@@ -6,6 +6,7 @@ from api.v1.aro.endpoints.auth.services.password import (
     verify_password,
 )
 from api.v1.aro.endpoints.auth.services.tokens import create_auth_token
+from api.v1.aro.models.auth_requests import LoginRequest, RegisterRequest
 from data.data_wrappers.wrappers import (
     AROUserAuthTokenWrapper,
     AROUserLoginWrapper,
@@ -17,46 +18,46 @@ from data.tables.aro_user_tables import (
     AROUsers,
 )
 from fastapi import HTTPException, status
-from pydantic import EmailStr
 
 HASH_ALGORITHM = "sha256"
 
 
-def register_user(
-    email: EmailStr, password: str, first_name: str, last_name: str | None, phone_number: str | None
-) -> tuple[AROUserAuthToken, AROUsers]:
-    """Register a new user with email and password, creating login credentials and returning an auth token."""
+def register_user(request: RegisterRequest) -> tuple[AROUserAuthToken, AROUsers]:
+    """
+    Register a new user with email and password, creating login credentials and returning an auth token.
+
+    :request RegisterRequest
+    :returns [AROUserAuthToken, AROUsers]
+    """
     users = AROUsersWrapper()
     logins = AROUserLoginWrapper()
 
     # check for existing email
-    existing_user = next((u for u in users.get_all() if u.email == email), None)
+    existing_user = next((u for u in users.get_all() if u.email == request.email), None)
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Email has already been taken.",
         )
 
-    # 2. create email
     user = users.create(
         {
             "call_sign": None,
             "is_callsign_verified": False,
-            "email": email,
-            "first_name": first_name,
-            "last_name": last_name,
-            "phone_number": phone_number,
+            "email": request.email,
+            "first_name": request.first_name,
+            "last_name": request.last_name,
+            "phone_number": request.phone_number,
         }
     )
 
-    # We now create the login credentials
     salt = urandom(16)
-    hashed_password = hash_password(password, salt)
     verification_token = str(uuid4())
+    hashed_password = hash_password(request.password, salt)
 
     logins.create(
         {
-            "email": email,
+            "email": request.email,
             "password": hashed_password,
             "password_salt": salt.hex(),
             "hashing_algorithm_name": HASH_ALGORITHM,
@@ -65,36 +66,34 @@ def register_user(
         }
     )
 
-    # create an auth_token
-    auth_token = create_auth_token(
-        user.id,
-        AROAuthToken.EMAIL_PASSWORD,
-    )
+    auth_token = create_auth_token(user.id, AROAuthToken.EMAIL_PASSWORD)
 
     return (auth_token, user)
 
 
-def login_user(email: EmailStr, password: str) -> tuple[AROUserAuthToken, AROUsers]:
-    """Verify login credentials and return an auth token for an authenticated user."""
+def login_user(request: LoginRequest) -> tuple[AROUserAuthToken, AROUsers]:
+    """
+    Verify login credentials and return an auth token for an authenticated user.
+
+    :request LoginRequest
+    :returns [AROUserAuthToken, AROUsers]
+    """
     users = AROUsersWrapper()
     login = AROUserLoginWrapper()
 
-    # check for existing email
-    login_record = next((login_item for login_item in login.get_all() if login_item.email == email), None)
+    login_record = next((item for item in login.get_all() if item.email == request.email), None)
     if not login_record:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Login credentials invalid.",
         )
 
-    # verify password
-    if not verify_password(password, login_record.password_salt, login_record.password):
+    if not verify_password(request.password, login_record.password_salt, login_record.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password.",
         )
 
-    # get user data
     user = users.get_by_id(login_record.user_data_id)
     if not user:
         raise HTTPException(
