@@ -22,6 +22,7 @@ class TokenResponse(BaseModel):
 
     @model_validator(mode="after")
     def validate_token(self) -> Self:
+        """Ensure the token meets minimum length requirements."""
         # Pydantic already enforces the field types — we only add checks
         # that go beyond what type validation can catch.
         if len(self.token) < 32:
