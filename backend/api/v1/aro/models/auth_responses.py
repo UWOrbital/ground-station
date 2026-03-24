@@ -1,7 +1,8 @@
-from uuid import UUID
-from typing import Self
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, model_validator
+from typing import Self
+from uuid import UUID
+
+from pydantic import BaseModel, model_validator
 
 
 class TokenResponse(BaseModel):
@@ -19,7 +20,7 @@ class TokenResponse(BaseModel):
     user_id: UUID
     expires_at: datetime
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def validate_token(self) -> Self:
         # Pydantic already enforces the field types — we only add checks
         # that go beyond what type validation can catch.

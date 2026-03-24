@@ -6,6 +6,7 @@ from pydantic import BaseModel, EmailStr, model_validator
 # Request & Responses
 # -----------------------------------------------------------------------
 
+
 class RegisterRequest(BaseModel):
     """
     RegisterRequest
@@ -25,22 +26,22 @@ class RegisterRequest(BaseModel):
     last_name: str | None = None
     phone_number: str | None = None
 
-    @model_validator(mode='before')
+    @model_validator(mode="before")
     @classmethod
     def sanitize_inputs(cls, data: dict[str, Any]) -> dict[str, Any]:
         # email: raw input is always a plain str, not EmailStr
-        if isinstance(data.get('email'), str):
-            data['email'] = data['email'].strip().lower()
-        if isinstance(data.get('first_name'), str):
-            data['first_name'] = data['first_name'].strip()
+        if isinstance(data.get("email"), str):
+            data["email"] = data["email"].strip().lower()
+        if isinstance(data.get("first_name"), str):
+            data["first_name"] = data["first_name"].strip()
         # names are proper nouns — strip whitespace only, never lowercase
-        if isinstance(data.get('last_name'), str):
-            data['last_name'] = data['last_name'].strip()
-        if isinstance(data.get('password'), str):
-            data['password'] = data['password'].replace(" ", "")
+        if isinstance(data.get("last_name"), str):
+            data["last_name"] = data["last_name"].strip()
+        if isinstance(data.get("password"), str):
+            data["password"] = data["password"].replace(" ", "")
         return data
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def validate_password_strength(self) -> Self:
         if len(self.password) < 8:
             raise ValueError("Password must be at least 8 characters.")
@@ -64,16 +65,16 @@ class LoginRequest(BaseModel):
     email: EmailStr
     password: str
 
-    @model_validator(mode='before')
+    @model_validator(mode="before")
     @classmethod
     def sanitize_inputs(cls, data: dict[str, Any]) -> dict[str, Any]:
-        if isinstance(data.get('email'), str):
-            data['email'] = data['email'].strip().lower()
+        if isinstance(data.get("email"), str):
+            data["email"] = data["email"].strip().lower()
         return data
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def validate_no_spaces_in_password(self) -> Self:
-        if ' ' in self.password:
+        if " " in self.password:
             raise ValueError("Password must not contain spaces.")
         return self
 
@@ -97,22 +98,22 @@ class GoogleRequest(BaseModel):
     last_name: str | None = None
     phone_number: str | None = None
 
-    @model_validator(mode='before')
+    @model_validator(mode="before")
     @classmethod
     def sanitize_inputs(cls, data: dict[str, Any]) -> dict[str, Any]:
-        if isinstance(data.get('google_id'), str):
-            data['google_id'] = data['google_id'].strip()
-        if isinstance(data.get('email'), str):
-            data['email'] = data['email'].strip().lower()
-        if isinstance(data.get('first_name'), str):
-            data['first_name'] = data['first_name'].strip()
-        if isinstance(data.get('last_name'), str):
-            data['last_name'] = data['last_name'].strip()
-        if isinstance(data.get('phone_number'), str):
-            data['phone_number'] = data['phone_number'].strip()
+        if isinstance(data.get("google_id"), str):
+            data["google_id"] = data["google_id"].strip()
+        if isinstance(data.get("email"), str):
+            data["email"] = data["email"].strip().lower()
+        if isinstance(data.get("first_name"), str):
+            data["first_name"] = data["first_name"].strip()
+        if isinstance(data.get("last_name"), str):
+            data["last_name"] = data["last_name"].strip()
+        if isinstance(data.get("phone_number"), str):
+            data["phone_number"] = data["phone_number"].strip()
         return data
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def validate_google_id(self) -> Self:
         if not self.google_id:
             raise ValueError("google_id cannot be empty.")
@@ -140,9 +141,9 @@ class CallsignRequest(BaseModel):
     qual_level_d: bool
     qual_level_e: bool
 
-    @model_validator(mode='before')
+    @model_validator(mode="before")
     @classmethod
     def normalize_callsign(cls, data: dict[str, Any]) -> dict[str, Any]:
-        if isinstance(data.get('call_sign'), str):
-            data['call_sign'] = data['call_sign'].strip().upper()
+        if isinstance(data.get("call_sign"), str):
+            data["call_sign"] = data["call_sign"].strip().upper()
         return data
