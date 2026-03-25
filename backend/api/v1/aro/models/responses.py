@@ -45,4 +45,3 @@ class PacketCommandResponse(BaseModel):
     """
 
     data: PacketCommands
-    operations: dict[str, Any]
