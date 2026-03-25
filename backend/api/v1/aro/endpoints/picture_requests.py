@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from data.data_wrappers.wrappers import ARORequestWrapper, PacketCommandsWrapper
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 from api.v1.aro.models.requests import PictureRequest
 from api.v1.aro.models.responses import AllPictureResponse, PacketCommandResponse, PictureResponse
@@ -58,6 +58,10 @@ async def get_packet(request_id: UUID) -> PacketCommandResponse:
     """
 
     request = ARORequestWrapper().get_by_id(request_id)
+
+    if request.packet_id is None:
+        raise HTTPException(status_code=404, detail="Packet not found")
+
     packet = PacketCommandsWrapper().get_by_id(request.packet_id)
 
     return PacketCommandResponse(data=packet)
