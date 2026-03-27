@@ -1,14 +1,12 @@
 from typing import Any
 
 from data.data_wrappers.wrappers import CommandsWrapper
-from data.resources.commands_pipeline import CommandsPipeline
 from fastapi import APIRouter
 
 from api.v1.mcc.models.requests import CreateCommandRequest, DeleteCommandRequest
 from api.v1.mcc.models.responses import CommandsResponse
 
 commands_router = APIRouter(tags=["MCC", "Commands"])
-COMMANDS_PIPELINE = CommandsPipeline()
 
 
 @commands_router.post("/create")

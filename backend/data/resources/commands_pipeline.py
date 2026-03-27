@@ -1,4 +1,5 @@
 import contextlib
+import warnings
 
 from data.data_wrappers.wrappers import CommandsWrapper, MainCommandWrapper
 from data.enums.transactional import CommandStatus
@@ -33,7 +34,8 @@ class CommandsPipeline:
         """
 
         if len(self.commands_queue) == 0:
-            self.build_queue()
+            warnings.warn("No commands in queue. Packeting will succeed but have no effect.", stacklevel=1)
+            return [b"\x00"]
 
         command_messages: list[CmdMsg] = []
         command_bytes: list[bytes] = []
@@ -61,11 +63,11 @@ class CommandsPipeline:
         commands = CommandsWrapper().get_all_by(status=CommandStatus.PENDING)
 
         for command in commands:
-            raw_param_string = command.params.split(",") if command.params else []
+            param_list = command.params.split(",") if command.params else []
             processed_param = {}
 
-            for i in range(0, len(raw_param_string) - 1, 2):
-                val = raw_param_string[i + 1]
+            for i in range(0, len(param_list) - 1, 2):
+                val = param_list[i + 1]
 
                 if val.lower() in ["true", "false"]:
                     val = val.lower() == "true"
@@ -77,7 +79,7 @@ class CommandsPipeline:
                         with contextlib.suppress(ValueError):
                             val = float(val)
 
-                processed_param[raw_param_string[i]] = val
+                processed_param[param_list[i]] = val
 
             main_cmd = MainCommandWrapper().get_by_id(command.type_)
             priority = main_cmd.priority if main_cmd else 0
@@ -87,7 +89,6 @@ class CommandsPipeline:
             cli_command.time = command.created_at
             self.commands_queue.append(cli_command)
 
-            # future task UPDATE TO USE ABSTRACTED UPDATE METHOD
             command.status = CommandStatus.SCHEDULED
             CommandsWrapper().update(command)
 
