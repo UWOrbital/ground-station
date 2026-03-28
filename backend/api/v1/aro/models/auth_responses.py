@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Self
 from uuid import UUID
 
+from data.tables.aro_user_tables import AROUsers
 from pydantic import BaseModel, model_validator
 
 
@@ -28,3 +29,19 @@ class TokenResponse(BaseModel):
         if len(self.token) < 32:
             raise ValueError("Generated token is too short to be valid.")
         return self
+
+
+class AllUsersResponse(BaseModel):
+    """
+    The users response model.
+    """
+
+    data: list[AROUsers]
+
+
+class UserResponse(BaseModel):
+    """
+    Single user response model.
+    """
+
+    data: AROUsers

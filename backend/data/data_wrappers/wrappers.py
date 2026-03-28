@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 from pydantic import EmailStr
@@ -56,13 +57,25 @@ class AROUserAuthTokenWrapper(AbstractWrapper[AROUserAuthToken, UUID]):
 
     model = AROUserAuthToken
 
-    def get_by_token(self, token: str) -> AROUserAuthToken | None:
+    def get_token_by_token(self, token: str) -> AROUserAuthToken | None:
         """
         :token str
         returns AROUserAuthToken | None
         """
         with get_db_session() as session:
-            return session.exec(select(self.model).where(self.model.token == token)).first()
+            return session.exec(select(AROUserAuthToken).where(AROUserAuthToken.token == token)).first()
+
+    def get_token_by_user_id(self, user_id: UUID) -> AROUserAuthToken | None:
+        """
+        :user_id UUID
+        returns AROUserAuthToken | None
+        """
+        with get_db_session() as session:
+            return session.exec(
+                select(AROUserAuthToken)
+                .where(AROUserAuthToken.user_data_id == user_id)
+                .where(AROUserAuthToken.expiry > datetime.now())
+            ).first()
 
 
 class AROUserCallsignWrapper(AbstractWrapper[AROUserCallsigns, UUID]):
@@ -72,7 +85,7 @@ class AROUserCallsignWrapper(AbstractWrapper[AROUserCallsigns, UUID]):
 
     model = AROUserCallsigns
 
-    def find_callsign(self, user_cs: str) -> AROUserCallsigns | None:
+    def get_callsign(self, user_cs: str) -> AROUserCallsigns | None:
         """
         :user_cs str
         return AROUserCallsigns | None
@@ -87,6 +100,17 @@ class AROUserLoginWrapper(AbstractWrapper[AROUserLogin, UUID]):
     """
 
     model = AROUserLogin
+
+    def get_login_by_email(self, email: EmailStr) -> AROUserLogin | None:
+        """
+        Find and return a user by their email address.
+
+        :email pydantic.EmailStr
+        :returns AROUserLogin | None
+        """
+        with get_db_session() as session:
+            found_login = session.exec(select(AROUserLogin).where(AROUserLogin.email == email)).first()
+        return found_login
 
 
 class ARORequestWrapper(AbstractWrapper[ARORequest, UUID]):

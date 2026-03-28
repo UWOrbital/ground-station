@@ -1,5 +1,5 @@
 """
-backend.api.v1.aro.auth.oauth 的 Docstring
+api.v1.aro.auth.oauth
 
 Supports two authentication methods.
 
@@ -19,10 +19,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import RedirectResponse
 from starlette.requests import Request
 
-from api.v1.aro.endpoints.auth.dependencies import get_current_user
-from api.v1.aro.endpoints.auth.services.cs_2fa import verify_user_callsign
-from api.v1.aro.endpoints.auth.services.google import google_auth
-from api.v1.aro.endpoints.auth.services.register import (
+from api.v1.aro.auth.dependencies import get_current_user
+from api.v1.aro.auth.services.callsign_2fa import verify_user_callsign
+from api.v1.aro.auth.google.google import google_auth
+from api.v1.aro.auth.manual.register import (
     login_user,
     logout_user,
     register_user,
@@ -33,8 +33,10 @@ from api.v1.aro.models.auth_requests import (
     LoginRequest,
     RegisterRequest,
 )
-from api.v1.aro.models.auth_responses import TokenResponse
-from api.v1.aro.models.responses import UserResponse
+from api.v1.aro.models.auth_responses import (
+    TokenResponse, 
+    UserResponse,
+)
 
 # -----------------------------------------------------------------------
 # CONFIG
@@ -60,15 +62,15 @@ oauth.register(
 @router.get("/google/login")
 async def google_login(request: Request) -> RedirectResponse:
     """
-    google_login 的 Docstring
-
-    :param request: 说明
-    :type request: Request
-    :return: 说明
-    :rtype: RedirectResponse
-
+    google_login
+    
     Initiate Google OAuth flow.
     Redirect the user back to Google's consent screen.
+
+    :param request
+    :type request: Request
+    :return: login redirect
+    :rtype: RedirectResponse
     """
     # The callback URL must match what's configured on Google Cloud Console
     redirect_uri = request.url_for("google_callback")
@@ -84,6 +86,11 @@ async def google_callback(request: Request) -> TokenResponse:
 
     Creates a new user if first login, otherwise finds existing user.
     Returns an auth token for the session.
+
+    :param request
+    :type request: Request
+    :return: auth token
+    :rtype TokenResponse
     """
     try:
         token = await oauth.google.authorize_access_token(request)
@@ -128,9 +135,13 @@ async def register(request: RegisterRequest) -> TokenResponse:
     register
 
     Register a new user with email and password.
-
-    Creates both AROUsers and AROUserLogin records.
+    Creates AROUsers and AROUserLogin records.
     Returns an auth token for immediate login.
+
+    :param request
+    :type RegisterRequest
+    :returns: auth token
+    :rtype TokenResponse
     """
     auth_token, user = register_user(request)
 
@@ -148,6 +159,11 @@ async def login(request: LoginRequest) -> TokenResponse:
 
     Validates credentials and returns an auth token.
     If unsuccessful, gives appropriate errors.
+
+    :param request
+    :type LoginRequest
+    :return: auth token
+    :rtype TokenResponse
     """
 
     auth_token, user = login_user(request)
@@ -166,6 +182,11 @@ async def logout(token: str) -> dict[str, str]:
 
     Invalidate an auth token (logout).
     Deletes the token from the database.
+
+    :param token
+    :type str
+    :return: logout message
+    :rtype dict[str,str]
     """
     logout_user(token)
 
@@ -179,6 +200,13 @@ async def verify_callsign(request: CallsignRequest, user: AROUsers = Depends(get
 
     The final step in authentication.
     Verifies a user's callsign and grants them admin access.
+
+    :param request
+    :type CallsignRequest
+    :param user
+    :type AROUsers
+    :return: aro user
+    :rtype UserResponse
     """
     if not user.is_callsign_verified:
         user = verify_user_callsign(request, user=user)

@@ -1,11 +1,11 @@
 from os import urandom
 from uuid import uuid4
 
-from api.v1.aro.endpoints.auth.services.password import (
+from api.v1.aro.auth.manual.password import (
     hash_password,
     verify_password,
 )
-from api.v1.aro.endpoints.auth.services.tokens import create_auth_token
+from api.v1.aro.auth.services.tokens import create_auth_token
 from api.v1.aro.models.auth_requests import LoginRequest, RegisterRequest
 from data.data_wrappers.wrappers import (
     AROUserAuthTokenWrapper,
@@ -19,9 +19,6 @@ from data.tables.aro_user_tables import (
 )
 from fastapi import HTTPException, status
 
-HASH_ALGORITHM = "sha256"
-
-
 def register_user(request: RegisterRequest) -> tuple[AROUserAuthToken, AROUsers]:
     """
     Register a new user with email and password, creating login credentials and returning an auth token.
@@ -33,7 +30,7 @@ def register_user(request: RegisterRequest) -> tuple[AROUserAuthToken, AROUsers]
     logins = AROUserLoginWrapper()
 
     # check for existing email
-    existing_user = next((u for u in users.get_all() if u.email == request.email), None)
+    existing_user = users.get_user_by_email(request.email)
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -60,7 +57,7 @@ def register_user(request: RegisterRequest) -> tuple[AROUserAuthToken, AROUsers]
             "email": request.email,
             "password": hashed_password,
             "password_salt": salt.hex(),
-            "hashing_algorithm_name": HASH_ALGORITHM,
+            "hashing_algorithm_name": "sha256",
             "user_data_id": user.id,
             "email_verification_token": verification_token,
         }
@@ -81,7 +78,7 @@ def login_user(request: LoginRequest) -> tuple[AROUserAuthToken, AROUsers]:
     users = AROUsersWrapper()
     login = AROUserLoginWrapper()
 
-    login_record = next((item for item in login.get_all() if item.email == request.email), None)
+    login_record = login.get_login_by_email(request.email)
     if not login_record:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -109,12 +106,12 @@ def login_user(request: LoginRequest) -> tuple[AROUserAuthToken, AROUsers]:
 def logout_user(token: str) -> None:
     """Invalidate an auth token by deleting it from the database."""
     auth_tokens = AROUserAuthTokenWrapper()
-    auth_token = auth_tokens.get_by_token(token)
+    auth_token = auth_tokens.get_token_by_token(token)
 
     if not auth_token:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Couldn't find your login credentials. How did you even log in?",
+            detail="Couldn't find your login credentials.",
         )
 
     auth_tokens.delete_by_id(auth_token.id)

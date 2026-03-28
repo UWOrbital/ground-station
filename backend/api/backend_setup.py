@@ -8,7 +8,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from api.middleware.auth_middleware import AuthMiddleware
 from api.middleware.cors_middleware import add_cors_middleware
 from api.middleware.logger_middleware import LoggerMiddleware
-from api.v1.aro.endpoints.auth.oauth import router as aro_auth_router
+from api.v1.aro.auth.oauth import router as aro_auth_router
 from api.v1.aro.endpoints.picture_requests import picture_requests_router
 from api.v1.aro.endpoints.user import aro_user_router
 from api.v1.mcc.endpoints.aro_requests import aro_requests_router

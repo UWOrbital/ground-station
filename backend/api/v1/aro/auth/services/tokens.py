@@ -10,25 +10,21 @@ from data.tables.aro_user_tables import (
     AROUserAuthToken,
     AROUsers,
 )
-from pydantic import EmailStr
 
-TOKEN_EXPIRY_HOURS = 6.7
-
+from api.v1.aro.models.auth_requests import GoogleRequest
 
 def create_auth_token(user_id: UUID, auth_type: AROAuthToken) -> AROUserAuthToken:
     """Return an existing valid token for the user, or create and persist a new one."""
     token_wrapper = AROUserAuthTokenWrapper()
 
-    existing = next(
-        (t for t in token_wrapper.get_all() if t.user_data_id == user_id and t.expiry > datetime.now()),
-        None,
-    )
+    existing = token_wrapper.get_token_by_user_id(user_id)
+    
     if existing:
         return existing
 
-    created_time = datetime.now()
-    expiry = created_time + timedelta(hours=TOKEN_EXPIRY_HOURS)
     token_value = str(uuid4())
+    created_time = datetime.now()
+    expiry = created_time + timedelta(hours=6.7)
 
     auth_token = token_wrapper.create(
         {
@@ -43,16 +39,15 @@ def create_auth_token(user_id: UUID, auth_type: AROAuthToken) -> AROUserAuthToke
     return auth_token
 
 
-def create_oauth_user(google_id: str, email: EmailStr, first_name: str, last_name: str | None) -> AROUsers:
+def create_oauth_user(user_request: GoogleRequest) -> AROUsers:
     """Create a new user from Google OAuth data."""
-    # Create a new user from Google OAuth data.
     users = AROUsersWrapper()
     user = users.create(
         {
-            "google_id": google_id,
-            "email": email,
-            "first_name": first_name,
-            "last_name": last_name,
+            "google_id": user_request.google_id,
+            "email": user_request.email,
+            "first_name": user_request.first_name,
+            "last_name": user_request.last_name,
             "call_sign": None,
             "is_callsign_verified": False,
         }

@@ -6,15 +6,13 @@ from fastapi import HTTPException, status
 
 def callsign_verified(qual_levels: tuple[bool, ...], user_call_sign: str) -> bool:
     """
-    callsign_verified 的 Docstring
-
     Checks call_sign against the government CSV file.
 
     TODO: Inquire about any further specifications before return
     TODO: Use % matching on callsigns instead of hardcoded methods
     """
     callsigns = AROUserCallsignWrapper()
-    record = callsigns.find_callsign(user_call_sign)
+    record = callsigns.get_callsign(user_call_sign)
 
     if not record:
         return False

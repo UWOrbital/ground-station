@@ -18,6 +18,7 @@ def verify_password(password: str, salt_hex: str, hashed: str) -> bool:
     Verify a password by hashing it with the stored salt and comparing to the stored hash.
     """
 
+    # Enforce this in frontend as well
     if len(password.replace(" ", "")) < 9:
         return False
 

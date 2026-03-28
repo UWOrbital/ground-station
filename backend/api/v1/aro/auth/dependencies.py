@@ -7,7 +7,7 @@ from data.data_wrappers.wrappers import (
 from data.tables.aro_user_tables import AROUsers
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from api.v1.aro.models.responses import UserResponse
+from api.v1.aro.models.auth_responses import UserResponse
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
@@ -20,7 +20,7 @@ async def get_current_user(token: str) -> AROUsers:
     token_wrapper = AROUserAuthTokenWrapper()
     user_wrapper = AROUsersWrapper()
 
-    auth_token = token_wrapper.get_by_token(token)
+    auth_token = token_wrapper.get_token_by_token(token)
 
     if not auth_token:
         raise HTTPException(
