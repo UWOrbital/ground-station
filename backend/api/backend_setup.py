@@ -1,4 +1,5 @@
 import logging
+
 import loguru
 from config.config import settings
 from fastapi import FastAPI

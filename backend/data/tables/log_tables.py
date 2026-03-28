@@ -1,16 +1,18 @@
 # data/tables/log_tables.py
 
 from datetime import datetime  # Python's built-in datetime type — used for the timestamp column
-from typing import Final       # Final means the value can never be reassigned (like a constant)
-from sqlmodel import Field     # Field() lets us configure column options (primary key, nullable, etc.)
+from typing import Final  # Final means the value can never be reassigned (like a constant)
+
+from sqlmodel import Field  # Field() lets us configure column options (primary key, nullable, etc.)
+
 from data.tables.base_model import BaseSQLModel  # Our custom base class — all tables extend this
 
 # ---------------------------------------------------------------------------
 # Constants — same pattern as aro_user_tables.py and main_tables.py
 # Using Final[str] means Python will warn you if you accidentally reassign them
 # ---------------------------------------------------------------------------
-LOGS_SCHEMA_NAME: Final[str] = "logs"   # The PostgreSQL schema (like a namespace / folder for tables)
-LOGS_API_TABLE_NAME: Final[str] = "api" # The actual table name inside that schema → logs.api
+LOGS_SCHEMA_NAME: Final[str] = "logs"  # The PostgreSQL schema (like a namespace / folder for tables)
+LOGS_API_TABLE_NAME: Final[str] = "api"  # The actual table name inside that schema → logs.api
 
 
 # ---------------------------------------------------------------------------
