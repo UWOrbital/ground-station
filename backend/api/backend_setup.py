@@ -1,9 +1,17 @@
-import logging
+from __future__ import annotations
 
-import loguru
+import logging
+from datetime import UTC
+from typing import TYPE_CHECKING
+
 from config.config import settings
+from data.tables.log_tables import APILog
 from fastapi import FastAPI
 from loguru import logger
+from sqlmodel import Session, create_engine
+
+if TYPE_CHECKING:
+    from loguru import Message
 
 from api.middleware.auth_middleware import AuthMiddleware
 from api.middleware.cors_middleware import add_cors_middleware
@@ -57,9 +65,6 @@ def setup_logging() -> None:
     sqlalchemy_logger.addHandler(SQLAlchemyHandler())
     sqlalchemy_logger.propagate = False
 
-    from data.tables.log_tables import APILog
-    from sqlmodel import Session, create_engine
-
     # Create a dedicated engine for the logging sink.
     # echo=False ensures this engine never emits SQL logs,
     # which would cause a deadlock by re-entering loguru mid-sink.
@@ -69,23 +74,21 @@ def setup_logging() -> None:
     # by disabling propagation on its logger
     logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
 
-    def db_sink(message: "loguru.Message") -> None:
+    def db_sink(message: Message) -> None:
         record = message.record
+        try:
+            log_entry = APILog(
+                time=record["time"].astimezone(UTC).replace(tzinfo=None),
+                level=record["level"].name,
+                msg=record["message"],
+                module=record["module"],
+                function_name=record["function"],
+                line_no=record["line"],
+            )
+            with Session(_log_engine) as session:
+                session.add(log_entry)
+                session.commit()
+        except Exception as e:
+            print(f"Failed to write log to DB: {e}")
 
-        # Skip VERBOSE logs as an extra safety measure
-        if record["level"].name == "VERBOSE":
-            return
-
-        log_entry = APILog(
-            time=record["time"].replace(tzinfo=None),
-            level=record["level"].name,
-            msg=record["message"],
-            module=record["module"],
-            function_name=record["function"],
-            line_no=record["line"],
-        )
-        with Session(_log_engine) as session:
-            session.add(log_entry)
-            session.commit()
-
-    logger.add(db_sink)
+    logger.add(db_sink, filter=lambda record: record["level"].name != "VERBOSE")

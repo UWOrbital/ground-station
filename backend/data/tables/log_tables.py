@@ -1,6 +1,6 @@
 # data/tables/log_tables.py
 
-from datetime import datetime  # Python's built-in datetime type — used for the timestamp column
+from datetime import UTC, datetime  # Python's built-in datetime type — used for the timestamp column
 from typing import Final  # Final means the value can never be reassigned (like a constant)
 
 from sqlmodel import Field  # Field() lets us configure column options (primary key, nullable, etc.)
@@ -40,7 +40,7 @@ class APILog(BaseSQLModel, table=True):
     # default_factory=datetime.utcnow means: "fill this in automatically
     # with the current UTC time if nothing is provided"
     # ------------------------------------------------------------------
-    time: datetime = Field(default_factory=datetime.utcnow)
+    time: datetime = Field(default_factory=lambda: datetime.now(UTC).replace(tzinfo=None))
 
     # ------------------------------------------------------------------
     # level — the log severity as a string
