@@ -1,5 +1,5 @@
 import logging
-
+import loguru
 from config.config import settings
 from fastapi import FastAPI
 from loguru import logger
@@ -55,3 +55,36 @@ def setup_logging() -> None:
     sqlalchemy_logger.setLevel(verbose_level)
     sqlalchemy_logger.addHandler(SQLAlchemyHandler())
     sqlalchemy_logger.propagate = False
+
+    from data.tables.log_tables import APILog
+    from sqlmodel import Session, create_engine
+
+    # Create a dedicated engine for the logging sink.
+    # echo=False ensures this engine never emits SQL logs,
+    # which would cause a deadlock by re-entering loguru mid-sink.
+    _log_engine = create_engine(settings.db.connection_string, echo=False)
+
+    # Silence SQLAlchemy logging specifically for the log engine
+    # by disabling propagation on its logger
+    logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
+
+    def db_sink(message: "loguru.Message") -> None:
+        record = message.record
+
+        # Skip VERBOSE logs as an extra safety measure
+        if record["level"].name == "VERBOSE":
+            return
+
+        log_entry = APILog(
+            time=record["time"].replace(tzinfo=None),
+            level=record["level"].name,
+            msg=record["message"],
+            module=record["module"],
+            function_name=record["function"],
+            line_no=record["line"],
+        )
+        with Session(_log_engine) as session:
+            session.add(log_entry)
+            session.commit()
+
+    logger.add(db_sink)
