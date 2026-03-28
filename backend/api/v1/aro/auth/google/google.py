@@ -20,14 +20,15 @@ def google_auth(request: GoogleRequest) -> tuple[AROUserAuthToken, AROUsers]:
     if not user:
         user = users.get_user_by_email(request.email)
 
-        if user:
-            # Link the existing account to this Google identity
-            user = users.update(
+        # Link the existing account to this Google identity
+        user = (
+            users.update(
                 user.id,
                 {"google_id": request.google_id},
             )
-        else:
-            user = create_oauth_user(request)
+            if user
+            else create_oauth_user(request)
+        )
 
     auth_token = create_auth_token(user.id, AROAuthToken.GOOGLE_OAUTH)
 
