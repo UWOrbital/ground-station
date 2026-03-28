@@ -20,13 +20,13 @@ from fastapi.responses import RedirectResponse
 from starlette.requests import Request
 
 from api.v1.aro.auth.dependencies import get_current_user
-from api.v1.aro.auth.services.callsign_2fa import verify_user_callsign
 from api.v1.aro.auth.google.google import google_auth
 from api.v1.aro.auth.manual.register import (
     login_user,
     logout_user,
     register_user,
 )
+from api.v1.aro.auth.services.callsign_2fa import verify_user_callsign
 from api.v1.aro.models.auth_requests import (
     CallsignRequest,
     GoogleRequest,
@@ -34,7 +34,7 @@ from api.v1.aro.models.auth_requests import (
     RegisterRequest,
 )
 from api.v1.aro.models.auth_responses import (
-    TokenResponse, 
+    TokenResponse,
     UserResponse,
 )
 
@@ -63,7 +63,7 @@ oauth.register(
 async def google_login(request: Request) -> RedirectResponse:
     """
     google_login
-    
+
     Initiate Google OAuth flow.
     Redirect the user back to Google's consent screen.
 

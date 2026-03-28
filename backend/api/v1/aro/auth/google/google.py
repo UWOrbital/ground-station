@@ -23,7 +23,7 @@ def google_auth(request: GoogleRequest) -> tuple[AROUserAuthToken, AROUsers]:
         if user:
             # Link the existing account to this Google identity
             user = users.update(
-                user.id, 
+                user.id,
                 {"google_id": request.google_id},
             )
         else:

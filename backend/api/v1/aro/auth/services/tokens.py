@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from uuid import UUID, uuid4
 
+from api.v1.aro.models.auth_requests import GoogleRequest
 from data.data_wrappers.wrappers import (
     AROUserAuthTokenWrapper,
     AROUsersWrapper,
@@ -11,14 +12,13 @@ from data.tables.aro_user_tables import (
     AROUsers,
 )
 
-from api.v1.aro.models.auth_requests import GoogleRequest
 
 def create_auth_token(user_id: UUID, auth_type: AROAuthToken) -> AROUserAuthToken:
     """Return an existing valid token for the user, or create and persist a new one."""
     token_wrapper = AROUserAuthTokenWrapper()
 
     existing = token_wrapper.get_token_by_user_id(user_id)
-    
+
     if existing:
         return existing
 

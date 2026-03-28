@@ -19,6 +19,7 @@ from data.tables.aro_user_tables import (
 )
 from fastapi import HTTPException, status
 
+
 def register_user(request: RegisterRequest) -> tuple[AROUserAuthToken, AROUsers]:
     """
     Register a new user with email and password, creating login credentials and returning an auth token.
