@@ -50,8 +50,9 @@ class CommandsPipeline:
             self.packet_list.append(comms.encode_frame(byte_string).ljust(PADDING_REQUIRED, b"\x00"))
 
         for cli_command in self.commands_queue:
-            cli_command.command.status = CommandStatus.PACKETED
-            CommandsWrapper().update(cli_command.command)
+            if cli_command.command is not None:
+                cli_command.command.status = CommandStatus.PACKETED
+                CommandsWrapper().update(cli_command.command)
 
         return self.packet_list
 
@@ -64,20 +65,21 @@ class CommandsPipeline:
 
         for command in commands:
             param_list = command.params.split(",") if command.params else []
-            processed_param = {}
+            processed_param: dict[str, str | int | bool | float] = {}
 
             for i in range(0, len(param_list) - 1, 2):
-                val = param_list[i + 1]
+                val_str = param_list[i + 1]
+                val: str | int | bool | float = val_str
 
-                if val.lower() in ["true", "false"]:
-                    val = val.lower() == "true"
+                if val_str.lower() in ["true", "false"]:
+                    val = val_str.lower() == "true"
                 else:
                     with contextlib.suppress(ValueError):
-                        val = int(val)
+                        val = int(val_str)
 
                     if isinstance(val, str):
                         with contextlib.suppress(ValueError):
-                            val = float(val)
+                            val = float(val_str)
 
                 processed_param[param_list[i]] = val
 
@@ -111,8 +113,9 @@ class CommandsPipeline:
         enum for aborted)
         """
         for cli_command in self.commands_queue:
-            cli_command.command.status = CommandStatus.COMPLETED
-            CommandsWrapper().update(cli_command.command)
+            if cli_command.command is not None:
+                cli_command.command.status = CommandStatus.COMPLETED
+                CommandsWrapper().update(cli_command.command)
 
         self.commands_queue = []
 

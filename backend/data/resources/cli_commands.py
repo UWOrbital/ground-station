@@ -11,7 +11,7 @@ class CLICommand:
     into GS will be easier.
     """
 
-    def __init__(self, params: dict[str, int | bool], cmd_id: int, prio: int) -> None:
+    def __init__(self, params: dict[str, str | int | bool | float], cmd_id: int, prio: int) -> None:
         """
         This abstracts the CLI commands in a way which makes it accessable for GS.
         The reason this is created is so that we are able to have a 1:1 clone of the
@@ -24,9 +24,9 @@ class CLICommand:
                priorities we have. 1 is the highest priority
         :time: tracks the time at which a command has been created
         """
-        self.command = None | Commands
+        self.command: Commands | None = None
         self.command_id: CmdCallbackId | None = None
-        self.factory_args: list[int | bool] = []
+        self.factory_args: list[str | int | bool | float] = []
 
         try:
             self.command_id = CmdCallbackId(cmd_id)
