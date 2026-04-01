@@ -3,8 +3,8 @@ from uuid import UUID
 from data.data_wrappers.wrappers import AROUsersWrapper
 from fastapi import APIRouter
 
-from api.v1.aro.models.requests import UserRequest
-from api.v1.aro.models.responses import AllUsersResponse, UserResponse
+from api.v1.aro.models.auth_requests import UserRequest
+from api.v1.aro.models.auth_responses import AllUsersResponse, UserResponse
 
 aro_user_router = APIRouter(tags=["ARO", "User Information"])
 
@@ -58,7 +58,7 @@ def delete_user(userid: str) -> UserResponse:
     """
     Deletes a user based on the user ID
     :param userid: The unique identifier of the user to be deleted
-    :return: returns the deleted user
+    :return: returns the deleted users
     """
     deleted_user = AROUsersWrapper().delete_by_id(UUID(userid))
     return UserResponse(data=deleted_user)
