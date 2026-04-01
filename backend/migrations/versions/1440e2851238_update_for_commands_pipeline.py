@@ -6,12 +6,13 @@ Revises: 6c54d182bb55
 Create Date: 2026-03-23 22:31:43.396369
 
 """
+
 import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "1440e2851238"
-down_revision = "6c54d182bb55"
+down_revision = "514ae47263fe"
 branch_labels = None
 depends_on = None
 

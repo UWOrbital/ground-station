@@ -51,8 +51,8 @@ class CommandsPipeline:
 
         for cli_command in self.commands_queue:
             if cli_command.command is not None:
-                cli_command.command.status = CommandStatus.PACKETED
-                CommandsWrapper().update(cli_command.command)
+                update_req = {"status": CommandStatus.PACKETED}
+                CommandsWrapper().update(cli_command.command.id, update_req)
 
         return self.packet_list
 
@@ -91,8 +91,8 @@ class CommandsPipeline:
             cli_command.time = command.created_at
             self.commands_queue.append(cli_command)
 
-            command.status = CommandStatus.SCHEDULED
-            CommandsWrapper().update(command)
+            update_req = {"status": CommandStatus.SCHEDULED}
+            CommandsWrapper().update(cli_command.command.id, update_req)
 
         self.sort_queue()
         return commands
@@ -114,8 +114,8 @@ class CommandsPipeline:
         """
         for cli_command in self.commands_queue:
             if cli_command.command is not None:
-                cli_command.command.status = CommandStatus.COMPLETED
-                CommandsWrapper().update(cli_command.command)
+                update_req = {"status": CommandStatus.COMPLETED}
+                CommandsWrapper().update(cli_command.command.id, update_req)
 
         self.commands_queue = []
 
