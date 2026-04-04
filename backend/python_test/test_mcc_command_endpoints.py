@@ -42,10 +42,10 @@ def test_create_command_success(client):
         "params": "test_params",
     }
 
-    response = client.post("/api/v1/mcc/commands/create", json=payload)
+    response = client.post("/api/v1/mcc/commands/create", json={"payload": payload})
 
     assert response.status_code == 200
-    data = response.json()
+    data = response.json()["data"][0]
     assert "id" in data
     assert data["status"] == CommandStatus.PENDING
     assert data["type_"] == 1
@@ -59,30 +59,30 @@ def test_create_command_duplicate(client):
     payload = {"status": CommandStatus.PENDING, "type_": 2, "params": "duplicate_test"}
 
     # Create the first command
-    response1 = client.post("/api/v1/mcc/commands/create", json=payload)
+    response1 = client.post("/api/v1/mcc/commands/create", json={"payload": payload})
     assert response1.status_code == 200
-    command1_id = response1.json()["id"]
+    command1_id = response1.json()["data"][0]["id"]
 
     # Create duplicate command (same payload except id will be different)
-    response2 = client.post("/api/v1/mcc/commands/create", json=payload)
+    response2 = client.post("/api/v1/mcc/commands/create", json={"payload": payload})
     assert response2.status_code == 200
-    command2_id = response2.json()["id"]
+    command2_id = response2.json()["data"][0]["id"]
 
     # Both commands should exist but have different IDs
     assert command1_id != command2_id
-    assert response2.json()["status"] == CommandStatus.PENDING
-    assert response2.json()["type_"] == 2
-    assert response2.json()["params"] == "duplicate_test"
+    assert response2.json()["data"][0]["status"] == CommandStatus.PENDING
+    assert response2.json()["data"][0]["type_"] == 2
+    assert response2.json()["data"][0]["params"] == "duplicate_test"
 
 
 def test_create_command_with_null_params(client):
     """Test creating a command with null params"""
     payload = {"status": CommandStatus.SCHEDULED, "type_": 3, "params": None}
 
-    response = client.post("/api/v1/mcc/commands/create", json=payload)
+    response = client.post("/api/v1/mcc/commands/create", json={"payload": payload})
 
     assert response.status_code == 200
-    data = response.json()
+    data = response.json()["data"][0]
     assert data["params"] is None
     assert data["status"] == CommandStatus.SCHEDULED
 
@@ -98,9 +98,9 @@ def test_create_command_different_status(client):
             "params": f"params_{status}",
         }
 
-        response = client.post("/api/v1/mcc/commands/create", json=payload)
+        response = client.post("/api/v1/mcc/commands/create", json={"payload": payload})
         assert response.status_code == 200
-        assert response.json()["status"] == status
+        assert response.json()["data"][0]["status"] == status
 
 
 # ---------------------------------------------Testing the DELETE endpoint--------------------------------------------- #
@@ -111,12 +111,12 @@ def test_delete_command_success(client):
     # First create a command to delete
     payload = {"status": CommandStatus.PENDING, "type_": 10, "params": "to_be_deleted"}
 
-    create_response = client.post("/api/v1/mcc/commands/create", json=payload)
+    create_response = client.post("/api/v1/mcc/commands/create", json={"payload": payload})
     assert create_response.status_code == 200
-    command_id = create_response.json()["id"]
+    command_id = create_response.json()["data"][0]["id"]
 
     # Delete the command
-    delete_response = client.delete(f"/api/v1/mcc/commands/delete/{command_id}")
+    delete_response = client.request("DELETE", "/api/v1/mcc/commands/delete", json={"command_id": command_id})
 
     assert delete_response.status_code == 200
     data = delete_response.json()
@@ -126,19 +126,19 @@ def test_delete_command_success(client):
 def test_delete_command_not_found(client):
     """Test deleting a non-existent command raises ValueError (unhandled exception)"""
     # Generate a random UUID that doesn't exist
-    non_existent_id = uuid4()
+    non_existent_id = str(uuid4())
 
     # The endpoint raises ValueError which is not caught by FastAPI
     # This causes the test client to raise an exception
     with pytest.raises(ValueError, match=f"Commands with ID {non_existent_id} not found."):
-        client.delete(f"/api/v1/mcc/commands/delete/{non_existent_id}")
+        client.request("DELETE", "/api/v1/mcc/commands/delete", json={"command_id": non_existent_id})
 
 
 def test_delete_command_invalid_uuid(client):
     """Test deleting with an invalid UUID format returns 422 error"""
     invalid_uuid = "not-a-valid-uuid"
 
-    response = client.delete(f"/api/v1/mcc/commands/delete/{invalid_uuid}")
+    response = client.request("DELETE", "/api/v1/mcc/commands/delete", json={"command_id": invalid_uuid})
 
     # FastAPI validation error for invalid UUID format
     assert response.status_code == 422
@@ -149,13 +149,13 @@ def test_delete_command_twice(client):
     # Create a command
     payload = {"status": CommandStatus.PENDING, "type_": 11, "params": "delete_twice_test"}
 
-    create_response = client.post("/api/v1/mcc/commands/create", json=payload)
-    command_id = create_response.json()["id"]
+    create_response = client.post("/api/v1/mcc/commands/create", json={"payload": payload})
+    command_id = create_response.json()["data"][0]["id"]
 
     # First deletion should succeed
-    delete_response1 = client.delete(f"/api/v1/mcc/commands/delete/{command_id}")
+    delete_response1 = client.request("DELETE", "/api/v1/mcc/commands/delete", json={"command_id": command_id})
     assert delete_response1.status_code == 200
 
     # Second deletion should raise ValueError
     with pytest.raises(ValueError, match=f"Commands with ID {command_id} not found."):
-        client.delete(f"/api/v1/mcc/commands/delete/{command_id}")
+        client.request("DELETE", "/api/v1/mcc/commands/delete", json={"command_id": command_id})

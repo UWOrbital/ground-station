@@ -28,6 +28,16 @@ class AbstractWrapper(ABC, Generic[T, PK]):
         with get_db_session() as session:
             return list(session.exec(select(self.model)).all())
 
+    def get_all_by(self, **kwargs: object) -> list[T]:
+        """
+        Get all data wrapper for the unspecified model by fields
+
+        :param kwargs: fields to search by
+        :return: a list of all model instances matching the fields
+        """
+        with get_db_session() as session:
+            return list(session.exec(select(self.model).filter_by(**kwargs)).all())
+
     def get_by_id(self, obj_id: PK) -> T:
         """
         Retrieve data wrapper for the unspecified model
