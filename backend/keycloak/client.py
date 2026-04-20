@@ -65,7 +65,15 @@ class KeycloakClient:
                     "redirect_uri": self.config.callback_url,
                 },
             )
-            return response.json()  # type: ignore[no-any-return]
+
+        response.raise_for_status()
+
+        tokens: dict[str, Any] = response.json()
+
+        if "error" in tokens:
+            raise ValueError("Keycloak token exchange failed")
+
+        return tokens
 
     def decode_id_token(self, id_token: str) -> dict[str, Any]:
         """
