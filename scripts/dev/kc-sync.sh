@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# to use, first run `chmod a+x kc-sync.sh` to grant permissions
+# This is a bash script to sync the keycloak configuration to the settings json as a makeshift version control.
+# To use, first run `chmod a+x kc-sync.sh` to grant permissions
 
 # get token
 TOKEN=$(curl -s -X POST http://localhost:8080/realms/master/protocol/openid-connect/token \

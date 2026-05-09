@@ -27,7 +27,7 @@ class MCCUsers(BaseSQLModel, table=True):
     :type phone_number: str, None
     """
 
-    id: UUID = Field(primary_key=True, index=True, description="UUID given by Keycloak ID Token.")
+    id: UUID = Field(primary_key=True, index=True, description="UUID sub given from decoded Keycloak ID Token.")
     email: EmailStr = Field(max_length=DEFAULT_MAX_LENGTH)
     first_name: str | None = Field(max_length=DEFAULT_MAX_LENGTH, nullable=True, default=None)
     last_name: str | None = Field(max_length=DEFAULT_MAX_LENGTH, nullable=True, default=None)
