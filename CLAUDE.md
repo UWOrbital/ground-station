@@ -2,6 +2,17 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Team context
+
+UW Orbital is a student CubeSat team. The software sub-team splits into **firmware** (runs on the satellite) and **ground station** (everything on the ground). This repo is the ground station codebase — its job is to receive data from the satellite, process it, and let humans act on it. Ground station coordinates with firmware (a separate sub-team, not in this repo) through the shared C interfaces in `backend/interfaces/` so downlinks decode correctly on both sides.
+
+Ground station has three product surfaces:
+- **Backend** (`backend/`) — FastAPI service that ingests downlink data, persists it, and serves both frontends. This is the primary surface in this repo.
+- **MCC** — Mission Control Center. An invite-only tool behind Keycloak; experts use it to monitor and command the satellite. Backend lives at `/api/v1/mcc/*`; the MCC frontend is the operator-facing client.
+- **ARO** — Amateur Radio Operator. Public-facing surface for amateur radio operators who want to request actions of the satellite. Backend lives at `/api/v1/aro/*`.
+
+When summarizing work to the user, frame what changed in terms of the team mission: which surface it affects (MCC operators, ARO amateurs, firmware-integration plumbing) and where it sits in the satellite-to-human pipeline. Don't just list code edits — connect them to who on the team benefits.
+
 ## Repository layout
 
 Three-part monorepo for UW Orbital's CubeSat ground station:
@@ -122,7 +133,18 @@ Two distinct flows:
 ## Code style rules (enforced)
 
 - **Type hints required on every function parameter and return type.** No untyped `def foo(x):` — write `def foo(x: int) -> str:`. mypy strict mode will reject missing annotations anyway, but apply this in test code too (which mypy doesn't check).
-- **Docstrings required on every function, method, and class you write or modify.** Ruff is configured with `D101 D102 D103 D105` + `D213`, so this is enforced for `backend/*.py`. Use the existing style: triple-quoted, summary line, `:param name:` / `:return:` blocks where parameters are non-obvious.
+- **Docstrings required on every function, method, and class you write or modify.** Ruff is configured with `D101 D102 D103 D105` + `D213`, so this is enforced for `backend/*.py`. Format: triple-quoted, summary line on the same opening line (`D213`), then a `:param <name>:` line for **every** parameter the function takes and a `:return:` line whenever the function returns a value. Don't skip params even if the name looks self-explanatory — the team enforces the full block. Example:
+
+  ```python
+  def pack_command(cmd_id: int, payload: bytes) -> bytes:
+      """Serialize a command into the OBC wire format.
+
+      :param cmd_id: numeric command identifier from the shared command table.
+      :param payload: raw command body; must already match the struct layout.
+      :return: framed bytes ready for AX.25 encoding.
+      """
+  ```
+- **Tests required for new code.** Any new or modified Python under `backend/` ships with a matching pytest in `backend/python_test/` — covering the golden path and at least the edge cases the change introduces. CI runs the full suite; untested behavior won't pass review. If a change is genuinely untestable (e.g. wiring a third-party SDK), say so explicitly in the PR.
 
 ## Maintaining this file
 
