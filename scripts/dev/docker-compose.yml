@@ -14,6 +14,28 @@ services:
     environment:
       - PYTHONPATH=/app/backend
       - GS_DATABASE_LOCATION=host.docker.internal
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+    - |
+      /opt/keycloak/bin/kc.sh start-dev --import-realm &
+      sleep 10
+      /opt/keycloak/bin/kcadm.sh config credentials \
+        --server http://localhost:8080 \
+        --realm master \
+        --user mcc-admin \
+        --password uworbital
+      /opt/keycloak/bin/kcadm.sh update realms/master -s sslRequired=NONE
+      wait
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: mcc-admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: uworbital
+    ports:
+      - "8080:8080"
+    volumes:
+    - keycloak_data:/opt/keycloak/data
+    - ../../backend/keycloak/mcc-realm.json:/opt/keycloak/data/import/mcc-realm.json
   aro-frontend:
     build:
       context: ../../frontend/aro
@@ -34,3 +56,5 @@ services:
     volumes:
       - ../../frontend/mcc:/app
       - /app/node_modules
+volumes:
+  keycloak_data:

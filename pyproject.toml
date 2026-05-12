@@ -42,6 +42,8 @@ dependencies = [
     "mypy==1.8.0",
     "ruff==0.2.0",
     "pytest-postgresql==7.0.1",
+    "python-jose>=3.5.0",
+    "types-python-jose>=3.5.0.20250531",
     "authlib>=1.6.9",
     "pyyaml>=6.0.3",
     "itsdangerous>=2.2.0",
@@ -50,7 +52,7 @@ dependencies = [
 ]
 
 [tool.setuptools]
-packages = []
+packages = ["backend"]
 
 [tool.pytest.ini_options]
 addopts = "-v"
@@ -83,7 +85,7 @@ ignore_missing_imports = true
 
 [tool.ruff]
 include = ["pyproject.toml", "backend/*.py"]
-exclude = ["frontend/*", "python_test"]
+exclude = ["frontend/*", "python_test", "migrations"]
 target-version = "py311"
 line-length = 120
 indent-width = 4

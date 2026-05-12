@@ -17,6 +17,7 @@ class DatabaseConfig(BaseSettings):
         env_prefix="GS_DATABASE_",
         # env_file=os.path.join(os.path.dirname(__file__), "../../.env"),
         env_file_encoding="utf-8",
+        extra="ignore",
     )
 
     @property

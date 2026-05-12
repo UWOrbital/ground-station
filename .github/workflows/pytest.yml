@@ -43,6 +43,11 @@ jobs:
         GS_DATABASE_LOCATION=localhost
         GS_DATABASE_PORT=5432
         GS_DATABASE_NAME=gs
+        KEYCLOAK_URL=http://localhost:8080
+        KEYCLOAK_REALM=mcc
+        KEYCLOAK_CLIENT_ID=ground-station
+        KEYCLOAK_CLIENT_SECRET=foobar676767brainrot
+        KEYCLOAK_CALLBACK_URL=http://localhost:8000/callback
         EOF
 
     - name: Run Alembic migrations
@@ -65,5 +70,10 @@ jobs:
         GS_DATABASE_LOCATION: localhost
         GS_DATABASE_PORT: 5432
         GS_DATABASE_NAME: gs
+        KEYCLOAK_URL: http://localhost:8080
+        KEYCLOAK_REALM: mcc
+        KEYCLOAK_CLIENT_ID: ground-station
+        KEYCLOAK_CLIENT_SECRET: foobar676767brainrot
+        KEYCLOAK_CALLBACK_URL: http://localhost:8000/callback
       run: |
         uv run pytest

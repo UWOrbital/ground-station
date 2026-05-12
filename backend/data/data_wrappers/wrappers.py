@@ -8,6 +8,7 @@ from data.data_wrappers.abstract_wrapper import AbstractWrapper  # SEE abstract_
 from data.database.engine import get_db_session
 from data.tables.aro_user_tables import AROUserAuthToken, AROUserCallsigns, AROUserLogin, AROUsers
 from data.tables.main_tables import MainCommand, MainTelemetry
+from data.tables.mcc_user_tables import MCCUsers
 from data.tables.transactional_tables import (
     ARORequest,
     Commands,
@@ -17,6 +18,14 @@ from data.tables.transactional_tables import (
     PacketTelemetry,
     Telemetry,
 )
+
+
+class MCCUsersWrapper(AbstractWrapper[MCCUsers, UUID]):
+    """
+    Data wrapper for MCCUsers table.
+    """
+
+    model = MCCUsers
 
 
 class AROUsersWrapper(AbstractWrapper[AROUsers, UUID]):
