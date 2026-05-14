@@ -29,7 +29,7 @@ jobs:
       - name: Keycloak check again
         run: |
           for i in {1..30}; do
-            if curl -s http://localhost:8080/health/live; then
+            if bash -c 'echo > /dev/tcp/127.0.0.1/8080'; then
               echo "Keycloak check passed"
               exit 0
             fi
