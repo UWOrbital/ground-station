@@ -12,6 +12,8 @@ jobs:
           KC_BOOTSTRAP_ADMIN_USERNAME: mcc-admin
           KC_BOOTSTRAP_ADMIN_PASSWORD: uworbital
           KC_HEALTH_ENABLED: "true"
+        entrypoint: /opt/keycloak/bin/kc.sh
+        command: start-dev
         ports:
           - "8080:8080"
         options: >-
