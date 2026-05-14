@@ -1,0 +1,44 @@
+name: Keycloak Startup
+on: [push, pull_request]
+
+jobs:
+  keycloak-test:
+    runs-on: ubuntu-latest
+ 
+    services:
+      keycloak:
+        image: quay.io/keycloak/keycloak:latest
+        env:
+          KC_BOOTSTRAP_ADMIN_USERNAME: mcc-admin
+          KC_BOOTSTRAP_ADMIN_PASSWORD: uworbital
+          KC_HEALTH_ENABLED: "true"
+        ports:
+          - "8080:8080"
+        options: >-
+          --health-cmd "curl -f http://localhost:8080/health/live" || exit 1
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+
+      - name: Keycloak check again
+        run: |
+          for i in {1..30}; do
+            if curl -s http://localhost:8080/health/live; then
+              echo "Keycloak check passed"
+              exit 0
+            fi
+            echo "waiting.."
+            sleep 5
+          done
+          echo "Keycloak failed to start"
+          exit 1
+      
+      - name: Keycloak verify
+        run: |
+          curl -v http://localhost:8080/
+
+
