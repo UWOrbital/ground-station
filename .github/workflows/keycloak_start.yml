@@ -4,7 +4,7 @@ on: [push, pull_request]
 jobs:
   keycloak-test:
     runs-on: ubuntu-latest
-
+ 
     services:
       keycloak:
         image: quay.io/keycloak/keycloak:latest
@@ -12,6 +12,7 @@ jobs:
           KC_BOOTSTRAP_ADMIN_USERNAME: mcc-admin
           KC_BOOTSTRAP_ADMIN_PASSWORD: uworbital
           KC_HEALTH_ENABLED: "true"
+          KC_HOSTNAME_STRICT: "false"
         entrypoint: /opt/keycloak/bin/kc.sh
         command: start-dev
         ports:
@@ -38,9 +39,17 @@ jobs:
           done
           echo "Keycloak failed to start"
           exit 1
+      
+      - name: Keycloak setup
+        run: |
+          docker exec $(docker ps -qf "name=keycloak") /opt/keycloak/bin/kcadm.sh config credentials \
+            --server http://localhost:8080 \
+            --realm master \
+            --user mcc-admin \
+            --password uworbital
+
+          docker exec $(docker ps -qf "name=keycloak") /opt/keycloak/bin/kcadm.sh update realms/master -s sslRequired=NONE
 
       - name: Keycloak verify
         run: |
           curl -v http://localhost:8080/
-
-
