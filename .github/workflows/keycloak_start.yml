@@ -17,7 +17,7 @@ jobs:
         ports:
           - "8080:8080"
         options: |
-          -v ${{ github.workspace }}/backend/keycloak/mcc-realm.json:/opt/keycloak/data/import/mcc-realm.json
+          -v ${{ github.workspace }}/backend/keycloak:/opt/keycloak/data/import
           --health-cmd "bash -c 'echo > /dev/tcp/127.0.0.1/8080'"
           --health-interval 10s
           --health-timeout 5s
