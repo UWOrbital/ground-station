@@ -4,7 +4,7 @@ on: [push, pull_request]
 jobs:
   keycloak-test:
     runs-on: ubuntu-latest
-
+ 
     services:
       keycloak:
         image: quay.io/keycloak/keycloak:latest
@@ -13,15 +13,15 @@ jobs:
           KC_BOOTSTRAP_ADMIN_PASSWORD: uworbital
           KC_HEALTH_ENABLED: "true"
           KC_HOSTNAME_STRICT: "false"
-        entrypoint: /opt/keycloak/bin/kc.sh
-        command: start-dev
         ports:
           - "8080:8080"
-        options: >-
+        options: >- 
+          -v ${{ github.workspace }}/keycloak/mcc-realm.json:/opt/keycloak/data/import/mcc-realm.json
           --health-cmd "bash -c 'echo > /dev/tcp/127.0.0.1/8080'"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 10
+          start-dev --import-realm
 
     steps:
       - uses: actions/checkout@v4
@@ -39,17 +39,17 @@ jobs:
           done
           echo "Keycloak failed to start"
           exit 1
-
+      
       - name: Keycloak setup
         run: |
           docker exec $(docker ps -qf "name=keycloak") /opt/keycloak/bin/kcadm.sh config credentials \
             --server http://localhost:8080 \
-            --realm master \
+            --realm mcc-realm \
             --user mcc-admin \
             --password uworbital
 
-          docker exec $(docker ps -qf "name=keycloak") /opt/keycloak/bin/kcadm.sh update realms/master -s sslRequired=NONE
+          docker exec $(docker ps -qf "name=keycloak") /opt/keycloak/bin/kcadm.sh update realms/mcc-realm -s sslRequired=NONE
 
       - name: Keycloak verify
         run: |
-          curl -v http://localhost:8080/
+          curl -v http://localhost:8080/realms/mcc-realm/.well-know/openid-configuration
