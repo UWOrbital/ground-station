@@ -4,7 +4,7 @@ on: [push, pull_request]
 jobs:
   keycloak-test:
     runs-on: ubuntu-latest
- 
+
     services:
       keycloak:
         image: quay.io/keycloak/keycloak:latest
@@ -39,7 +39,7 @@ jobs:
           done
           echo "Keycloak failed to start"
           exit 1
-      
+
       - name: Keycloak setup
         run: |
           docker exec $(docker ps -qf "name=keycloak") /opt/keycloak/bin/kcadm.sh config credentials \
