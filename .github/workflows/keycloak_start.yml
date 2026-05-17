@@ -51,8 +51,8 @@ jobs:
 
           docker exec $(docker ps -qf "name=keycloak") /opt/keycloak/bin/kcadm.sh create realms -f /tmp/mcc-realm.json
 
-          docker exec $(docker ps -qf "name=keycloak") /opt/keycloak/bin/kcadm.sh update realms/mcc-realm -s sslRequired=NONE
+          docker exec $(docker ps -qf "name=keycloak") /opt/keycloak/bin/kcadm.sh update realms/mcc -s sslRequired=NONE
 
       - name: Keycloak verify
         run: |
-          curl -v http://localhost:8080/realms/mcc-realm/.well-known/openid-configuration
+          curl -v http://localhost:8080/realms/mcc/.well-known/openid-configuration
