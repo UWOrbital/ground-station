@@ -29,13 +29,12 @@ class KeycloakClient:
             }
         )
 
-    # TODO: Put keycloak CDN location and post logout redirect URI in .env
     @property
     def login_url(self) -> str:
         """
         Returns keycloak login URL.
         """
-        return f"http://localhost:8080/realms/{self.config.realm}/protocol/openid-connect/auth?{self._params}"
+        return f"{self.config.external_url}/realms/{self.config.realm}/protocol/openid-connect/auth?{self._params}"
 
     def logout_url(self, id_token: str) -> str:
         """
@@ -44,11 +43,11 @@ class KeycloakClient:
         params = urlencode(
             {
                 "client_id": self.config.client_id,
-                "post_logout_redirect_uri": "http://localhost:8000/docs",
+                "post_logout_redirect_uri": self.config.redirect_uri,
                 "id_token_hint": id_token,
             }
         )
-        return f"http://localhost:8080/realms/{self.config.realm}/protocol/openid-connect/logout?{params}"
+        return f"{self.config.external_url}/realms/{self.config.realm}/protocol/openid-connect/logout?{params}"
 
     def get_tokens(self, code: str) -> dict[str, Any]:
         """
@@ -56,7 +55,7 @@ class KeycloakClient:
         """
         with httpx.Client() as client:
             response = client.post(
-                f"{self.config.url}/realms/{self.config.realm}/protocol/openid-connect/token",
+                f"{self.config.host}/realms/{self.config.realm}/protocol/openid-connect/token",
                 data={
                     "grant_type": "authorization_code",
                     "client_id": self.config.client_id,
@@ -77,16 +76,18 @@ class KeycloakClient:
 
     def decode_id_token(self, id_token: str) -> dict[str, Any]:
         """
-        Decodes user id token to get user information
+        Decodes and verifies user id token via JWKS signature verification.
         """
+        with httpx.Client() as client:
+            response = client.get(f"{self.config.host}/realms/{self.config.realm}/protocol/openid-connect/certs")
+        response.raise_for_status()
+        jwks = response.json()
+
         return jwt.decode(
             id_token,
-            key="",
-            options={
-                "verify_signature": False,
-                "verify_aud": False,
-                "verify_at_hash": False,
-            },
+            jwks,
+            algorithms=["RS256"],
+            audience=self.config.client_id,
         )
 
 
