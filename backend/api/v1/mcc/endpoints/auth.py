@@ -14,7 +14,7 @@ def login() -> None:
     """
     Login endpoint for redirecting to keycloak's login/registration page
     """
-    return RedirectResponse(url=keycloak.login_url)  # type: ignore[return-value]
+    return RedirectResponse(url=keycloak.login_url, status_code=303)  # type: ignore[return-value]
 
 
 @mcc_auth_router.get("/callback")
@@ -40,12 +40,14 @@ def auth_token_callback(code: str) -> RedirectResponse:
     except Exception as e:
         raise HTTPException(status_code=500, detail="User provisioning failed") from e
 
-    response = RedirectResponse(
-        url="localhost:8000/docs"
-    )  # TODO: Change redirect URI to frontend page, or set dynamically
+    response = RedirectResponse(url=keycloak.config.redirect_uri)
 
-    response.set_cookie("id_token", tokens["id_token"], httponly=True, secure=True, samesite="lax")
-    response.set_cookie("access_token", tokens["access_token"], httponly=True, secure=True, samesite="lax")
+    response.set_cookie(
+        "id_token", tokens["id_token"], httponly=True, secure=keycloak.config.secure_cookies, samesite="lax"
+    )
+    response.set_cookie(
+        "access_token", tokens["access_token"], httponly=True, secure=keycloak.config.secure_cookies, samesite="lax"
+    )
 
     return response
 
@@ -58,4 +60,4 @@ def logout(request: Request) -> None:
     id_token = request.cookies.get("id_token")
     if not id_token:
         raise HTTPException(status_code=401, detail="Not authenticated")
-    return RedirectResponse(url=keycloak.logout_url(id_token))  # type: ignore[return-value]
+    return RedirectResponse(url=keycloak.logout_url(id_token), status_code=303)  # type: ignore[return-value]
