@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(uv sync)",
+      "Bash(uv sync:*)",
+      "Bash(uv run:*)",
+      "Bash(uv pip:*)",
+      "Bash(uv add:*)",
+      "Bash(uv lock:*)",
+
+      "Bash(uv run fastapi dev:*)",
+      "Bash(uv run fastapi run:*)",
+      "Bash(uv run python:*)",
+      "Bash(uv run pytest:*)",
+      "Bash(uv run mypy:*)",
+      "Bash(uv run ruff:*)",
+      "Bash(uv run alembic:*)",
+      "Bash(uv run pre-commit:*)",
+
+      "Bash(psql:*)",
+      "Bash(pg_isready:*)",
+      "Bash(createdb:*)",
+      "Bash(dropdb:*)",
+
+      "Bash(git status)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git branch:*)",
+      "Bash(git switch:*)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git fetch:*)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)",
+      "Bash(git submodule:*)",
+      "Bash(gh pr:*)",
+      "Bash(gh issue:*)",
+
+      "Bash(cmake:*)",
+      "Bash(make:*)"
+    ],
+    "deny": [
+      "Bash(pip install:*)",
+      "Bash(pip3 install:*)",
+      "Bash(poetry:*)",
+      "Bash(pipenv:*)",
+      "Bash(conda:*)",
+
+      "Bash(rm -rf:*)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(dropdb:*)"
+    ]
+  }
+}
