@@ -10,11 +10,11 @@ mcc_auth_router = APIRouter(tags=["MCC", "Authentication"])
 
 
 @mcc_auth_router.get("/login")
-def login() -> None:
+def login() -> RedirectResponse:
     """
     Login endpoint for redirecting to keycloak's login/registration page
     """
-    return RedirectResponse(url=keycloak.login_url, status_code=303)  # type: ignore[return-value]
+    return RedirectResponse(url=keycloak.login_url, status_code=303)
 
 
 @mcc_auth_router.get("/callback")
