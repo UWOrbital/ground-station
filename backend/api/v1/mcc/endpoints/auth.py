@@ -53,14 +53,13 @@ def auth_token_callback(code: str) -> RedirectResponse:
 
 
 @mcc_auth_router.get("/logout")
-def logout(request: Request) -> None:
+def logout(request: Request) -> RedirectResponse:
     """
-    Logout endpoint for redirecting to keycloak's logout handler
+    Log-out endpoint for removing tokens from users.
     """
     id_token = request.cookies.get("id_token")
-    if not id_token:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    response = RedirectResponse(url=keycloak.logout_url(id_token), status_code=303)
+    url = keycloak.logout_url(id_token) if id_token else keycloak.config.redirect_uri
+    response = RedirectResponse(url=url)
     response.delete_cookie("id_token")
     response.delete_cookie("access_token")
     return response  # type: ignore[return-value]
