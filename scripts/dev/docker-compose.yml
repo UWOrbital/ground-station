@@ -35,7 +35,7 @@ services:
       - "8080:8080"
     volumes:
     - keycloak_data:/opt/keycloak/data
-    - ../../backend/keycloak/mcc-realm.json:/opt/keycloak/data/import/mcc-realm.json
+    - ../../backend/mcc_keycloak/mcc-realm.json:/opt/keycloak/data/import/mcc-realm.json
   aro-frontend:
     build:
       context: ../../frontend/aro

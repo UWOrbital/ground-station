@@ -1,9 +1,9 @@
-import httpx
 from data.data_wrappers.wrappers import MCCUsersWrapper
 from fastapi import APIRouter, Request
 from fastapi.exceptions import HTTPException
 from fastapi.responses import RedirectResponse
-from keycloak.client import keycloak
+from keycloak.exceptions import KeycloakError
+from mcc_keycloak.client import keycloak
 from sqlalchemy.exc import IntegrityError
 
 mcc_auth_router = APIRouter(tags=["MCC", "Authentication"])
@@ -24,7 +24,7 @@ def auth_token_callback(code: str) -> RedirectResponse:
     """
     try:
         tokens = keycloak.get_tokens(code)
-    except (httpx.HTTPStatusError, ValueError) as e:
+    except (KeycloakError, ValueError) as e:
         raise HTTPException(status_code=401, detail="Token exchange failed") from e
     user_info = keycloak.decode_id_token(tokens["id_token"])
     try:
