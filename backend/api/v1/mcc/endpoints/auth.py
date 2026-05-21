@@ -60,4 +60,7 @@ def logout(request: Request) -> None:
     id_token = request.cookies.get("id_token")
     if not id_token:
         raise HTTPException(status_code=401, detail="Not authenticated")
-    return RedirectResponse(url=keycloak.logout_url(id_token), status_code=303)  # type: ignore[return-value]
+    response = RedirectResponse(url=keycloak.logout_url(id_token), status_code=303)
+    response.delete_cookie("id_token")
+    response.delete_cookie("access_token")
+    return response  # type: ignore[return-value]
