@@ -62,4 +62,4 @@ def logout(request: Request) -> RedirectResponse:
     response = RedirectResponse(url=url)
     response.delete_cookie("id_token")
     response.delete_cookie("access_token")
-    return response  # type: ignore[return-value]
+    return response
