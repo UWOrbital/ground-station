@@ -9,7 +9,6 @@ Supports two authentication methods.
 After initial authentication, the user will need to additionally verify with their callsign.
 """
 
-
 from typing import cast
 
 from authlib.integrations.starlette_client import OAuth, OAuthError

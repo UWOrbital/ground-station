@@ -1,7 +1,7 @@
 from cmd import Cmd
 from datetime import datetime
 from multiprocessing import Process
-from sys import argv, exit
+from sys import argv
 
 from interfaces.obc_gs_interface.commands.python import CmdCallbackId
 from obc_utils.command_utils import LOG_PATH, arg_parse, poll, send_command, send_conn_request

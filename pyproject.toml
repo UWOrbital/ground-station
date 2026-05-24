@@ -113,7 +113,6 @@ select = [
     # Documentation
     "D213", "D101", "D102", "D103", "D105"
 ]
-ignore = ["ANN101", "ANN102"]
 fixable = ["ALL"]
 unfixable = []
 
