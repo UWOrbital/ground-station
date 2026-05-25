@@ -5,7 +5,6 @@ from fastapi import FastAPI
 from loguru import logger
 from starlette.middleware.sessions import SessionMiddleware
 
-from api.middleware.auth_middleware import AuthMiddleware
 from api.middleware.cors_middleware import add_cors_middleware
 from api.middleware.logger_middleware import LoggerMiddleware
 from api.v1.aro.auth.oauth import router as aro_auth_router
@@ -41,7 +40,6 @@ def setup_middlewares(app: FastAPI) -> None:
     """Adds the middlewares to the app"""
     add_cors_middleware(app)  # Cors middleware should be added first
     app.add_middleware(SessionMiddleware, secret_key=settings.auth.jwt_secret_key)
-    app.add_middleware(AuthMiddleware)
     app.add_middleware(
         LoggerMiddleware,
         excluded_endpoints=settings.logger.excluded_endpoints,
