@@ -60,8 +60,6 @@ compile_commands.json
 *.suo
 *.ntvs*
 *.njsproj
-.claude/
-*.claude
 *.sln
 *.sw?
 
