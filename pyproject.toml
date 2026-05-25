@@ -42,13 +42,13 @@ dependencies = [
     "mypy==1.8.0",
     "ruff==0.2.0",
     "pytest-postgresql==7.0.1",
-    "python-jose>=3.5.0",
     "types-python-jose>=3.5.0.20250531",
     "authlib>=1.6.9",
     "pyyaml>=6.0.3",
     "itsdangerous>=2.2.0",
-    "pydantic-extra-types[phone-numbers]>=2.11.0",
+    "pydantic-extra-types>=2.11.0",
     "phonenumbers>=9.0.26",
+    "python-keycloak>=7.1.1",
 ]
 
 [tool.setuptools]

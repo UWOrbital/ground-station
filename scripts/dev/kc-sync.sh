@@ -31,6 +31,6 @@ import json
 realm = json.load(open('/tmp/realm.json'))
 realm['clients'] = json.load(open('/tmp/clients.json'))
 realm['roles'] = {'realm': json.load(open('/tmp/roles.json'))}
-json.dump(realm, open('../../backend/keycloak/mcc-realm.json', 'w'), indent=2)
+json.dump(realm, open('../../backend/mcc_keycloak/mcc-realm.json', 'w'), indent=2)
 print('Keycloak is synced!')
 "

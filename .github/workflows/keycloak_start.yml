@@ -41,7 +41,7 @@ jobs:
 
       - name: Keycloak setup
         run: |
-          docker cp backend/keycloak/mcc-realm.json $(docker ps -qf "name=keycloak"):/tmp/mcc-realm.json
+          docker cp backend/mcc_keycloak/mcc-realm.json $(docker ps -qf "name=keycloak"):/tmp/mcc-realm.json
 
           docker exec $(docker ps -qf "name=keycloak") /opt/keycloak/bin/kcadm.sh config credentials \
             --server http://localhost:8080 \
