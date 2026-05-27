@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import { useState, useEffect } from "react";
 import orbital_logo from "../assets/orbital_logo.png";
 // import { CSS_VARIABLES } from "../utils/themes";
 import { NAVIGATION_LINKS } from "../utils/routes";
@@ -11,13 +10,6 @@ import { NAVIGATION_LINKS } from "../utils/routes";
 function Nav() {
   // TODO: create user auth that checks if the user is logged in
   const isLoggedIn = false;
-  const [satelliteStatus, setSatelliteStatus] = useState<StatusType>("unknown");
-
-  // TODO: Replace with actual API call when endpoint is available
-  useEffect(() => {
-    // Placeholder: Set to online by default for now
-    setSatelliteStatus("online");
-  }, []);
 
   return (
     <nav className="m-7 text-white">
