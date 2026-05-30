@@ -30,6 +30,7 @@ from data.tables.main_tables import (
     MainTableIDDatabase,
     MainTelemetry,
 )
+from data.tables.mcc_user_tables import MCCUsers
 
 # Transactional schema related items
 TRANSACTIONAL_SCHEMA_NAME: Final[str] = "transactional"
@@ -86,6 +87,7 @@ class Commands(BaseSQLModel, table=True):
     """
 
     id: UUID = Field(default_factory=uuid4, primary_key=True, index=True)
+    user_id: UUID = Column(DB_UUID, ForeignKey(MCCUsers.id), nullable=False)  # type: ignore
     status: CommandStatus = Field(default=CommandStatus.PENDING)
     type_: MainTableID = Column(MainTableIDDatabase, ForeignKey(MainCommand.id))  # type: ignore
     params: str | None = None  # TODO: Make sure this matches the corresponding params in the main command table
@@ -99,6 +101,12 @@ class Commands(BaseSQLModel, table=True):
             [MainCommand.id],  # type: ignore
             onupdate="CASCADE",
             ondelete="CASCADE",
+        ),
+        ForeignKeyConstraint(
+            ["user_id"],
+            [MCCUsers.id],  # type: ignore
+            onupdate="CASCADE",
+            ondelete="RESTRICT",
         ),
         {"schema": TRANSACTIONAL_SCHEMA_NAME},
     )  # Since the table is in a different schema sqlmodel can't find the table normally

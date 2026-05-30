@@ -1,21 +1,25 @@
-from typing import Annotated, Any
-from uuid import UUID
+from typing import Annotated
 
+from data.enums.transactional import CommandStatus
 from pydantic import BaseModel, Field
 
 
-class DeleteCommandRequest(BaseModel):
-    """
-    Deletes a command from the commands table.
-    """
-
-    command_id: Annotated[UUID, Field(description="Command ID which is to be deleted")]
-
-
 class CreateCommandRequest(BaseModel):
+    """Request model for creating a new command entry."""
+
+    type_: Annotated[int, Field(description="MainCommand ID identifying the command type")]
+    params: Annotated[
+        str | None, Field(description="Serialized command parameters matching the main command schema")
+    ] = None
+
+
+class UpdateCommandRequest(BaseModel):
     """
-    This creates a command and adds it to the database.
+    Request model for partially updating an existing command entry.
+
+    All fields are optional; only provided fields are written to the database.
     """
 
-    # TODO Refine this to figure out what the fk the actual params are
-    payload: Annotated[dict[str, Any], Field(description="Params for to create a command")]
+    status: Annotated[CommandStatus | None, Field(description="New command lifecycle status")] = None
+    type_: Annotated[int | None, Field(description="Replacement MainCommand ID")] = None
+    params: Annotated[str | None, Field(description="Replacement serialized command parameters")] = None
