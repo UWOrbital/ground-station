@@ -1,12 +1,20 @@
 from data.data_wrappers.wrappers import MCCUsersWrapper
 from fastapi import APIRouter, Request
 from fastapi.exceptions import HTTPException
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, Response
 from keycloak.exceptions import KeycloakError
 from mcc_keycloak.client import keycloak
 from sqlalchemy.exc import IntegrityError
 
 mcc_auth_router = APIRouter(tags=["MCC", "Authentication"])
+
+
+@mcc_auth_router.get("/ping", dependencies=[keycloak.require_auth])
+def ping() -> dict[str, str]:
+    """
+    Simple ping endpoint to verify that user is authenticated.
+    """
+    return {"status": "authenticated"}
 
 
 @mcc_auth_router.get("/login")
@@ -18,7 +26,7 @@ def login() -> RedirectResponse:
 
 
 @mcc_auth_router.get("/callback")
-def auth_token_callback(code: str) -> RedirectResponse:
+def auth_token_callback(code: str) -> Response:
     """
     Callback endpoint redirected to by keycloak for tokens
     """
@@ -40,13 +48,21 @@ def auth_token_callback(code: str) -> RedirectResponse:
     except Exception as e:
         raise HTTPException(status_code=500, detail="User provisioning failed") from e
 
-    response = RedirectResponse(url=keycloak.config.redirect_uri)
+    response = Response(
+        status_code=302,
+        headers={"location": keycloak.config.redirect_uri},
+    )
 
     response.set_cookie(
-        "id_token", tokens["id_token"], httponly=True, secure=keycloak.config.secure_cookies, samesite="lax"
+        "id_token", tokens["id_token"], httponly=True, secure=keycloak.config.secure_cookies, samesite="lax", path="/"
     )
     response.set_cookie(
-        "access_token", tokens["access_token"], httponly=True, secure=keycloak.config.secure_cookies, samesite="lax"
+        "access_token",
+        tokens["access_token"],
+        httponly=True,
+        secure=keycloak.config.secure_cookies,
+        samesite="lax",
+        path="/",
     )
 
     return response

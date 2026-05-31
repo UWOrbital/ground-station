@@ -1,4 +1,4 @@
-from collections.abc import Awaitable, Callable, Sequence
+from collections.abc import AsyncIterator, Awaitable, Callable, Sequence
 from datetime import datetime
 from sys import getsizeof
 from time import perf_counter
@@ -91,10 +91,10 @@ class LoggerMiddleware(BaseHTTPMiddleware):
         )
 
         if has_body_iterator:
-            return Response(
-                content=response_body,
-                status_code=response.status_code,
-                headers=dict(response.headers),
-                media_type=response.media_type,
-            )
+
+            async def body_iterator() -> AsyncIterator[bytes]:
+                yield response_body_bytes
+
+            response.body_iterator = body_iterator()  # type: ignore[attr-defined]
+
         return response

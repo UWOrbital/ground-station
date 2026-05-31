@@ -8,6 +8,7 @@ from data.data_wrappers.wrappers import MCCUsersWrapper
 from data.tables.mcc_user_tables import MCCUsers
 from fastapi import Depends, Request, status
 from fastapi.exceptions import HTTPException
+from jwcrypto.jwt import JWTExpired
 from keycloak import KeycloakError, KeycloakOpenID
 
 
@@ -59,7 +60,12 @@ class KeycloakClient:
 
     def decode_id_token(self, id_token: str) -> dict[str, Any]:
         """Decodes and verifies user id token via JWKS signature verification."""
-        claims: dict[str, Any] = self.internal_client.decode_token(id_token)
+        try:
+            claims: dict[str, Any] = self.internal_client.decode_token(id_token)
+        except JWTExpired as e:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired") from e
+        except KeycloakError as e:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token") from e
         aud = claims.get("aud")
         if isinstance(aud, str):
             aud = [aud]
@@ -69,11 +75,18 @@ class KeycloakClient:
 
     def decode_access_token(self, access_token: str) -> dict[str, Any]:
         """Decodes and verifies access token via JWKS signature verification."""
-        return self.internal_client.decode_token(
-            access_token,
-            options={"verify_aud": True},
-            audience=self.config.client_id,
-        )
+        try:
+            claims: dict[str, Any] = self.internal_client.decode_token(access_token)
+        except JWTExpired as e:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired") from e
+        except KeycloakError as e:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token") from e
+        aud = claims.get("aud")
+        if isinstance(aud, str):
+            aud = [aud]
+        if self.config.client_id not in (aud or []):
+            raise ValueError("Invalid token audience")
+        return claims
 
     def authenticate(self, request: Request) -> dict[str, Any]:
         """Authenticates user tokens."""
