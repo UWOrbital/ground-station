@@ -3,19 +3,33 @@ from uuid import UUID, uuid4
 import pytest
 from data.enums.transactional import CommandStatus
 from data.tables.main_tables import MainCommand
+from data.tables.mcc_user_tables import MCCUsers
 from fastapi.testclient import TestClient
 from main import app
+from mcc_keycloak.client import keycloak
 
 
 @pytest.fixture
-def client():
-    return TestClient(app)
+def mcc_user(db_session):
+    """Create a test MCC user in the database."""
+    user = MCCUsers(id=uuid4(), email="test@uworbital.ca", phone_number=None)
+    db_session.add(user)
+    db_session.commit()
+    return user
+
+
+@pytest.fixture
+def client(mcc_user):
+    """TestClient with Keycloak auth dependencies overridden."""
+    app.dependency_overrides[keycloak.get_current_user] = lambda: mcc_user
+    app.dependency_overrides[keycloak.authenticate] = lambda: {}
+    yield TestClient(app)
+    app.dependency_overrides.clear()
 
 
 @pytest.fixture(autouse=True)
 def setup_main_commands(db_session):
-    """Setup MainCommand records needed for testing"""
-    # Create MainCommand entries that will be referenced by Commands
+    """Setup MainCommand records needed for testing."""
     main_commands = [
         MainCommand(id=1, name="TestCmd1", params=None, format=None, data_size=4, total_size=4),
         MainCommand(id=2, name="TestCmd2", params=None, format=None, data_size=4, total_size=4),
@@ -34,128 +48,103 @@ def setup_main_commands(db_session):
 # ---------------------------------------------Testing the POST endpoint--------------------------------------------- #
 
 
-def test_create_command_success(client):
-    """Test successful creation of a new command"""
+def test_create_command_success(client: TestClient) -> None:
+    """Test successful creation of a new command."""
     payload = {
-        "status": CommandStatus.PENDING,
-        "type_": 1,  # Assuming valid MainCommand ID
+        "type_": 1,
         "params": "test_params",
     }
 
-    response = client.post("/api/v1/mcc/commands/create", json={"payload": payload})
+    response = client.post("/api/v1/mcc/commands/", json=payload)
 
     assert response.status_code == 200
-    data = response.json()["data"][0]
+    data = response.json()["data"]
     assert "id" in data
     assert data["status"] == CommandStatus.PENDING
     assert data["type_"] == 1
     assert data["params"] == "test_params"
-    # Validate that id is a valid UUID
     UUID(data["id"])
 
 
-def test_create_command_duplicate(client):
-    """Test that creating a duplicate command is allowed and succeeds"""
-    payload = {"status": CommandStatus.PENDING, "type_": 2, "params": "duplicate_test"}
+def test_create_command_duplicate(client: TestClient) -> None:
+    """Test that creating a duplicate command is allowed and succeeds."""
+    payload = {"type_": 2, "params": "duplicate_test"}
 
-    # Create the first command
-    response1 = client.post("/api/v1/mcc/commands/create", json={"payload": payload})
+    response1 = client.post("/api/v1/mcc/commands/", json=payload)
     assert response1.status_code == 200
-    command1_id = response1.json()["data"][0]["id"]
+    command1_id = response1.json()["data"]["id"]
 
-    # Create duplicate command (same payload except id will be different)
-    response2 = client.post("/api/v1/mcc/commands/create", json={"payload": payload})
+    response2 = client.post("/api/v1/mcc/commands/", json=payload)
     assert response2.status_code == 200
-    command2_id = response2.json()["data"][0]["id"]
+    command2_id = response2.json()["data"]["id"]
 
-    # Both commands should exist but have different IDs
     assert command1_id != command2_id
-    assert response2.json()["data"][0]["status"] == CommandStatus.PENDING
-    assert response2.json()["data"][0]["type_"] == 2
-    assert response2.json()["data"][0]["params"] == "duplicate_test"
+    assert response2.json()["data"]["status"] == CommandStatus.PENDING
+    assert response2.json()["data"]["type_"] == 2
+    assert response2.json()["data"]["params"] == "duplicate_test"
 
 
-def test_create_command_with_null_params(client):
-    """Test creating a command with null params"""
-    payload = {"status": CommandStatus.SCHEDULED, "type_": 3, "params": None}
+def test_create_command_with_null_params(client: TestClient) -> None:
+    """Test creating a command with null params."""
+    payload = {"type_": 3, "params": None}
 
-    response = client.post("/api/v1/mcc/commands/create", json={"payload": payload})
+    response = client.post("/api/v1/mcc/commands/", json=payload)
 
     assert response.status_code == 200
-    data = response.json()["data"][0]
+    data = response.json()["data"]
     assert data["params"] is None
-    assert data["status"] == CommandStatus.SCHEDULED
+    assert data["status"] == CommandStatus.PENDING
 
 
-def test_create_command_different_status(client):
-    """Test creating commands with different status values"""
-    statuses = [CommandStatus.PENDING, CommandStatus.SCHEDULED, CommandStatus.SENT]
+def test_create_command_missing_type(client: TestClient) -> None:
+    """Test that omitting the required type_ field returns a validation error."""
+    payload = {"params": "some_params"}
 
-    for idx, status in enumerate(statuses):
-        payload = {
-            "status": status,
-            "type_": 4 + idx,  # Use different type_ to avoid duplicates
-            "params": f"params_{status}",
-        }
+    response = client.post("/api/v1/mcc/commands/", json=payload)
 
-        response = client.post("/api/v1/mcc/commands/create", json={"payload": payload})
-        assert response.status_code == 200
-        assert response.json()["data"][0]["status"] == status
+    assert response.status_code == 422
 
 
 # ---------------------------------------------Testing the DELETE endpoint--------------------------------------------- #
 
 
-def test_delete_command_success(client):
-    """Test successful deletion of an existing command"""
-    # First create a command to delete
-    payload = {"status": CommandStatus.PENDING, "type_": 10, "params": "to_be_deleted"}
-
-    create_response = client.post("/api/v1/mcc/commands/create", json={"payload": payload})
+def test_delete_command_success(client: TestClient) -> None:
+    """Test successful deletion of an existing command."""
+    create_response = client.post("/api/v1/mcc/commands/", json={"type_": 10})
     assert create_response.status_code == 200
-    command_id = create_response.json()["data"][0]["id"]
+    command_id = create_response.json()["data"]["id"]
 
-    # Delete the command
-    delete_response = client.request("DELETE", "/api/v1/mcc/commands/delete", json={"command_id": command_id})
+    delete_response = client.delete(f"/api/v1/mcc/commands/{command_id}")
 
     assert delete_response.status_code == 200
     data = delete_response.json()
-    assert data["message"] == f"Command with id {command_id} deleted successfully"
+    assert data["message"] == f"Command {command_id} deleted successfully"
 
 
-def test_delete_command_not_found(client):
-    """Test deleting a non-existent command raises ValueError (unhandled exception)"""
-    # Generate a random UUID that doesn't exist
+def test_delete_command_not_found(client: TestClient) -> None:
+    """Test deleting a non-existent command returns 404."""
     non_existent_id = str(uuid4())
 
-    # The endpoint raises ValueError which is not caught by FastAPI
-    # This causes the test client to raise an exception
-    with pytest.raises(ValueError, match=f"Commands with ID {non_existent_id} not found."):
-        client.request("DELETE", "/api/v1/mcc/commands/delete", json={"command_id": non_existent_id})
+    response = client.delete(f"/api/v1/mcc/commands/{non_existent_id}")
+
+    assert response.status_code == 404
 
 
-def test_delete_command_invalid_uuid(client):
-    """Test deleting with an invalid UUID format returns 422 error"""
-    invalid_uuid = "not-a-valid-uuid"
+def test_delete_command_invalid_uuid(client: TestClient) -> None:
+    """Test deleting with an invalid UUID format returns 422."""
+    response = client.delete("/api/v1/mcc/commands/not-a-valid-uuid")
 
-    response = client.request("DELETE", "/api/v1/mcc/commands/delete", json={"command_id": invalid_uuid})
-
-    # FastAPI validation error for invalid UUID format
     assert response.status_code == 422
 
 
-def test_delete_command_twice(client):
-    """Test that deleting the same command twice fails on second attempt"""
-    # Create a command
-    payload = {"status": CommandStatus.PENDING, "type_": 11, "params": "delete_twice_test"}
+def test_delete_command_twice(client: TestClient) -> None:
+    """Test that deleting the same command twice fails on the second attempt."""
+    create_response = client.post("/api/v1/mcc/commands/", json={"type_": 11})
+    assert create_response.status_code == 200
+    command_id = create_response.json()["data"]["id"]
 
-    create_response = client.post("/api/v1/mcc/commands/create", json={"payload": payload})
-    command_id = create_response.json()["data"][0]["id"]
-
-    # First deletion should succeed
-    delete_response1 = client.request("DELETE", "/api/v1/mcc/commands/delete", json={"command_id": command_id})
+    delete_response1 = client.delete(f"/api/v1/mcc/commands/{command_id}")
     assert delete_response1.status_code == 200
 
-    # Second deletion should raise ValueError
-    with pytest.raises(ValueError, match=f"Commands with ID {command_id} not found."):
-        client.request("DELETE", "/api/v1/mcc/commands/delete", json={"command_id": command_id})
+    delete_response2 = client.delete(f"/api/v1/mcc/commands/{command_id}")
+    assert delete_response2.status_code == 404

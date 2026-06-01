@@ -87,7 +87,7 @@ class Commands(BaseSQLModel, table=True):
     """
 
     id: UUID = Field(default_factory=uuid4, primary_key=True, index=True)
-    user_id: UUID = Column(DB_UUID, ForeignKey(MCCUsers.id), nullable=False)  # type: ignore
+    user_id: UUID | None = Field(default=None, sa_column=Column("user_id", DB_UUID, nullable=True))
     status: CommandStatus = Field(default=CommandStatus.PENDING)
     type_: MainTableID = Column(MainTableIDDatabase, ForeignKey(MainCommand.id))  # type: ignore
     params: str | None = None  # TODO: Make sure this matches the corresponding params in the main command table
@@ -106,7 +106,7 @@ class Commands(BaseSQLModel, table=True):
             ["user_id"],
             [MCCUsers.id],  # type: ignore
             onupdate="CASCADE",
-            ondelete="RESTRICT",
+            ondelete="SET NULL",
         ),
         {"schema": TRANSACTIONAL_SCHEMA_NAME},
     )  # Since the table is in a different schema sqlmodel can't find the table normally
