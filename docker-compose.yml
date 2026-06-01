@@ -20,7 +20,8 @@ services:
     command:
     - |
       /opt/keycloak/bin/kc.sh start-dev --import-realm &
-      sleep 10
+      until echo > /dev/tcp/localhost/8080; do sleep 2; done
+      sleep 5
       /opt/keycloak/bin/kcadm.sh config credentials \
         --server http://localhost:8080 \
         --realm master \
@@ -31,6 +32,7 @@ services:
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: mcc-admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: uworbital
+      KC_HEALTH_ENABLED: true
     ports:
       - "8080:8080"
     volumes:
