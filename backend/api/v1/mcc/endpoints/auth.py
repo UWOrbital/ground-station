@@ -34,7 +34,7 @@ def auth_token_callback(code: str) -> Response:
         tokens = keycloak.get_tokens(code)
     except (KeycloakError, ValueError) as e:
         raise HTTPException(status_code=401, detail="Token exchange failed") from e
-    user_info = keycloak.decode_id_token(tokens["id_token"])
+    user_info = keycloak.decode_token(tokens["id_token"])
     try:
         MCCUsersWrapper().create(
             {
