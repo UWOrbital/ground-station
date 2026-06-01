@@ -72,7 +72,7 @@ npm run test      # vitest
 
 ### Docker dev environment
 
-`scripts/dev/docker-compose.yml` brings up backend + Keycloak + both frontends. Compose paths are relative to `scripts/dev/`, and the backend service mounts `../../.env` — a `.env` at the **repo root** (not `backend/.env`) is what gets picked up by compose. Run from `scripts/dev/`:
+`docker-compose.yml` at the repo root brings up backend + Keycloak + both frontends. The backend service reads `.env` at the repo root (not `backend/.env`). Run from the repo root:
 
 ```sh
 docker compose up --build
@@ -80,7 +80,7 @@ docker compose up --build
 
 ### Keycloak realm sync
 
-`scripts/dev/kc-sync.sh` pulls the live MCC realm/clients/roles out of a running Keycloak (admin `mcc-admin` / `uworbital`) and writes them back to `backend/keycloak/mcc-realm.json`, which is the source-controlled realm that compose imports on boot. Run it from `scripts/dev/` after changing realm settings in the Keycloak UI; commit the resulting JSON.
+`scripts/dev/kc-sync.sh` pulls the live MCC realm/clients/roles out of a running Keycloak (admin `mcc-admin` / `uworbital`) and writes them back to `backend/mcc_keycloak/mcc-realm.json`, which is the source-controlled realm that compose imports on boot. Run it from `scripts/dev/` after changing realm settings in the Keycloak UI; commit the resulting JSON.
 
 ## Architecture notes
 
