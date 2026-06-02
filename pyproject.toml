@@ -9,46 +9,65 @@ description = "All backend code used by UW Orbital's GS subteam"
 requires-python = ">=3.12"
 
 dependencies = [
-    "textual==6.2.0",
-    "requests==2.31.0",
+    # web framework and API
+    "fastapi[standard]==0.136.3",
+    "fastapi-cache2==0.2.2",
+
+    # database
+    "sqlmodel==0.0.38",
+    "alembic==1.18.4",
+    "psycopg2-binary==2.9.12",
+
+    # settings
+    "pydantic-settings==2.14.1",
+
+    # security
+    "authlib==1.7.2",
+    "itsdangerous==2.2.0",
+    "python-keycloak==7.1.1",
+
+    # hardware/protocol
     "pyserial==3.5",
-    "skyfield==1.48",
-    "fastapi[standard]==0.115.0",
-    "fastapi-cache2==0.2.1",
-    "sqlmodel==0.0.22",
-    "jinja2==3.1.6",
-    "toml==0.10.2",
-    "loguru==0.7.3",
-    "pyham_ax25==1.0.2",
-    "tinyaes==1.1.1",
+    "pyham_ax25==1.0.3",
     "pyStuffing==0.0.4",
-    "hypothesis==6.131.30",
-    "psycopg2-binary==2.9.10",
-    "python-dotenv==1.1.0",
-    "tqdm==4.67",
-    "uvicorn==0.22.0",
-    "pydantic-settings==2.4.0",
-    # Typed packages
-    "types-requests==2.31.0",
-    "types-pyserial==3.5.0",
-    "types-setuptools==69.1.0.20240217",
-    "types-toml==0.10.8",
-    "types-tqdm==4.67.0.20250516",
-    # Development/test dependencies
-    "alembic==1.11.1",
-    "pre-commit==3.3.3",
-    "pytest==7.4.0",
-    "pytest-cov==4.1.0",
-    "mypy==1.8.0",
-    "ruff==0.2.0",
-    "pytest-postgresql==7.0.1",
-    "types-python-jose>=3.5.0.20250531",
-    "authlib>=1.6.9",
+    "tinyaes==1.1.2",
+
+    # terminal UI
+    "textual>=8.2.7,<9.0.0",
+
+    # utilities
+    "requests>=2.32.0",
+    "python-dotenv>=1.1.0",
+    "loguru>=0.7.3",
+    "tqdm>=4.67.0",
+    "skyfield>=1.54",
     "pyyaml>=6.0.3",
-    "itsdangerous>=2.2.0",
     "pydantic-extra-types>=2.11.0",
-    "phonenumbers>=9.0.26",
-    "python-keycloak>=7.1.1",
+    "phonenumbers>=9.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    # testing
+    "pytest==9.0.3",
+    "pytest-cov==7.1.0",
+    "pytest-postgresql==8.1.0",
+    "psycopg[binary]>=3.1.0",
+    "httpx2>=0.28.0",
+    "hypothesis>=6.100.0,<7.0.0",
+
+    # static checking
+    "mypy==2.1.0",
+    "ruff==0.15.15",
+
+    # type stubs
+    "types-requests>=2.31.0",
+    "types-pyserial>=3.5.0",
+    "types-python-jose>=3.5.0",
+    "types-tqdm>=4.67.0",
+
+    # tooling
+    "pre-commit==4.6.0",
 ]
 
 [tool.setuptools]
@@ -56,10 +75,10 @@ packages = ["backend"]
 
 [tool.pytest.ini_options]
 addopts = "-v"
-testpaths = ["python_test"]
+testpaths = ["backend/python_test"]
 
 [tool.mypy]
-exclude = ["python_test/*"]
+exclude = ["backend/python_test/*", "backend/migrations/*"]
 strict = true
 plugins = "pydantic.mypy"
 
@@ -83,10 +102,15 @@ ignore_missing_imports = true
 module = "pyStuffing.*"
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = ["interfaces", "interfaces.*"]
+ignore_missing_imports = true
+follow_imports = "skip"
+
 [tool.ruff]
 include = ["pyproject.toml", "backend/*.py"]
-exclude = ["frontend/*", "python_test", "migrations"]
-target-version = "py311"
+exclude = ["frontend/*", "backend/python_test", "backend/migrations"]
+target-version = "py312"
 line-length = 120
 indent-width = 4
 
