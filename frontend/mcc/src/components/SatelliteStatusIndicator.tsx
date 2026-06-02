@@ -67,14 +67,10 @@ function SatelliteStatusModal({
   return (
     <>
       {/* Backdrop */}
-<<<<<<< HEAD
-      <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-=======
       <div
         className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
->>>>>>> 8983a58 (Add satelite status indicator to navbar)
 
       {/* Modal */}
       <div className="fixed top-20 right-8 z-50 w-96 rounded-lg border border-border bg-background shadow-lg animate-in fade-in slide-in-from-top-2">
@@ -91,11 +87,7 @@ function SatelliteStatusModal({
                 <span
                   className={`absolute inline-flex h-full w-full rounded-full ${config.accentColor.replace(
                     "500",
-<<<<<<< HEAD
-                    "400",
-=======
                     "400"
->>>>>>> 8983a58 (Add satelite status indicator to navbar)
                   )} animate-ping`}
                 ></span>
               )}
@@ -104,11 +96,7 @@ function SatelliteStatusModal({
           </div>
           <button
             onClick={onClose}
-<<<<<<< HEAD
             className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-=======
-            className="text-muted-foreground hover:text-foreground transition-colors"
->>>>>>> 8983a58 (Add satelite status indicator to navbar)
             aria-label="Close"
           >
             <svg
@@ -132,17 +120,12 @@ function SatelliteStatusModal({
         <div className="px-6 py-4 space-y-4">
           {/* Status Section */}
           <div>
-<<<<<<< HEAD
-            <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Status</p>
-            <p className={`text-lg font-semibold ${config.textColor}`}>{config.label}</p>
-=======
             <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
               Status
             </p>
             <p className={`text-lg font-semibold ${config.textColor}`}>
               {config.label}
             </p>
->>>>>>> 8983a58 (Add satelite status indicator to navbar)
           </div>
 
           {/* Last Contact */}
@@ -166,27 +149,17 @@ function SatelliteStatusModal({
           )}
 
           {/* Telemetry Data */}
-<<<<<<< HEAD
           <div className="border-t border-border pt-4">
-            <p className="text-xs uppercase tracking-wider text-muted-foreground mb-3">Telemetry</p>
+            <p className="text-xs uppercase tracking-wider text-muted-foreground mb-3">
+              Telemetry
+            </p>
             {telemetryData && telemetryData.length > 0 ? (
-              <div className="space-y-2">
-                {telemetryData.map((item, idx) => (
-                  <div key={idx} className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">{item.label}</span>
-=======
-          {telemetryData && telemetryData.length > 0 && (
-            <div className="border-t border-border pt-4">
-              <p className="text-xs uppercase tracking-wider text-muted-foreground mb-3">
-                Telemetry
-              </p>
               <div className="space-y-2">
                 {telemetryData.map((item, idx) => (
                   <div key={idx} className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">
                       {item.label}
                     </span>
->>>>>>> 8983a58 (Add satelite status indicator to navbar)
                     <span className="text-sm font-medium text-foreground">
                       {item.value}
                       {item.unit && <span className="text-xs ml-1">{item.unit}</span>}
@@ -194,27 +167,12 @@ function SatelliteStatusModal({
                   </div>
                 ))}
               </div>
-<<<<<<< HEAD
             ) : (
-              <p className="text-sm text-muted-foreground italic">No telemetry data available</p>
-            )}
-          </div>
-=======
-            </div>
-          )}
-
-          {/* No Telemetry */}
-          {(!telemetryData || telemetryData.length === 0) && (
-            <div className="border-t border-border pt-4">
-              <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
-                Telemetry
-              </p>
               <p className="text-sm text-muted-foreground italic">
                 No telemetry data available
               </p>
-            </div>
-          )}
->>>>>>> 8983a58 (Add satelite status indicator to navbar)
+            )}
+          </div>
         </div>
       </div>
     </>
@@ -241,11 +199,7 @@ function SatelliteStatusIndicator({
       {/* Compact Status Indicator Button */}
       <button
         onClick={() => setIsModalOpen(true)}
-<<<<<<< HEAD
         className="flex items-center gap-2 px-3 py-2 rounded-md border border-foreground/20 transition-all duration-200 hover:bg-accent cursor-pointer"
-=======
-        className="flex items-center gap-2 px-3 py-2 rounded-md border border-border/50 transition-all duration-200 hover:border-border hover:bg-accent/30 cursor-pointer"
->>>>>>> 8983a58 (Add satelite status indicator to navbar)
         title={`Satellite Status: ${config.label}. Click for details.`}
         aria-label={`Satellite status: ${config.label}`}
       >
@@ -260,11 +214,7 @@ function SatelliteStatusIndicator({
             <span
               className={`absolute inline-flex h-full w-full rounded-full ${config.accentColor.replace(
                 "500",
-<<<<<<< HEAD
-                "400",
-=======
                 "400"
->>>>>>> 8983a58 (Add satelite status indicator to navbar)
               )} animate-ping`}
             ></span>
           )}

@@ -10,7 +10,7 @@ import SatelliteStatusIndicator from "./SatelliteStatusIndicator";
  */
 function Nav() {
   // TODO: create user auth that checks if the user is logged in
-  const isLoggedIn = false;
+  const isLoggedIn = true;
   const { theme, toggleTheme } = useTheme();
 
   return (
