@@ -35,9 +35,10 @@ class TelemetryDataResponse(BaseModel):
     The Telemetry Data Response
     """
 
-    label : str
-    value : str
-    unit : str | None = None
+    label: str
+    value: str
+    unit: str | None = None
+
 
 class SatelliteStatusResponse(BaseModel):
     """
@@ -45,7 +46,7 @@ class SatelliteStatusResponse(BaseModel):
     The Satellite Status Response model
     """
 
-    status : str
-    last_contact : str
-    session_duration : str
-    telemetry_data : list[TelemetryDataResponse]
+    status: str
+    last_contact: str
+    session_duration: str
+    telemetry_data: list[TelemetryDataResponse]

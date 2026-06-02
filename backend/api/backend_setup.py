@@ -14,8 +14,8 @@ from api.v1.mcc.endpoints.aro_requests import aro_requests_router
 from api.v1.mcc.endpoints.auth import mcc_auth_router
 from api.v1.mcc.endpoints.commands import commands_router
 from api.v1.mcc.endpoints.main_commands import main_commands_router
-from api.v1.mcc.endpoints.telemetry import telemetry_router
 from api.v1.mcc.endpoints.status import status_router
+from api.v1.mcc.endpoints.telemetry import telemetry_router
 
 
 def setup_routes(app: FastAPI) -> None:
