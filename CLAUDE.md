@@ -17,13 +17,13 @@ When summarizing work to the user, frame what changed in terms of the team missi
 
 Three-part monorepo for UW Orbital's CubeSat ground station:
 
-- `backend/` — FastAPI service (Python 3.12, packaged as `backend` via setuptools). Imports inside the backend are written as if `backend/` is on `sys.path` (e.g. `from api.lifespan import lifespan`, `from config.config import settings`). The backend package is installed editable via `uv sync`, so the `backend.egg-info` and `pyproject.toml` at the repo root configure tooling for the backend only.
+- `backend/` — FastAPI service (Python 3.12, packaged as `backend` via setuptools). Imports inside the backend are written as if `backend/` is on `sys.path` (e.g. `from api.lifespan import lifespan`, `from config.config import settings`). The backend package is installed editable via `uv sync --extra dev`, so the `backend.egg-info` and `pyproject.toml` at the repo root configure tooling for the backend only.
 - `frontend/aro/` and `frontend/mcc/` — two independent Vite + React 19 + TS apps. ARO (Amateur Radio Operator) is the public-facing app; MCC (Mission Control Center) is the operator app behind Keycloak.
 - `backend/interfaces/` — git submodule (`https://github.com/UWOrbital/interfaces.git`) containing C sources shared with the flight firmware. Built with CMake into `libobc-gs-interface.so`; the Python `obc_gs_interface/` package wraps it via `ctypes`/cffi. Always clone with `--recursive` or run `git submodule update --init --recursive`.
 
 ## Common commands
 
-All Python commands assume `uv` is installed and the venv is synced (`uv sync` from repo root).
+All Python commands assume `uv` is installed and the venv is synced (`uv sync --extra dev` from repo root).
 
 ### Backend
 

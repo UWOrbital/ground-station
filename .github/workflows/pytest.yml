@@ -26,7 +26,7 @@ jobs:
         sudo apt install -y postgresql
         sudo apt install cmake gcc
         python -m pip install --upgrade pip uv
-        uv sync
+        uv sync --extra dev
 
     - name: Set up PostgreSQL database
       run: |
