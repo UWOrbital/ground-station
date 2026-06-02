@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState } from "react"
 
-export type SatelliteStatus = "online" | "idle" | "offline" | "error";
+export type SatelliteStatus = "online" | "idle" | "offline" | "error"
 
 export interface TelemetryData {
   label: string;
