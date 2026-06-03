@@ -10,7 +10,7 @@ import { useState } from "react";
 
 interface TableProps<T> {
   data: T[];
-  columns: ColumnDef<T, any>[];
+  columns: ColumnDef<T, unknown>[];
   onRowClick?: (row: T) => void;
   showFilters?: boolean;
   containerClassName?: string;
@@ -74,10 +74,7 @@ function Table<T>({
                   >
                     {header.isPlaceholder
                       ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                      : flexRender(header.column.columnDef.header, header.getContext())}
                   </th>
                 ))}
               </tr>

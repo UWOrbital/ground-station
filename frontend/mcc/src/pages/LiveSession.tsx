@@ -44,11 +44,7 @@ const columns = [
         Paused: "text-yellow-400",
         Completed: "text-blue-400",
       };
-      return (
-        <span className={statusColors[status] || "text-gray-400"}>
-          {status}
-        </span>
-      );
+      return <span className={statusColors[status] || "text-gray-400"}>{status}</span>;
     },
   }),
 ];
@@ -131,21 +127,12 @@ function LiveSession() {
           <table className="w-full text-white">
             <thead>
               {table.getHeaderGroups().map((headerGroup) => (
-                <tr
-                  key={headerGroup.id}
-                  className="border-b border-gray-700/50"
-                >
+                <tr key={headerGroup.id} className="border-b border-gray-700/50">
                   {headerGroup.headers.map((header) => (
-                    <th
-                      key={header.id}
-                      className="text-left px-6 py-4 font-normal text-gray-300"
-                    >
+                    <th key={header.id} className="text-left px-6 py-4 font-normal text-gray-300">
                       {header.isPlaceholder
                         ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                        : flexRender(header.column.columnDef.header, header.getContext())}
                     </th>
                   ))}
                 </tr>
@@ -159,10 +146,7 @@ function LiveSession() {
                 >
                   {row.getVisibleCells().map((cell) => (
                     <td key={cell.id} className="px-6 py-4 text-gray-200">
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
                   ))}
                 </tr>

@@ -12,7 +12,7 @@ describe("Nav", () => {
         <BrowserRouter>
           <Nav />
         </BrowserRouter>
-      </ThemeProvider>
+      </ThemeProvider>,
     );
     expect(screen.getByAltText("orbital logo")).toBeInTheDocument();
   });
@@ -23,7 +23,7 @@ describe("Nav", () => {
         <BrowserRouter>
           <Nav />
         </BrowserRouter>
-      </ThemeProvider>
+      </ThemeProvider>,
     );
     expect(screen.getByText("Dashboard")).toBeInTheDocument();
     expect(screen.getByText("Commands")).toBeInTheDocument();

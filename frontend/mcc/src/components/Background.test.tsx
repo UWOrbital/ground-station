@@ -9,7 +9,7 @@ describe("Background", () => {
     render(
       <ThemeProvider>
         <Background />
-      </ThemeProvider>
+      </ThemeProvider>,
     );
     expect(screen.getByAltText("background-image")).toBeInTheDocument();
   });
@@ -18,7 +18,7 @@ describe("Background", () => {
     render(
       <ThemeProvider>
         <Background />
-      </ThemeProvider>
+      </ThemeProvider>,
     );
     const image = screen.getByAltText("background-image");
     // In light mode (default), opacity should be slightly higher for visibility
