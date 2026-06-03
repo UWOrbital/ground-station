@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Any, Generic, TypeVar
+from typing import Any, TypeVar
 from uuid import UUID
 
 from sqlmodel import select
@@ -11,7 +11,7 @@ T = TypeVar("T", bound=BaseSQLModel)
 PK = TypeVar("PK", int, UUID)
 
 
-class AbstractWrapper(ABC, Generic[T, PK]):
+class AbstractWrapper[T, PK](ABC):
     """
     An Abstract Base Class for all data wrappers.
     """
