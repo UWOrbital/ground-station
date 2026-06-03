@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@400;500;700&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -19,7 +19,7 @@ body {
   height: 100%;
   width: 100%;
   overflow: hidden;
-  --font-geist: 'Geist', sans-serif;
+  --font-geist: "Geist", sans-serif;
 }
 
 @custom-variant dark (&:is(.dark *));
@@ -66,7 +66,7 @@ body {
 :root {
   --radius: 0.625rem;
   --background: #040910;
-  --foreground: #FFFFFF;
+  --foreground: #ffffff;
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
@@ -95,11 +95,12 @@ body {
   --sidebar-accent: oklch(0.97 0 0);
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);}
+  --sidebar-ring: oklch(0.708 0 0);
+}
 
 .dark {
   --background: #040910;
-  --foreground: #FFFFFF;
+  --foreground: #ffffff;
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
@@ -128,7 +129,8 @@ body {
   --sidebar-accent: oklch(0.269 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);}
+  --sidebar-ring: oklch(0.556 0 0);
+}
 
 @layer base {
   button:not(:disabled),

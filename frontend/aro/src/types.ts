@@ -2,28 +2,24 @@
 
 // Enums matching database schema
 export type AROCommandStatus =
-  | 'pending'
-  | 'scheduled'
-  | 'taken'
-  | 'cancelled'
-  | 'failed'
-  | 'completed';
+  | "pending"
+  | "scheduled"
+  | "taken"
+  | "cancelled"
+  | "failed"
+  | "completed";
 
 export type CommandStatus =
-  | 'pending'
-  | 'scheduled'
-  | 'ongoing'
-  | 'cancelled'
-  | 'failed'
-  | 'completed';
+  | "pending"
+  | "scheduled"
+  | "ongoing"
+  | "cancelled"
+  | "failed"
+  | "completed";
 
-export type SessionStatus =
-  | 'pending'
-  | 'scheduled'
-  | 'ongoing'
-  | 'completed';
+export type SessionStatus = "pending" | "scheduled" | "ongoing" | "completed";
 
-export type MainPacketType = 'uplink' | 'downlink';
+export type MainPacketType = "uplink" | "downlink";
 
 // Database table interfaces
 export interface ARORequest {

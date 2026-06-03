@@ -9,7 +9,7 @@ describe("Nav", () => {
     render(
       <BrowserRouter>
         <Nav />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
     expect(screen.getByAltText("orbital-logo")).toBeInTheDocument();
   });
@@ -18,7 +18,7 @@ describe("Nav", () => {
     render(
       <BrowserRouter>
         <Nav />
-      </BrowserRouter>
+      </BrowserRouter>,
     );
     expect(screen.getByText("Home")).toBeInTheDocument();
     expect(screen.getByText("Requests")).toBeInTheDocument();
