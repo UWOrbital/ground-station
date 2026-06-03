@@ -15,8 +15,8 @@ MAIN_COMMAND_TABLE_NAME: Final[str] = "commands"
 MAIN_TELEMETRY_TABLE_NAME: Final[str] = "telemetry"
 
 
-type MainTableID = int
-type MainTableIDDatabase = Integer
+MainTableID = int
+MainTableIDDatabase = Integer
 
 
 class MainCommand(BaseSQLModel, table=True):
