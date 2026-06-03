@@ -29,7 +29,6 @@ function Nav() {
       </div>
 
       <div className="flex items-center gap-4">
-
         <button
           onClick={toggleTheme}
           className="w-10 h-10 flex items-center justify-center rounded-full border border-foreground/20 hover:bg-accent transition-colors"
