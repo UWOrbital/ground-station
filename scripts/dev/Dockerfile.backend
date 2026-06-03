@@ -12,7 +12,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends gcc libc-dev && \
     rm -rf /var/lib/apt/lists/*
 
-RUN uv sync --frozen
+RUN uv sync --extra dev --frozen
 
 ENV PATH="/app/.venv/bin:$PATH"
 

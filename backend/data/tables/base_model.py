@@ -1,7 +1,7 @@
 from typing import Any
 
 from sqlmodel import SQLModel
-from sqlmodel._compat import SQLModelConfig, get_config_value, set_config_value
+from sqlmodel._compat import SQLModelConfig
 
 
 class BaseSQLModel(SQLModel):
@@ -12,7 +12,7 @@ class BaseSQLModel(SQLModel):
     model_config = SQLModelConfig(validate_assignment=True)
 
     def __init__(self, **data: dict[str, Any]) -> None:
-        is_table = get_config_value(model=self, parameter="table", default=False)
-        set_config_value(model=self, parameter="table", value=False)  # Makes it validate the model
+        is_table = self.model_config.get("table", False)
+        self.model_config["table"] = False
         super().__init__(**data)
-        set_config_value(model=self, parameter="table", value=is_table)
+        self.model_config["table"] = is_table

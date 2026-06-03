@@ -1,4 +1,4 @@
-from typing import Final, TypeAlias
+from typing import Final
 
 from exceptions.exceptions import DatabaseError
 from pydantic import model_validator
@@ -15,8 +15,8 @@ MAIN_COMMAND_TABLE_NAME: Final[str] = "commands"
 MAIN_TELEMETRY_TABLE_NAME: Final[str] = "telemetry"
 
 
-MainTableID: TypeAlias = int
-MainTableIDDatabase: TypeAlias = Integer
+MainTableID = int
+MainTableIDDatabase = Integer
 
 
 class MainCommand(BaseSQLModel, table=True):
