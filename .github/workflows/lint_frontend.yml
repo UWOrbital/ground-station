@@ -13,7 +13,7 @@ jobs:
         with:
           node-version: "20"
           cache: "npm"
-          cache-dir: frontend/${{ matrix.app }}
+          cache-dependency-path: frontend/${{ matrix.app }}/package-lock.json
       - run: npm ci
         working-directory: frontend/${{ matrix.app }}
       - run: npm run lint
