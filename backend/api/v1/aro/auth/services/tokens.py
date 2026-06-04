@@ -22,17 +22,17 @@ def create_auth_token(user_id: UUID, auth_type: AROAuthToken) -> AROUserAuthToke
     if existing:
         return existing
 
-    token_value = str(uuid4())
+    token_value = uuid4()
     created_time = datetime.now()
     expiry = created_time + timedelta(hours=6.7)
 
     auth_token = token_wrapper.create(
         {
-            "user_data_id": user_id,
+            "user_id": user_id,
             "token": token_value,
             "created_on": created_time,
             "expiry": expiry,
-            "auth_type": auth_type,
+            "type_": auth_type,
         }
     )
 

@@ -36,7 +36,7 @@ async def get_current_user(token: str) -> AROUsers:
         )
 
     try:
-        user = user_wrapper.get_by_id(auth_token.user_data_id)
+        user = user_wrapper.get_by_id(auth_token.user_id)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Couldn't find the user from ID.") from e
 

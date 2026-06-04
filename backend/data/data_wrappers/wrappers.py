@@ -14,8 +14,6 @@ from data.tables.transactional_tables import (
     Commands,
     CommsSession,
     Packet,
-    PacketCommands,
-    PacketTelemetry,
     Telemetry,
 )
 
@@ -66,13 +64,17 @@ class AROUserAuthTokenWrapper(AbstractWrapper[AROUserAuthToken, UUID]):
 
     model = AROUserAuthToken
 
-    def get_token_by_token(self, token: str) -> AROUserAuthToken | None:
+    def get_token_by_token(self, token: str | UUID) -> AROUserAuthToken | None:
         """
-        :token str
+        :token str | UUID
         returns AROUserAuthToken | None
         """
+        try:
+            token_uuid = token if isinstance(token, UUID) else UUID(str(token))
+        except ValueError:
+            return None
         with get_db_session() as session:
-            return session.exec(select(AROUserAuthToken).where(AROUserAuthToken.token == token)).first()
+            return session.exec(select(AROUserAuthToken).where(AROUserAuthToken.token == token_uuid)).first()
 
     def get_token_by_user_id(self, user_id: UUID) -> AROUserAuthToken | None:
         """
@@ -82,7 +84,7 @@ class AROUserAuthTokenWrapper(AbstractWrapper[AROUserAuthToken, UUID]):
         with get_db_session() as session:
             return session.exec(
                 select(AROUserAuthToken)
-                .where(AROUserAuthToken.user_data_id == user_id)
+                .where(AROUserAuthToken.user_id == user_id)
                 .where(AROUserAuthToken.expiry > datetime.now())
             ).first()
 
@@ -162,22 +164,6 @@ class PacketWrapper(AbstractWrapper[Packet, UUID]):
     model = Packet
 
 
-class PacketCommandsWrapper(AbstractWrapper[PacketCommands, UUID]):
-    """
-    Data wrapper for PacketCommands table.
-    """
-
-    model = PacketCommands
-
-
-class PacketTelemetryWrapper(AbstractWrapper[PacketTelemetry, UUID]):
-    """
-    Data wrapper for PacketTelemetry table.
-    """
-
-    model = PacketTelemetry
-
-
 class CommandsWrapper(AbstractWrapper[Commands, UUID]):
     """
     Data wrapper for Commands table.
@@ -187,16 +173,11 @@ class CommandsWrapper(AbstractWrapper[Commands, UUID]):
 
     def retrieve_floating_commands(self) -> list[Commands]:
         """
-        Retrieves all commands which do not have a valid entry in
-        the packet_commands table.
-        A command which is not valid is considered as any command whose ID
-        does not match with any command_id in the packet_commands table
+        Retrieves all commands which have not yet been assigned to a packet.
+        A floating command is any command whose `packet_id` is still null.
         """
-        packet_commands = PacketCommandsWrapper().get_all()
-        packet_ids = {packet_command.command_id for packet_command in packet_commands}
-
         commands = self.get_all()
-        floating_commands = [fc for fc in commands if fc.id not in packet_ids]
+        floating_commands = [command for command in commands if command.packet_id is None]
 
         return floating_commands
 

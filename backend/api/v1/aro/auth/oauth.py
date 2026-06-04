@@ -117,7 +117,7 @@ async def google_callback(request: Request) -> TokenResponse:
     auth_token, user = google_auth(google_request)
 
     return TokenResponse(
-        token=auth_token.token,
+        token=str(auth_token.token),
         user_id=user.id,
         expires_at=auth_token.expiry,
     )
@@ -145,7 +145,7 @@ async def register(request: RegisterRequest) -> TokenResponse:
     auth_token, user = register_user(request)
 
     return TokenResponse(
-        token=auth_token.token,
+        token=str(auth_token.token),
         user_id=user.id,
         expires_at=auth_token.expiry,
     )
@@ -168,7 +168,7 @@ async def login(request: LoginRequest) -> TokenResponse:
     auth_token, user = login_user(request)
 
     return TokenResponse(
-        token=auth_token.token,
+        token=str(auth_token.token),
         user_id=user.id,
         expires_at=auth_token.expiry,
     )

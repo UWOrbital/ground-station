@@ -5,20 +5,17 @@ from data.data_wrappers.wrappers import (
     CommandsWrapper,
     CommsSessionWrapper,
     MainCommandWrapper,
-    PacketCommandsWrapper,
     PacketWrapper,
 )
 from data.enums.transactional import MainPacketType
 
 
 def test_retrieve_floating_commands_filters():
-    pcw = PacketCommandsWrapper()
     cw = CommandsWrapper()
     mc = MainCommandWrapper()
     pw = PacketWrapper()
     csw = CommsSessionWrapper()
 
-    packet_id = uuid4()
     cmd_type = mc.create(
         dict(
             id=1,
@@ -31,7 +28,7 @@ def test_retrieve_floating_commands_filters():
     comms_session = csw.create({"id": uuid4(), "start_time": datetime.now()})
     packet = pw.create(
         dict(
-            id=packet_id,
+            id=uuid4(),
             session_id=comms_session.id,
             raw_data=b"\x00",
             type_=MainPacketType.UPLINK,
@@ -40,18 +37,19 @@ def test_retrieve_floating_commands_filters():
         )
     )
 
-    cmd_in_packet = cw.create(dict(id=uuid4(), type_=cmd_type))
+    # A command assigned to a packet is no longer floating
+    cmd_in_packet = cw.create(dict(id=uuid4(), type_=cmd_type, packet_id=packet.id, sequence_index=0))
     cmd_free = cw.create(dict(id=uuid4(), type_=cmd_type))
     cmd_free2 = cw.create(dict(id=uuid4(), type_=cmd_type))
 
-    pcw.create(dict(packet_id=packet.id, command_id=cmd_in_packet.id))
-
     result = cw.retrieve_floating_commands()
-    for command in result:
-        assert command.id in [cmd_free.id, cmd_free2.id]
+    result_ids = {command.id for command in result}
+
+    assert cmd_in_packet.id not in result_ids
+    assert result_ids == {cmd_free.id, cmd_free2.id}
 
 
-def test_retrieve_floating_commands_no_packet_commands():
+def test_retrieve_floating_commands_no_packet():
     cw = CommandsWrapper()
     mc = MainCommandWrapper()
     cmd_type = mc.create(

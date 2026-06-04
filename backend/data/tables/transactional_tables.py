@@ -37,12 +37,10 @@ TRANSACTIONAL_SCHEMA_NAME: Final[str] = "transactional"
 
 # Table names in database
 ARO_REQUEST_TABLE_NAME: Final[str] = "aro_requests"
-COMMS_SESSION_TABLE_NAME: Final[str] = "comms_session"
-PACKET_TABLE_NAME: Final[str] = "packet"
+SESSIONS_TABLE_NAME: Final[str] = "sessions"
+PACKET_TABLE_NAME: Final[str] = "packets"
 TELEMETRY_TABLE_NAME: Final[str] = "telemetry"
 COMMANDS_TABLE_NAME: Final[str] = "commands"
-PACKET_TELEMETRY_TABLE_NAME: Final[str] = "packet_telemetry"
-PACKET_COMMANDS_TABLE_NAME: Final[str] = "packet_commands"
 
 # Transactional data tables
 
@@ -62,7 +60,7 @@ class ARORequest(BaseSQLModel, table=True):
     pic_transmitted_on: datetime | None = Field(default=None)
     packet_id: UUID | None = Field(
         default=None,
-        foreign_key=to_foreign_key_value(TRANSACTIONAL_SCHEMA_NAME, PACKET_COMMANDS_TABLE_NAME),
+        foreign_key=to_foreign_key_value(TRANSACTIONAL_SCHEMA_NAME, PACKET_TABLE_NAME),
         ondelete="CASCADE",
     )
     status: ARORequestStatus = Field(default=ARORequestStatus.PENDING)
@@ -92,6 +90,12 @@ class Commands(BaseSQLModel, table=True):
     type_: MainTableID = Column(MainTableIDDatabase, ForeignKey(MainCommand.id))  # type: ignore
     params: str | None = None  # TODO: Make sure this matches the corresponding params in the main command table
     created_at: datetime = Field(default_factory=datetime.now, sa_column_kwargs={"server_default": func.now()})
+    packet_id: UUID | None = Field(
+        default=None,
+        foreign_key=to_foreign_key_value(TRANSACTIONAL_SCHEMA_NAME, PACKET_TABLE_NAME),
+        ondelete="SET NULL",
+    )
+    sequence_index: int | None = Field(default=None)  # Position of this command within its packet
 
     # table information
     __tablename__ = COMMANDS_TABLE_NAME
@@ -121,6 +125,13 @@ class Telemetry(BaseSQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True, index=True)
     type_: MainTableID = Column(MainTableIDDatabase, ForeignKey(MainTelemetry.id))  # type: ignore
     value: str | None = None  # TODO: Make sure this matches the corresponding params in the main command table
+    packet_id: UUID | None = Field(
+        default=None,
+        foreign_key=to_foreign_key_value(TRANSACTIONAL_SCHEMA_NAME, PACKET_TABLE_NAME),
+        ondelete="SET NULL",
+    )
+    sequence_index: int | None = Field(default=None)  # Position of this telemetry within its packet
+    timestamp: datetime = Field(default_factory=datetime.now, sa_column_kwargs={"server_default": func.now()})
 
     # table information
     __tablename__ = TELEMETRY_TABLE_NAME
@@ -149,7 +160,7 @@ class CommsSession(BaseSQLModel, table=True):
     status: SessionStatus = Field(default=SessionStatus.PENDING)
 
     # table information
-    __tablename__ = COMMS_SESSION_TABLE_NAME
+    __tablename__ = SESSIONS_TABLE_NAME
     __table_args__ = {"schema": TRANSACTIONAL_SCHEMA_NAME}
 
 
@@ -163,61 +174,15 @@ class Packet(BaseSQLModel, table=True):
 
     id: UUID = Field(default_factory=uuid4, primary_key=True, index=True)
     session_id: UUID = Field(
-        foreign_key=to_foreign_key_value(TRANSACTIONAL_SCHEMA_NAME, COMMS_SESSION_TABLE_NAME), ondelete="CASCADE"
+        foreign_key=to_foreign_key_value(TRANSACTIONAL_SCHEMA_NAME, SESSIONS_TABLE_NAME), ondelete="CASCADE"
     )
     raw_data: bytes = Field(max_length=PACKET_RAW_LENGTH)
     type_: MainPacketType
-    # subtype enum # CSDC requirement. TODO: Figure out what this means
+    subtype: str | None = Field(default=None)  # CSDC requirement. TODO: Promote to an enum once subtypes are defined
     payload_data: bytes = Field(max_length=PACKET_DATA_LENGTH)
     created_on: datetime = Field(default_factory=datetime.now)
     offset: int
 
     # table information
     __tablename__ = PACKET_TABLE_NAME
-    __table_args__ = {"schema": TRANSACTIONAL_SCHEMA_NAME}
-
-
-class PacketTelemetry(BaseSQLModel, table=True):
-    """
-    Holds data about the telemetry packet
-    """
-
-    id: UUID = Field(default_factory=uuid4, primary_key=True, index=True)
-    packet_id: UUID = Field(
-        foreign_key=to_foreign_key_value(TRANSACTIONAL_SCHEMA_NAME, PACKET_TABLE_NAME), ondelete="CASCADE"
-    )
-    telemetry_id: UUID = Field(
-        foreign_key=to_foreign_key_value(TRANSACTIONAL_SCHEMA_NAME, TELEMETRY_TABLE_NAME), ondelete="CASCADE"
-    )
-    previous: UUID | None = Field(
-        default=None,
-        foreign_key=to_foreign_key_value(TRANSACTIONAL_SCHEMA_NAME, TELEMETRY_TABLE_NAME),
-        ondelete="CASCADE",
-    )
-
-    # table information
-    __tablename__ = PACKET_TELEMETRY_TABLE_NAME
-    __table_args__ = {"schema": TRANSACTIONAL_SCHEMA_NAME}
-
-
-class PacketCommands(BaseSQLModel, table=True):
-    """
-    Holds data about a command packet
-    """
-
-    id: UUID = Field(default_factory=uuid4, primary_key=True, index=True)
-    packet_id: UUID = Field(
-        foreign_key=to_foreign_key_value(TRANSACTIONAL_SCHEMA_NAME, PACKET_TABLE_NAME), ondelete="CASCADE"
-    )
-    command_id: UUID = Field(
-        foreign_key=to_foreign_key_value(TRANSACTIONAL_SCHEMA_NAME, COMMANDS_TABLE_NAME), ondelete="CASCADE"
-    )
-    previous: UUID | None = Field(
-        default=None,
-        foreign_key=to_foreign_key_value(TRANSACTIONAL_SCHEMA_NAME, COMMANDS_TABLE_NAME),
-        ondelete="CASCADE",
-    )
-
-    # table information
-    __tablename__ = PACKET_COMMANDS_TABLE_NAME
     __table_args__ = {"schema": TRANSACTIONAL_SCHEMA_NAME}

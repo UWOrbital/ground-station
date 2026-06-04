@@ -64,4 +64,4 @@ def test_queue_to_packet_integration(db_session: Session, pipeline: CommandsPipe
 
     # Verify status update in DB
     db_session.refresh(cmd)
-    assert cmd.status == CommandStatus.PACKETED
+    assert cmd.status == CommandStatus.ONGOING

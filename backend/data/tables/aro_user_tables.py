@@ -111,7 +111,7 @@ class AROUserLogin(BaseSQLModel, table=True):
     :param salt: 16 random bytes for password hashing
     :param created_on: datetime object of the time at which AROUserLogin was created
     :param hashing_algorithm_name: the name of the hashing algorithm for pwd hashing
-    :param user_data_id: id created by AROUsers
+    :param user_id: id created by AROUsers
     :param email_verification_token: given after user verifies
     """
 
@@ -121,7 +121,7 @@ class AROUserLogin(BaseSQLModel, table=True):
     password_salt: str = Field(max_length=32)
     created_on: datetime = Field(default_factory=datetime.now)
     hashing_algorithm_name: str = Field(min_length=1, max_length=20)
-    user_data_id: UUID = Column(DB_UUID, ForeignKey(AROUsers.id))  # type: ignore
+    user_id: UUID = Column(DB_UUID, ForeignKey(AROUsers.id))  # type: ignore
     email_verification_token: str = Field(min_length=1, max_length=200)
 
     __tablename__ = ARO_USER_LOGIN
@@ -133,19 +133,19 @@ class AROUserAuthToken(BaseSQLModel, table=True):
     Stores all information for User Auth Tokens
 
     :param id: a unique identifier for the user auth token
-    :param user_data_id: id created by AROUser
+    :param user_id: id created by AROUser
     :param token: UUID token
     :param created_on: datetime object which tracks the date and time at which user auth token was created
     :param expiry: datetime object which represents the time at which the token expires
-    :param auth_type: the type of the token
+    :param type_: the type of the token
     """
 
     id: UUID = Field(default_factory=uuid4, primary_key=True, index=True)
-    user_data_id: UUID = Column(DB_UUID, ForeignKey(AROUsers.id))  # type: ignore
-    token: str
+    user_id: UUID = Column(DB_UUID, ForeignKey(AROUsers.id))  # type: ignore
+    token: UUID = Field(default_factory=uuid4)
     created_on: datetime = Field(default_factory=datetime.now)
     expiry: datetime = Field()
-    auth_type: AROAuthToken = Field(sa_column=Column(Enum(AROAuthToken, name="auth_type"), nullable=False))
+    type_: AROAuthToken = Field(sa_column=Column("type", Enum(AROAuthToken, name="auth_type"), nullable=False))
 
     __tablename__ = ARO_AUTH_TOKEN
     __table_args__ = {"schema": ARO_USER_SCHEMA_NAME}

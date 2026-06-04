@@ -59,7 +59,7 @@ def register_user(request: RegisterRequest) -> tuple[AROUserAuthToken, AROUsers]
             "password": hashed_password,
             "password_salt": salt.hex(),
             "hashing_algorithm_name": "sha256",
-            "user_data_id": user.id,
+            "user_id": user.id,
             "email_verification_token": verification_token,
         }
     )
@@ -92,7 +92,7 @@ def login_user(request: LoginRequest) -> tuple[AROUserAuthToken, AROUsers]:
             detail="Incorrect email or password.",
         )
 
-    user = users.get_by_id(login_record.user_data_id)
+    user = users.get_by_id(login_record.user_id)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

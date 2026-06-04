@@ -51,7 +51,7 @@ class CommandsPipeline:
 
         for cli_command in self.commands_queue:
             if cli_command.command is not None:
-                update_req = {"status": CommandStatus.PACKETED}
+                update_req = {"status": CommandStatus.ONGOING}
                 CommandsWrapper().update(cli_command.command.id, update_req)
 
         return self.packet_list
