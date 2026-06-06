@@ -1,6 +1,6 @@
-import { useState } from "react"
+import { useState } from "react";
 
-export type SatelliteStatus = "online" | "idle" | "offline" | "error"
+export type SatelliteStatus = "online" | "idle" | "offline" | "error";
 
 export interface TelemetryData {
   label: string;
@@ -67,10 +67,7 @@ function SatelliteStatusModal({
   return (
     <>
       {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
       <div className="fixed top-20 right-8 z-50 w-96 rounded-lg border border-border bg-background shadow-lg animate-in fade-in slide-in-from-top-2">
@@ -87,7 +84,7 @@ function SatelliteStatusModal({
                 <span
                   className={`absolute inline-flex h-full w-full rounded-full ${config.accentColor.replace(
                     "500",
-                    "400"
+                    "400",
                   )} animate-ping`}
                 ></span>
               )}
@@ -120,12 +117,8 @@ function SatelliteStatusModal({
         <div className="px-6 py-4 space-y-4">
           {/* Status Section */}
           <div>
-            <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
-              Status
-            </p>
-            <p className={`text-lg font-semibold ${config.textColor}`}>
-              {config.label}
-            </p>
+            <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Status</p>
+            <p className={`text-lg font-semibold ${config.textColor}`}>{config.label}</p>
           </div>
 
           {/* Last Contact */}
@@ -150,16 +143,12 @@ function SatelliteStatusModal({
 
           {/* Telemetry Data */}
           <div className="border-t border-border pt-4">
-            <p className="text-xs uppercase tracking-wider text-muted-foreground mb-3">
-              Telemetry
-            </p>
+            <p className="text-xs uppercase tracking-wider text-muted-foreground mb-3">Telemetry</p>
             {telemetryData && telemetryData.length > 0 ? (
               <div className="space-y-2">
                 {telemetryData.map((item, idx) => (
                   <div key={idx} className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">
-                      {item.label}
-                    </span>
+                    <span className="text-sm text-muted-foreground">{item.label}</span>
                     <span className="text-sm font-medium text-foreground">
                       {item.value}
                       {item.unit && <span className="text-xs ml-1">{item.unit}</span>}
@@ -168,9 +157,7 @@ function SatelliteStatusModal({
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground italic">
-                No telemetry data available
-              </p>
+              <p className="text-sm text-muted-foreground italic">No telemetry data available</p>
             )}
           </div>
         </div>
@@ -214,7 +201,7 @@ function SatelliteStatusIndicator({
             <span
               className={`absolute inline-flex h-full w-full rounded-full ${config.accentColor.replace(
                 "500",
-                "400"
+                "400",
               )} animate-ping`}
             ></span>
           )}
