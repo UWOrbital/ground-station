@@ -161,7 +161,7 @@ class CommsSessionWrapper(AbstractWrapper[CommsSession, UUID]):
         :return: CommsSession | None
         """
         with get_db_session() as session:
-            return session.exec(select(CommsSession).order_by(CommsSession.start_time.desc()).limit(1)).first()
+            return session.exec(select(CommsSession).order_by(col(CommsSession.start_time).desc()).limit(1)).first()
 
 
 class PacketWrapper(AbstractWrapper[Packet, UUID]):
