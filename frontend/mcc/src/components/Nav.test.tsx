@@ -29,6 +29,6 @@ describe("Nav", () => {
     expect(screen.getByText("Commands")).toBeInTheDocument();
     expect(screen.getByText("ARO Admin")).toBeInTheDocument();
     expect(screen.getByText("Live Sessions")).toBeInTheDocument();
-    expect(screen.getByText("Profile")).toBeInTheDocument();
+    expect(screen.getByText("Login")).toBeInTheDocument();
   });
 });
