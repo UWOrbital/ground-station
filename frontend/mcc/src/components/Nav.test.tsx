@@ -12,7 +12,7 @@ describe("Nav", () => {
         <BrowserRouter>
           <Nav />
         </BrowserRouter>
-      </ThemeProvider>
+      </ThemeProvider>,
     );
     expect(screen.getByAltText("orbital logo")).toBeInTheDocument();
   });
@@ -23,12 +23,12 @@ describe("Nav", () => {
         <BrowserRouter>
           <Nav />
         </BrowserRouter>
-      </ThemeProvider>
+      </ThemeProvider>,
     );
     expect(screen.getByText("Dashboard")).toBeInTheDocument();
     expect(screen.getByText("Commands")).toBeInTheDocument();
     expect(screen.getByText("ARO Admin")).toBeInTheDocument();
     expect(screen.getByText("Live Sessions")).toBeInTheDocument();
-    expect(screen.getByText("Login")).toBeInTheDocument();
+    expect(screen.getByText("Profile")).toBeInTheDocument();
   });
 });

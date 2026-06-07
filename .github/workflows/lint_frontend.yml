@@ -1,0 +1,20 @@
+name: Lint Frontend
+on: [push, pull_request]
+
+jobs:
+  lint-frontend:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app: [aro, mcc]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+      - run: npm ci
+        working-directory: frontend/${{ matrix.app }}
+      - run: npm run lint
+        working-directory: frontend/${{ matrix.app }}
+      - run: npx prettier --check .
+        working-directory: frontend/${{ matrix.app }}

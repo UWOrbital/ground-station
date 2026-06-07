@@ -1,13 +1,14 @@
-from collections.abc import Awaitable, Callable, Sequence
+from collections.abc import AsyncIterator, Awaitable, Callable, Sequence
 from datetime import datetime
 from sys import getsizeof
 from time import perf_counter
 from uuid import uuid4
 
-from fastapi import FastAPI, Request, Response
+from fastapi import Request, Response
 from loguru import logger
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR
+from starlette.types import ASGIApp
 
 
 class LoggerMiddleware(BaseHTTPMiddleware):
@@ -18,7 +19,7 @@ class LoggerMiddleware(BaseHTTPMiddleware):
     :type excluded_endpoints: Sequence[str]
     """
 
-    def __init__(self, app: FastAPI, excluded_endpoints: Sequence[str] = ()) -> None:
+    def __init__(self, app: ASGIApp, excluded_endpoints: Sequence[str] = ()) -> None:
         super().__init__(app)
         self.excluded_endpoints = excluded_endpoints
 
@@ -85,16 +86,16 @@ class LoggerMiddleware(BaseHTTPMiddleware):
                     f"Request ID: {request_id}",
                     f"Response: {response_body}",
                     f"Bytes: {response_size}",
-                    f"Seconds Elapsed: {process_time:.3f}.",
+                    f"ms Elapsed: {process_time * 1000:.2f}.",
                 ]
             )
         )
 
         if has_body_iterator:
-            return Response(
-                content=response_body,
-                status_code=response.status_code,
-                headers=dict(response.headers),
-                media_type=response.media_type,
-            )
+
+            async def body_iterator() -> AsyncIterator[bytes]:
+                yield response_body_bytes
+
+            response.body_iterator = body_iterator()  # type: ignore[attr-defined]
+
         return response

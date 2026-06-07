@@ -3,7 +3,7 @@ import type { Command } from "./types";
 // Extended command interface with parameter details
 export interface CommandParameter {
   name: string;
-  type: 'int' | 'float' | 'string' | 'boolean'; // TODO: this needs to be confirmed with actual types used
+  type: "int" | "float" | "string" | "boolean"; // TODO: this needs to be confirmed with actual types used
   size?: number; // size in bytes for int/float
 }
 
@@ -26,8 +26,8 @@ const mockCommandsList: ExtendedCommand[] = [
         name: "time",
         type: "int",
         size: 7,
-      }
-    ]
+      },
+    ],
   },
   {
     id: 2,
@@ -46,8 +46,8 @@ const mockCommandsList: ExtendedCommand[] = [
         name: "time",
         type: "int",
         size: 7,
-      }
-    ]
+      },
+    ],
   },
 ];
 

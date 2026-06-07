@@ -6,9 +6,7 @@ function Login() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen px-4">
       <div className="w-full max-w-md bg-gray-900/50 backdrop-blur-sm rounded-lg p-8 border border-gray-700/50">
-        <h1 className="text-white text-3xl font-bold mb-6 text-center">
-          Login
-        </h1>
+        <h1 className="text-white text-3xl font-bold mb-6 text-center">Login</h1>
         <form className="space-y-4">
           <div>
             <label htmlFor="username" className="text-gray-300 block mb-2">

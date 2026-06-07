@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 # Standard library imports
 from argparse import ArgumentParser
 from collections.abc import Iterable
@@ -11,9 +13,7 @@ from logging import DEBUG, INFO, WARNING, basicConfig, critical, debug, info, wa
 from math import isclose
 from os import remove
 from os.path import exists
-from re import compile
 from struct import pack
-from sys import exit
 from typing import BinaryIO, Final
 
 # 3rd party imports
@@ -109,8 +109,7 @@ def define_parser() -> ArgumentParser:
         "--step-size",
         type=str,
         default=DEFAULT_STEP_SIZE,
-        help=f"Step size in the same format as the Horizons API (e.g. 1m, 1h, 1d, 100). "
-        f"Default: {DEFAULT_STEP_SIZE}",
+        help=f"Step size in the same format as the Horizons API (e.g. 1m, 1h, 1d, 100). Default: {DEFAULT_STEP_SIZE}",
     )
     parser.add_argument(
         "-t",
@@ -141,8 +140,7 @@ def define_parser() -> ArgumentParser:
         "--exclude",
         choices=["first", "last", "both", "none"],
         default=DEFAULT_EXCLUDE,
-        help=f"Exclude the first, last, both or none of the values from the output file. "
-        f"Default: {DEFAULT_EXCLUDE}",
+        help=f"Exclude the first, last, both or none of the values from the output file. Default: {DEFAULT_EXCLUDE}",
     )
     parser.add_argument(
         "-l",
@@ -176,7 +174,7 @@ def is_valid_date(date_str: str) -> bool:
     :param date_str: The date to be checked
     :return: True if the date is a valid date, otherwise False
     """
-    time_regex = compile(r"^[1-9]\d{3}-\d{2}-\d{2}$")
+    time_regex = re.compile(r"^[1-9]\d{3}-\d{2}-\d{2}$")
     if not time_regex.match(date_str):
         return False
     try:

@@ -10,6 +10,7 @@ from config.data_config import (
     PACKET_DATA_LENGTH,
     PACKET_RAW_LENGTH,
 )
+from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import UUID as DB_UUID
 from sqlalchemy.schema import Column, ForeignKey, ForeignKeyConstraint
 from sqlmodel import Field
@@ -29,6 +30,7 @@ from data.tables.main_tables import (
     MainTableIDDatabase,
     MainTelemetry,
 )
+from data.tables.mcc_user_tables import MCCUsers
 
 # Transactional schema related items
 TRANSACTIONAL_SCHEMA_NAME: Final[str] = "transactional"
@@ -85,9 +87,11 @@ class Commands(BaseSQLModel, table=True):
     """
 
     id: UUID = Field(default_factory=uuid4, primary_key=True, index=True)
+    user_id: UUID | None = Field(default=None, sa_column=Column("user_id", DB_UUID, nullable=True))
     status: CommandStatus = Field(default=CommandStatus.PENDING)
     type_: MainTableID = Column(MainTableIDDatabase, ForeignKey(MainCommand.id))  # type: ignore
     params: str | None = None  # TODO: Make sure this matches the corresponding params in the main command table
+    created_at: datetime = Field(default_factory=datetime.now, sa_column_kwargs={"server_default": func.now()})
 
     # table information
     __tablename__ = COMMANDS_TABLE_NAME
@@ -97,6 +101,12 @@ class Commands(BaseSQLModel, table=True):
             [MainCommand.id],  # type: ignore
             onupdate="CASCADE",
             ondelete="CASCADE",
+        ),
+        ForeignKeyConstraint(
+            ["user_id"],
+            [MCCUsers.id],  # type: ignore
+            onupdate="CASCADE",
+            ondelete="SET NULL",
         ),
         {"schema": TRANSACTIONAL_SCHEMA_NAME},
     )  # Since the table is in a different schema sqlmodel can't find the table normally

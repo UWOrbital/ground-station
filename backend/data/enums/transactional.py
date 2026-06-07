@@ -7,6 +7,7 @@ class CommandStatus(StrEnum):
     """
 
     PENDING = auto()  # Command was created in the db but not yet sent to the OBC
+    PACKETED = auto()
     SCHEDULED = auto()  # Command is scheduled to be sent to the OBC
     SENT = auto()  # Command was sent to the OBC
     CANCELLED = auto()  # Command was cancelled by MCC or an ARO. This is a final state of a command

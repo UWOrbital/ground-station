@@ -33,11 +33,7 @@ const columns = [
         Responded: "text-blue-400",
         Failed: "text-red-400",
       };
-      return (
-        <span className={statusColors[status] || "text-gray-400"}>
-          {status}
-        </span>
-      );
+      return <span className={statusColors[status] || "text-gray-400"}>{status}</span>;
     },
   }),
   columnHelper.accessor("type", {
@@ -94,13 +90,10 @@ function Commands() {
   return (
     <div>
       <div className="min-h-screen w-full flex justify-center items-center space-x-10">
-          {selectedCommand !== "" && <SendCommand selectedCommandName={selectedCommand} setCommand={setSelectedCommand} />}
-        <Table
-          data={data}
-          columns={columns}
-          onRowClick={handleCommandSelect}
-          showFilters={true}
-        />
+        {selectedCommand !== "" && (
+          <SendCommand selectedCommandName={selectedCommand} setCommand={setSelectedCommand} />
+        )}
+        <Table data={data} columns={columns} onRowClick={handleCommandSelect} showFilters={true} />
       </div>
       <SelectCommand selectedCommand={selectedCommand} setCommand={setSelectedCommand} />
     </div>

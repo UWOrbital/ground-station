@@ -21,7 +21,7 @@ function Nav() {
       </div>
 
       {/* Navigation Links */}
-      {isLoggedIn? (
+      {isLoggedIn ? (
         <div className="absolute right-14 mt-2 flex space-x-7">
           {NAVIGATION_LINKS.map((link) => (
             <Link key={link.url} to={link.url} className="mt-1 hover:underline">

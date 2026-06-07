@@ -47,10 +47,7 @@ describe("Table Component", () => {
 
     const filterInputs = screen.getAllByRole("textbox");
     expect(filterInputs).toHaveLength(1);
-    expect(filterInputs[0]).toHaveAttribute(
-      "placeholder",
-      "Search..."
-    );
+    expect(filterInputs[0]).toHaveAttribute("placeholder", "Search...");
   });
 
   it("does not render filter inputs when showFilters is false", () => {
@@ -62,9 +59,7 @@ describe("Table Component", () => {
 
   it("calls onRowClick when row is clicked", () => {
     const handleRowClick = vi.fn();
-    render(
-      <Table data={testData} columns={columns} onRowClick={handleRowClick} />
-    );
+    render(<Table data={testData} columns={columns} onRowClick={handleRowClick} />);
 
     const firstRow = screen.getByText("Test 1").closest("tr");
     firstRow?.click();
@@ -75,11 +70,7 @@ describe("Table Component", () => {
   it("applies custom containerClassName", () => {
     const customClass = "custom-container-class";
     const { container } = render(
-      <Table
-        data={testData}
-        columns={columns}
-        containerClassName={customClass}
-      />
+      <Table data={testData} columns={columns} containerClassName={customClass} />,
     );
 
     const tableContainer = container.querySelector(`.${customClass}`);

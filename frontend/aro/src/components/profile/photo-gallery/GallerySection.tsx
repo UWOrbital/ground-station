@@ -8,7 +8,20 @@ import "yet-another-react-lightbox/plugins/captions.css";
 
 function formatTimestamp(date: Date): string {
   const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const monthNames = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
 
   const dayName = dayNames[date.getDay()];
   const monthName = monthNames[date.getMonth()];
@@ -19,7 +32,7 @@ function formatTimestamp(date: Date): string {
 
   const ampm = hours >= 12 ? "PM" : "AM";
   const displayHour = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours;
-  const displayMinute = minutes.toString().padStart(2, '0');
+  const displayMinute = minutes.toString().padStart(2, "0");
 
   return `${dayName} - ${monthName} ${day}, ${year} - ${displayHour}:${displayMinute} ${ampm}`;
 }
@@ -41,11 +54,7 @@ interface GallerySectionProps {
   spacing?: number;
 }
 
-export default function GallerySection({
-  title,
-  photos,
-  spacing = 12,
-}: GallerySectionProps) {
+export default function GallerySection({ title, photos, spacing = 12 }: GallerySectionProps) {
   const [index, setIndex] = React.useState(-1);
 
   const handleDownload = React.useCallback(() => {
@@ -58,15 +67,16 @@ export default function GallerySection({
 
   const handlePin = React.useCallback(() => {
     // TODO: Implement pin functionality
-  }, [index]);
+  }, []);
 
-  const slidesWithCaptions = React.useMemo(() =>
-    photos.map(photo => ({
-      ...photo,
-      title: formatTimestamp(photo.date),
-      description: photo.location || "",
-    })),
-    [photos]
+  const slidesWithCaptions = React.useMemo(
+    () =>
+      photos.map((photo) => ({
+        ...photo,
+        title: formatTimestamp(photo.date),
+        description: photo.location || "",
+      })),
+    [photos],
   );
 
   return (

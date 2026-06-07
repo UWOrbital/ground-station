@@ -1,16 +1,17 @@
 from abc import ABC
-from typing import Any, Generic, TypeVar
+from typing import Any, TypeVar
 from uuid import UUID
+
+from sqlmodel import select
 
 from data.database.engine import get_db_session
 from data.tables.base_model import BaseSQLModel
-from sqlmodel import select
 
 T = TypeVar("T", bound=BaseSQLModel)
 PK = TypeVar("PK", int, UUID)
 
 
-class AbstractWrapper(ABC, Generic[T, PK]):
+class AbstractWrapper[T, PK](ABC):
     """
     An Abstract Base Class for all data wrappers.
     """
@@ -26,6 +27,16 @@ class AbstractWrapper(ABC, Generic[T, PK]):
         """
         with get_db_session() as session:
             return list(session.exec(select(self.model)).all())
+
+    def get_all_by(self, **kwargs: object) -> list[T]:
+        """
+        Get all data wrapper for the unspecified model by fields
+
+        :param kwargs: fields to search by
+        :return: a list of all model instances matching the fields
+        """
+        with get_db_session() as session:
+            return list(session.exec(select(self.model).filter_by(**kwargs)).all())
 
     def get_by_id(self, obj_id: PK) -> T:
         """

@@ -9,7 +9,7 @@ import { useTheme } from "../contexts/ThemeContext";
  */
 function Nav() {
   // TODO: create user auth that checks if the user is logged in
-  const isLoggedIn = false;
+  const isLoggedIn = true;
   const { theme, toggleTheme } = useTheme();
 
   return (
@@ -22,19 +22,13 @@ function Nav() {
       {/* Navigation Links */}
       <div className="flex space-x-7">
         {NAVIGATION_LINKS.map((link) => (
-          <Link
-            key={link.url}
-            to={link.url}
-            className="hover:underline transition-colors"
-          >
+          <Link key={link.url} to={link.url} className="hover:underline transition-colors">
             {link.text}
           </Link>
         ))}
       </div>
 
-
       <div className="flex items-center gap-4">
-
         <button
           onClick={toggleTheme}
           className="w-10 h-10 flex items-center justify-center rounded-full border border-foreground/20 hover:bg-accent transition-colors"
@@ -42,7 +36,6 @@ function Nav() {
           title={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
         >
           {theme === "light" ? (
-
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="18"
@@ -57,7 +50,6 @@ function Nav() {
               <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
             </svg>
           ) : (
-
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="18"
@@ -81,7 +73,6 @@ function Nav() {
             </svg>
           )}
         </button>
-
 
         {isLoggedIn ? (
           <Link

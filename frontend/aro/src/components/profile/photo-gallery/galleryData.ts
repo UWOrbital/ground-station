@@ -33,8 +33,18 @@ export type MonthSection = {
 };
 
 export const monthSections: MonthSection[] = [
-  { title: "October 2025", year: 2025, month: 10, slides: generateSlides(spaceImage, 19, 2025, 10) },
-  { title: "November 2025", year: 2025, month: 11, slides: generateSlides(spaceImage, 19, 2025, 11) },
+  {
+    title: "October 2025",
+    year: 2025,
+    month: 10,
+    slides: generateSlides(spaceImage, 19, 2025, 10),
+  },
+  {
+    title: "November 2025",
+    year: 2025,
+    month: 11,
+    slides: generateSlides(spaceImage, 19, 2025, 11),
+  },
 ];
 
 export function sortSlidesByDate(slides: Slide[], order: "asc" | "desc" = "desc"): Slide[] {
@@ -46,10 +56,10 @@ export function sortSlidesByDate(slides: Slide[], order: "asc" | "desc" = "desc"
 
 export function getSortedMonthSections(order: "asc" | "desc" = "desc"): MonthSection[] {
   const sorted = [...monthSections].sort((a, b) =>
-    order === "asc" ? a.year - b.year || a.month - b.month : b.year - a.year || b.month - a.month
+    order === "asc" ? a.year - b.year || a.month - b.month : b.year - a.year || b.month - a.month,
   );
 
-  return sorted.map(section => ({
+  return sorted.map((section) => ({
     ...section,
     slides: sortSlidesByDate(section.slides, order),
   }));

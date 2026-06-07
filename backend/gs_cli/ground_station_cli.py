@@ -1,7 +1,7 @@
 from cmd import Cmd
 from datetime import datetime
 from multiprocessing import Process
-from sys import argv, exit
+from sys import argv
 
 from interfaces.obc_gs_interface.commands.python import CmdCallbackId
 from obc_utils.command_utils import LOG_PATH, arg_parse, poll, send_command, send_conn_request
@@ -89,7 +89,7 @@ class GroundStationShell(Cmd):
 
         cmd_response = send_command(line, self._com_port, 1)
         print(cmd_response)
-        if cmd_response is not None and cmd_response.cmd_id == CmdCallbackId.CMD_EXEC_OBC_RESET:
+        if cmd_response is not None and cmd_response.cmd_id == CmdCallbackId.CMD_EXEC_OBC_RESET:  # type: ignore[misc]
             self._conn_request_sent = False
 
         self._restart_logging()

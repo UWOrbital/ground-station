@@ -1,6 +1,6 @@
-import { MapContainer, TileLayer, useMap, Marker, Popup, useMapEvents } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import { useQuery, useQueryClient} from "@tanstack/react-query";
+import { MapContainer, TileLayer, useMap, Marker, Popup, useMapEvents } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 
 function RecenterMap({ lat, lng }: { lat: number; lng: number }) {
