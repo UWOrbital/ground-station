@@ -34,11 +34,11 @@ def client():
 def test_login_endpoint(client):
     """Test that login endpoint sends a redirect response with status code 303"""
     mock_url = f"http://mock-keycloak/auth/openid-connect/auth?client_id={settings.keycloak.client_id}"
-    
+
     with patch.object(KeycloakClient, "login_url", new_callable=PropertyMock) as mock_login:
         mock_login.return_value = mock_url
         response = client.get(f"{AUTH_PREFIX}/login", follow_redirects=False)
-        
+
     assert response.status_code == 303
     assert response.headers["location"] == mock_url
 
