@@ -65,7 +65,7 @@ def test_callback_endpoint(client):
 
 
 def test_callback_endpoint_exceptions(client):
-    """Test that callback endpoint can handle bad input"""
+    """Test that callback endpoint can handle bad input (500 status code)"""
     with patch.object(mcc_auth.keycloak, "get_tokens", return_value=MOCK_TOKENS) as mock_get_tokens, \
          patch.object(mcc_auth.keycloak, "decode_token", return_value=MOCK_BAD_USER_INFO) as mock_decode_token:
 
