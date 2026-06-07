@@ -1,4 +1,5 @@
 import pytest
+import json
 import backend.api.v1.mcc.endpoints.auth as mcc_auth
 from unittest.mock import patch, PropertyMock
 from mcc_keycloak.client import KeycloakClient
@@ -18,6 +19,11 @@ MOCK_USER_INFO = {
     "preferred_username": "mcc-admin"
 }
 
+MOCK_BAD_USER_INFO = {
+    "sub": "bad_id",
+    "email": "bad_email",
+}
+
 AUTH_PREFIX = "/api/v1/mcc/auth"
 
 @pytest.fixture
@@ -28,11 +34,11 @@ def client():
 def test_login_endpoint(client):
     """Test that login endpoint sends a redirect response with status code 303"""
     mock_url = f"http://mock-keycloak/auth/openid-connect/auth?client_id={settings.keycloak.client_id}"
-
+    
     with patch.object(KeycloakClient, "login_url", new_callable=PropertyMock) as mock_login:
         mock_login.return_value = mock_url
         response = client.get(f"{AUTH_PREFIX}/login", follow_redirects=False)
-
+        
     assert response.status_code == 303
     assert response.headers["location"] == mock_url
 
@@ -56,6 +62,20 @@ def test_callback_endpoint(client):
     assert response.status_code == 302
     assert response.cookies["id_token"] == "mock_id_token"
     assert response.cookies["access_token"] == "mock_access_token"
+
+
+def test_callback_endpoint_exceptions(client):
+    """Test that callback endpoint can handle bad input"""
+    with patch.object(mcc_auth.keycloak, "get_tokens", return_value=MOCK_TOKENS) as mock_get_tokens, \
+         patch.object(mcc_auth.keycloak, "decode_token", return_value=MOCK_BAD_USER_INFO) as mock_decode_token:
+
+        response = client.get(f"{AUTH_PREFIX}/callback?code=temp_code", follow_redirects=False)
+
+    mock_get_tokens.assert_called_once_with("temp_code")
+    mock_decode_token.assert_called_once_with("mock_id_token")
+
+    assert response.status_code == 500
+    assert json.loads(response.text)["detail"] == "User provisioning failed"
 
 
 def test_logout_endpoint(client):
