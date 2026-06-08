@@ -2,7 +2,7 @@ from datetime import datetime
 from uuid import UUID
 
 from pydantic import EmailStr
-from sqlmodel import select
+from sqlmodel import col, select
 
 from data.data_wrappers.abstract_wrapper import AbstractWrapper  # SEE abstract_wrapper.py FOR LOGIC
 from data.database.engine import get_db_session
@@ -153,6 +153,16 @@ class CommsSessionWrapper(AbstractWrapper[CommsSession, UUID]):
 
     model = CommsSession
 
+    def get_most_recent_session(self) -> CommsSession | None:
+        """
+
+        Retrieves the Comms session if there is one with the most recent start_time
+
+        :return: CommsSession | None
+        """
+        with get_db_session() as session:
+            return session.exec(select(CommsSession).order_by(col(CommsSession.start_time).desc())).first()
+
 
 class PacketWrapper(AbstractWrapper[Packet, UUID]):
     """
@@ -207,3 +217,16 @@ class TelemetryWrapper(AbstractWrapper[Telemetry, UUID]):
     """
 
     model = Telemetry
+
+    def get_most_recent_by_type(self, telemetry_id: int) -> Telemetry | None:
+        """
+
+        Get the most recent telemetry filtered by the type id
+
+        :param telemetry_id: The MainTelemetryID to filter by.
+            Note: fragile, may break if spreadsheet IDs change.
+        :return: Telemetry | None
+        """
+
+        with get_db_session() as session:
+            return session.exec(select(Telemetry).where(Telemetry.type_ == telemetry_id)).first()

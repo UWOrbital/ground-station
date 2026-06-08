@@ -27,3 +27,26 @@ class DeleteCommandResponse(BaseModel):
     """Response model confirming a command deletion."""
 
     message: Annotated[str, Field(description="Confirmation message including the deleted command ID")]
+
+
+class TelemetryDataResponse(BaseModel):
+    """
+
+    The Telemetry Data Response
+    """
+
+    label: str
+    value: str
+    unit: str | None = None
+
+
+class SatelliteStatusResponse(BaseModel):
+    """
+
+    The Satellite Status Response model
+    """
+
+    status: str
+    last_contact: str
+    session_duration: str
+    telemetry_data: list[TelemetryDataResponse]
