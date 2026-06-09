@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import orbital_logo from "../assets/orbital_logo.png";
 import { NAVIGATION_LINKS } from "../utils/nav-links";
 import { useTheme } from "../contexts/ThemeContext";
+import SatelliteStatusIndicator from "./SatelliteStatusIndicator";
 
 /**
  * @brief Nav component displaying the navigation bar
@@ -9,7 +10,7 @@ import { useTheme } from "../contexts/ThemeContext";
  */
 function Nav() {
   // TODO: create user auth that checks if the user is logged in
-  const isLoggedIn = true;
+  const isLoggedIn = false;
   const { theme, toggleTheme } = useTheme();
 
   return (
@@ -29,6 +30,21 @@ function Nav() {
       </div>
 
       <div className="flex items-center gap-4">
+        {/* Satellite Status Indicator - Only shown when logged in */}
+        {isLoggedIn && (
+          <SatelliteStatusIndicator
+            status="online"
+            lastContact="2 min ago"
+            sessionDuration="1h 23m"
+            telemetryData={[
+              { label: "Battery Level", value: "85", unit: "%" },
+              { label: "Temperature", value: "42", unit: "°C" },
+              { label: "Signal Strength", value: "Strong", unit: "" },
+              { label: "Altitude", value: "450", unit: "km" },
+            ]}
+          />
+        )}
+
         <button
           onClick={toggleTheme}
           className="w-10 h-10 flex items-center justify-center rounded-full border border-foreground/20 hover:bg-accent transition-colors"
