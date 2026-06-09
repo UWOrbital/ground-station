@@ -24,4 +24,8 @@ export const NAVIGATION_LINKS: NavLink[] = [
     text: "Live Sessions",
     url: "/live-sessions",
   },
+  {
+    text: "Users",
+    url: "/users",
+  },
 ];
