@@ -129,6 +129,13 @@ class ARORequestWrapper(AbstractWrapper[ARORequest, UUID]):
 
     model = ARORequest
 
+    def get_all(self) -> list[ARORequest]:
+        """
+        Retrieves all ARO requests sorted by most recent
+        """
+        with get_db_session() as session:
+            return list(session.exec(select(ARORequest).order_by(ARORequest.created_on.desc())).all())
+
 
 class MainCommandWrapper(AbstractWrapper[MainCommand, int]):
     """
