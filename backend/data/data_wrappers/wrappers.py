@@ -134,7 +134,7 @@ class ARORequestWrapper(AbstractWrapper[ARORequest, UUID]):
         Retrieves all ARO requests sorted by most recent
         """
         with get_db_session() as session:
-            return list(session.exec(select(ARORequest).order_by(ARORequest.created_on.desc())).all())
+            return list(session.exec(select(ARORequest).order_by(col(ARORequest.created_on).desc())).all())
 
 
 class MainCommandWrapper(AbstractWrapper[MainCommand, int]):

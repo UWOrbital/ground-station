@@ -79,3 +79,9 @@ def test_get_db_session(monkeypatch, db_session: Session):
         _get_db_session,
         raising=True,
     )
+
+    monkeypatch.setattr(
+        "data.data_wrappers.wrappers.get_db_session",
+        _get_db_session,
+        raising=True,
+    )

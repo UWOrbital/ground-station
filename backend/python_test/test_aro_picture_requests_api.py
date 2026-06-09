@@ -1,6 +1,9 @@
+from datetime import datetime, timedelta
+from decimal import Decimal
 from uuid import UUID
 
 import pytest
+from data.tables.transactional_tables import ARORequest
 from fastapi.testclient import TestClient
 from main import app
 
@@ -50,18 +53,37 @@ def created_picture_request(client, picture_request_payload):
     return response.json()
 
 @pytest.fixture
-def multi_created_picture_requests(client, picture_request_payload):
-
-    responses = []
+def multi_created_picture_requests(created_aro_user, db_session):
+    created_on = datetime.now()
+    requests = []
 
     for i in range(5):
-        response = client.post(
-            "/api/v1/aro/requests/", json=picture_request_payload, headers={"Content-Type": "application/json"}
+        request = ARORequest(
+            aro_id=UUID(created_aro_user["id"]),
+            latitude=Decimal("49.282"),
+            longitude=Decimal("-123.120"),
+            created_on=created_on + timedelta(minutes=i),
         )
+        db_session.add(request)
+        requests.append(request)
 
-        responses.append(response.json())
+    db_session.commit()
 
-    return responses
+    for request in requests:
+        db_session.refresh(request)
+
+    return [
+        {
+            "data": {
+                "id": str(request.id),
+                "aro_id": str(request.aro_id),
+                "latitude": str(request.latitude),
+                "longitude": str(request.longitude),
+            }
+        }
+        for request in reversed(requests)
+    ]
+
 
 def test_create_picture_request(client, picture_request_payload):
     response = client.post(
@@ -105,6 +127,16 @@ def test_get_all_picture_requests(client, multi_created_picture_requests):
 
         assert operations[i]["delete"] == f"/api/v1/aro/requests/{requests[i]["id"]}/delete"
         assert operations[i]["download"] == f"/api/v1/aro/requests/{requests[i]["id"]}/packet"
+
+
+def test_get_all_picture_requests_orders_by_recency(client, multi_created_picture_requests):
+    response = client.get("/api/v1/aro/requests/")
+
+    assert response.status_code == 200
+    request_ids = [request["id"] for request in response.json()["data"]]
+    expected_ids = [request["data"]["id"] for request in multi_created_picture_requests]
+
+    assert request_ids == expected_ids
 
 
 def test_count_and_offset(client, multi_created_picture_requests):
