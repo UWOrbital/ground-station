@@ -24,6 +24,8 @@ Binary record layout (little-endian):
 The file ID mapping (log_file_ids.json) is generated in the OBC-firmware repo
 by scripts/gen_log_file_ids.py and must be kept in sync with the firmware
 build that produced the logs.
+
+Full documentation: https://uworbital.github.io/docs/tasks/logger/
 """
 
 from __future__ import annotations

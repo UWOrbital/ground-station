@@ -203,3 +203,14 @@ def test_binary_is_smaller_than_text():
     entry = parse_text_log_line(text)
     encoded = encode_log_entry(entry)
     assert len(encoded) < len(text) / 4
+
+
+def test_large_scale_round_trip_10k_records():
+    """10k synthetic logs round-trip losslessly; encode/decode stays fast."""
+    from obc_utils.benchmark_binary_logs import run_benchmark
+
+    result = run_benchmark(10_000)
+    assert result.round_trip_ok
+    assert result.encode_seconds < 2.0
+    assert result.decode_seconds < 5.0
+    assert result.encode_records_per_sec > 50_000
