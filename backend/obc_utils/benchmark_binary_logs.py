@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Benchmark binary log encode/decode throughput at scale.
+"""Benchmark binary log encode/decode throughput at scale.
 
 Compression ratio is fixed per record type (file path → 2-byte ID, etc.) and does
 not change with volume — this script measures encode/decode time and verifies
@@ -68,7 +67,10 @@ def _make_text_line(index: int, rng: random.Random) -> str:
     level = rng.choice(LEVEL_NAMES[:6])
     ts = 1749483000 + index
     dt = datetime.fromtimestamp(ts, tz=UTC)
-    prefix = f"{dt.year % 100:02d}-{dt.month:02d}-{dt.day:02d}_{dt.hour:02d}-{dt.minute:02d}-{dt.second:02d} "
+    prefix = (
+        f"{dt.year % 100:02d}-{dt.month:02d}-{dt.day:02d}_"
+        f"{dt.hour:02d}-{dt.minute:02d}-{dt.second:02d} "
+    )
 
     if rng.random() < 0.30:
         payload = str(rng.choice(ERROR_CODES))
@@ -97,17 +99,20 @@ def run_benchmark(record_count: int, seed: int = 42) -> BenchmarkResult:
 
     if record_count <= 100_000:
         decoded_lines = [entry_to_text(entry) for entry in decoded_entries]
-        mismatches = sum(1 for original, decoded in zip(text_lines, decoded_lines, strict=True) if original != decoded)
+        mismatches = sum(
+            1 for original, decoded in zip(text_lines, decoded_lines, strict=True) if original != decoded
+        )
         round_trip_ok = mismatches == 0 and len(decoded_lines) == record_count
     else:
         check_indices = {0, record_count - 1, record_count // 2}
         check_indices.update(range(0, record_count, max(1, record_count // 1000)))
-        mismatches = 0
         if len(decoded_entries) != record_count:
             mismatches = abs(len(decoded_entries) - record_count)
             round_trip_ok = False
         else:
-            mismatches = sum(1 for i in check_indices if entry_to_text(decoded_entries[i]) != text_lines[i])
+            mismatches = sum(
+                1 for i in check_indices if entry_to_text(decoded_entries[i]) != text_lines[i]
+            )
             round_trip_ok = mismatches == 0
 
     return BenchmarkResult(

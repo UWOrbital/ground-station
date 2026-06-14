@@ -162,45 +162,46 @@ def decode_log_entry(data: bytes, offset: int = 0) -> tuple[LogEntry, int]:
     Returns the decoded entry and the number of bytes consumed.
     Raises LogCodecError if the record is malformed or truncated.
     """
-    buf = data[offset:]
-    if len(buf) < FIXED_HEADER_SIZE:
+    start = offset
+    end = len(data)
+    if end - start < FIXED_HEADER_SIZE:
         raise LogCodecError("Buffer too short for log record header")
-    if buf[0] != SYNC_BYTE:
-        raise LogCodecError(f"Bad sync byte: 0x{buf[0]:02X}")
+    if data[start] != SYNC_BYTE:
+        raise LogCodecError(f"Bad sync byte: 0x{data[start]:02X}")
 
-    flags = buf[1]
+    flags = data[start + 1]
     level = flags & FLAG_LEVEL_MASK
     if level >= len(LEVEL_NAMES):
         raise LogCodecError(f"Invalid log level: {level}")
 
     is_msg = bool(flags & FLAG_TYPE_MSG)
     has_timestamp = bool(flags & FLAG_HAS_TIMESTAMP)
-    file_id = int.from_bytes(buf[2:4], "little")
-    line = int.from_bytes(buf[4:6], "little")
+    file_id = int.from_bytes(data[start + 2 : start + 4], "little")
+    line = int.from_bytes(data[start + 4 : start + 6], "little")
 
     pos = FIXED_HEADER_SIZE
     timestamp = None
     if has_timestamp:
-        if len(buf) < pos + TIMESTAMP_SIZE:
+        if end - start < pos + TIMESTAMP_SIZE:
             raise LogCodecError("Buffer too short for timestamp")
-        timestamp = int.from_bytes(buf[pos : pos + TIMESTAMP_SIZE], "little")
+        timestamp = int.from_bytes(data[start + pos : start + pos + TIMESTAMP_SIZE], "little")
         pos += TIMESTAMP_SIZE
 
     err_code = None
     msg = None
     if is_msg:
-        if len(buf) < pos + 1:
+        if end - start < pos + 1:
             raise LogCodecError("Buffer too short for msg length")
-        msg_len = buf[pos]
+        msg_len = data[start + pos]
         pos += 1
-        if msg_len > MAX_MSG_LEN or len(buf) < pos + msg_len:
+        if msg_len > MAX_MSG_LEN or end - start < pos + msg_len:
             raise LogCodecError("Buffer too short for msg body")
-        msg = buf[pos : pos + msg_len].decode("utf-8", errors="replace")
+        msg = data[start + pos : start + pos + msg_len].decode("utf-8", errors="replace")
         pos += msg_len
     else:
-        if len(buf) < pos + ERROR_CODE_SIZE:
+        if end - start < pos + ERROR_CODE_SIZE:
             raise LogCodecError("Buffer too short for error code")
-        err_code = int.from_bytes(buf[pos : pos + ERROR_CODE_SIZE], "little")
+        err_code = int.from_bytes(data[start + pos : start + pos + ERROR_CODE_SIZE], "little")
         pos += ERROR_CODE_SIZE
 
     entry = LogEntry(
