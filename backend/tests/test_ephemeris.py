@@ -2,11 +2,39 @@ import logging
 import math
 import os
 import struct
+from json import dumps
+from unittest.mock import Mock, patch
 
 import pytest
 from sun import ephemeris
 from sun import ephemeris_parser as ep
 from sun.ephemeris import DataPoint, ErrorCode
+
+
+HORIZONS_LINES = [
+    "      1.000000000, B.C. 4713-Jan-02 12:00:00.0000,  1.384519786747137E+08, -5.472710939424842E+07, -1.276932755237378E+06,",
+    "      1.125000000, B.C. 4713-Jan-02 15:00:00.0000,  1.385760653373899E+08, -5.442875513032935E+07, -1.272689795682322E+06,",
+    "      1.250000000, B.C. 4713-Jan-02 18:00:00.0000,  1.386995049407168E+08, -5.413014269361465E+07, -1.268441062983371E+06,",
+    "      1.375000000, B.C. 4713-Jan-02 21:00:00.0000,  1.388222969000409E+08, -5.383127342494688E+07, -1.264186567945778E+06,",
+    "      1.500000000, B.C. 4713-Jan-03 00:00:00.0000,  1.389444406309174E+08, -5.353214866855511E+07, -1.259926321179278E+06,",
+    "      1.625000000, B.C. 4713-Jan-03 03:00:00.0000,  1.390659355491845E+08, -5.323276977215502E+07, -1.255660333107308E+06,",
+    "      1.750000000, B.C. 4713-Jan-03 06:00:00.0000,  1.391867810710398E+08, -5.293313808704702E+07, -1.251388613976542E+06,",
+    "      1.875000000, B.C. 4713-Jan-03 09:00:00.0000,  1.393069766131224E+08, -5.263325496821213E+07, -1.247111173866812E+06,",
+    "      2.000000000, B.C. 4713-Jan-03 12:00:00.0000,  1.394265215925976E+08, -5.233312177440570E+07, -1.242828022701215E+06,",
+]
+
+
+def _mock_horizons_response(lines: list[str]) -> Mock:
+    api_text = "\n".join(["$$SOE", *lines, "$$EOE"])
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.text = dumps(
+        {
+            "signature": {"version": ephemeris.SUPPORTED_VERSION},
+            "result": api_text,
+        }
+    )
+    return mock_response
 
 
 @pytest.mark.parametrize(
@@ -573,7 +601,8 @@ def test_write_data(data_point):
 )
 def test_main(argsv, data_points_expected):
     filename = "test_main.bin"
-    data_points_returned = ephemeris.main(argsv)
+    with patch("sun.ephemeris.get", return_value=_mock_horizons_response(HORIZONS_LINES)):
+        data_points_returned = ephemeris.main(argsv)
 
     data_points_actual = ep.parse_file(filename)
     os.remove(filename)
@@ -673,21 +702,11 @@ def test_convert_to_date(time, expected):
 
 
 def test_get_lines_from_api():
-    lines = [
-        "      1.000000000, B.C. 4713-Jan-02 12:00:00.0000,  1.384519786747137E+08, -5.472710939424842E+07, -1.276932755237378E+06,",
-        "      1.125000000, B.C. 4713-Jan-02 15:00:00.0000,  1.385760653373899E+08, -5.442875513032935E+07, -1.272689795682322E+06,",
-        "      1.250000000, B.C. 4713-Jan-02 18:00:00.0000,  1.386995049407168E+08, -5.413014269361465E+07, -1.268441062983371E+06,",
-        "      1.375000000, B.C. 4713-Jan-02 21:00:00.0000,  1.388222969000409E+08, -5.383127342494688E+07, -1.264186567945778E+06,",
-        "      1.500000000, B.C. 4713-Jan-03 00:00:00.0000,  1.389444406309174E+08, -5.353214866855511E+07, -1.259926321179278E+06,",
-        "      1.625000000, B.C. 4713-Jan-03 03:00:00.0000,  1.390659355491845E+08, -5.323276977215502E+07, -1.255660333107308E+06,",
-        "      1.750000000, B.C. 4713-Jan-03 06:00:00.0000,  1.391867810710398E+08, -5.293313808704702E+07, -1.251388613976542E+06,",
-        "      1.875000000, B.C. 4713-Jan-03 09:00:00.0000,  1.393069766131224E+08, -5.263325496821213E+07, -1.247111173866812E+06,",
-        "      2.000000000, B.C. 4713-Jan-03 12:00:00.0000,  1.394265215925976E+08, -5.233312177440570E+07, -1.242828022701215E+06,",
-    ]
-    assert ephemeris.get_lines_from_api(1, 2, 8, "sun") == lines
+    with patch("sun.ephemeris.get", return_value=_mock_horizons_response(HORIZONS_LINES)):
+        assert ephemeris.get_lines_from_api(1, 2, 8, "sun") == HORIZONS_LINES
 
 
-@pytest.mark.skip(reason="Taking too long")
+@pytest.mark.integration
 def test_100k_request():
     filename = "test_100k_request.bin"
     length = 110_000

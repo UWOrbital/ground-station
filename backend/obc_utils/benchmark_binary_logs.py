@@ -55,10 +55,12 @@ class BenchmarkResult:
 
     @property
     def encode_records_per_sec(self) -> float:
+        """Return encoding throughput in records per second."""
         return self.record_count / self.encode_seconds if self.encode_seconds else 0.0
 
     @property
     def decode_records_per_sec(self) -> float:
+        """Return decoding throughput in records per second."""
         return self.record_count / self.decode_seconds if self.decode_seconds else 0.0
 
 
@@ -81,6 +83,7 @@ def _make_text_line(index: int, rng: random.Random) -> str:
 
 
 def run_benchmark(record_count: int, seed: int = 42) -> BenchmarkResult:
+    """Benchmark encode/decode performance for a synthetic log workload."""
     rng = random.Random(seed)
     text_lines = [_make_text_line(i, rng) for i in range(record_count)]
     text_blob = ("\n".join(text_lines) + "\n").encode()
@@ -133,6 +136,7 @@ def _format_row(result: BenchmarkResult) -> str:
 
 
 def main() -> None:
+    """Parse CLI arguments, run benchmarks, and print a summary table."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--records",
