@@ -123,4 +123,5 @@ class KeycloakClient:
         except ValueError as e:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found") from e
 
+
 keycloak = KeycloakClient(settings.keycloak)
