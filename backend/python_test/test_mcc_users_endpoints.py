@@ -9,13 +9,6 @@ from data.tables.mcc_user_tables import MCCUsers
 from main import app
 from config.config import settings
 
-# MOCK_USER = MagicMock()
-# MOCK_USER.id = UUID("E621E1F8-C36C-495A-93FC-0C247A3E6E5F")
-# MOCK_USER.email = "test@uworbital.com"
-# MOCK_USER.first_name = "first_name"
-# MOCK_USER.last_name = "last_name"
-# MOCK_USER.phone_number = ""
-
 MOCK_USER = MCCUsers(
     id=UUID("E621E1F8-C36C-495A-93FC-0C247A3E6E5F"),
     email="test@uworbital.com",
@@ -65,13 +58,20 @@ def test_users_update_endpoint(client):
     MOCK_USER.first_name = "updated_first_name"
     MOCK_USER.last_name = "updated_last_name"
 
-    with patch.object(mcc_users.MCCUsersWrapper, "update", return_value=MOCK_USER) as mock_update:
-        response = client.patch(f"{USERS_PREFIX}/me", json={"first_name": "updated_first_name", "last_name": "updated_last_name"})
+    payload = {
+        "first_name": "updated_first_name",
+        "last_name": "updated_last_name",
+    }
+
+    with patch.object(mcc_users.MCCUsersWrapper, "update", return_value=MOCK_USER) as mock_update, \
+         patch.object(mcc_users.keycloak, "sync_user_changes", return_value=None) as mock_sync_changes:
+        response = client.patch(f"{USERS_PREFIX}/me", json=payload)
 
     assert response.status_code == 200
-    assert response.json()["first_name"] == "updated_first_name"
-    assert response.json()["last_name"] == "updated_last_name"
-    mock_update.assert_called_once_with(UUID("E621E1F8-C36C-495A-93FC-0C247A3E6E5F"), {"first_name": "updated_first_name", "last_name": "updated_last_name"})
+    assert response.json()["first_name"] == payload["first_name"]
+    assert response.json()["last_name"] == payload["last_name"]
+    mock_update.assert_called_once_with(MOCK_USER.id, payload)
+    mock_sync_changes.assert_called_once_with(MOCK_USER.id, payload)
 
     MOCK_USER.first_name = "first_name"
     MOCK_USER.last_name = "last_name"
@@ -79,8 +79,10 @@ def test_users_update_endpoint(client):
 
 def test_users_delete_endpoint(client):
     """Test that me endpoint can handle delete users by their id"""
-    with patch.object(mcc_users.MCCUsersWrapper, "delete_by_id", return_value=MOCK_USER) as mock_delete_by_id:
+    with patch.object(mcc_users.MCCUsersWrapper, "delete_by_id", return_value=MOCK_USER) as mock_delete_by_id, \
+         patch.object(mcc_users.keycloak, "sync_user_deletion", return_value=None) as mock_sync_deletion:
         response = client.delete(f"{USERS_PREFIX}/me", follow_redirects=False)
 
     assert response.status_code == 200
     mock_delete_by_id.assert_called_once_with(MOCK_USER.id)
+    mock_sync_deletion.assert_called_once_with(MOCK_USER.id)
