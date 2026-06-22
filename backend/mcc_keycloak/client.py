@@ -112,14 +112,14 @@ class KeycloakClient:
             payload[key] = data[value]
 
         try:
-            self.admin_client.update_user(user_id=user_id, payload=payload)
+            self.admin_client.update_user(user_id=str(user_id), payload=payload)
         except ValueError as e:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found") from e
 
     def sync_user_deletion(self, user_id: UUID) -> None:
         """Syncs a user deletion to the Keycloak service"""
         try:
-            self.admin_client.delete_user(user_id=user_id)
+            self.admin_client.delete_user(user_id=str(user_id))
         except ValueError as e:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found") from e
 
