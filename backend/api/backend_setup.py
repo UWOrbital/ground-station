@@ -12,11 +12,11 @@ from api.v1.aro.endpoints.picture_requests import picture_requests_router
 from api.v1.aro.endpoints.user import aro_user_router
 from api.v1.mcc.endpoints.aro_requests import aro_requests_router
 from api.v1.mcc.endpoints.auth import mcc_auth_router
-from api.v1.mcc.endpoints.users import mcc_users_router
 from api.v1.mcc.endpoints.commands import commands_router
 from api.v1.mcc.endpoints.main_commands import main_commands_router
 from api.v1.mcc.endpoints.status import status_router
 from api.v1.mcc.endpoints.telemetry import telemetry_router
+from api.v1.mcc.endpoints.users import mcc_users_router
 
 
 def setup_routes(app: FastAPI) -> None:

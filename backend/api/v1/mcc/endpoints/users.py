@@ -45,7 +45,7 @@ def update_me(data: dict[str, Any], user: MCCUsers = Depends(keycloak.get_curren
 @mcc_users_router.delete("/me")
 def delete_me(user: MCCUsers = Depends(keycloak.get_current_user)) -> dict[str, str]:
     """
-    Endpoint for deleting user from .
+    Endpoint for deleting user from keycloak service in use.
     """
     try:
         MCCUsersWrapper().delete_by_id(user.id)
