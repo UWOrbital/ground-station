@@ -10,7 +10,7 @@ mcc_users_router = APIRouter(tags=["MCC", "Users"], dependencies=[keycloak.requi
 
 
 @mcc_users_router.get("/me")
-def get_me(user: MCCUsers = Depends(keycloak.get_current_user)) -> dict:
+def get_me(user: MCCUsers = Depends(keycloak.get_current_user)) -> dict[str, Any]:
     """
     Login endpoint for redirecting to keycloak's login/registration page
     """
@@ -24,7 +24,7 @@ def get_me(user: MCCUsers = Depends(keycloak.get_current_user)) -> dict:
 
 
 @mcc_users_router.patch("/me")
-def update_me(data: dict[str, Any], user: MCCUsers = Depends(keycloak.get_current_user)) -> dict:
+def update_me(data: dict[str, Any], user: MCCUsers = Depends(keycloak.get_current_user)) -> dict[str, Any]:
     """
     Callback endpoint redirected to by keycloak for tokens
     """
@@ -36,6 +36,8 @@ def update_me(data: dict[str, Any], user: MCCUsers = Depends(keycloak.get_curren
         raise HTTPException(status_code=422, detail="Field type mismatch")
     except RuntimeError:
         raise HTTPException(status_code=500, detail="Failed to update user")
+
+    keycloak.sync_user_changes(user.id, data)
 
     return get_me(user)
 
@@ -50,4 +52,5 @@ def delete_me(user: MCCUsers = Depends(keycloak.get_current_user)) -> dict[str, 
     except ValueError:
         raise HTTPException(status_code=404, detail="User not found")
 
+    keycloak.sync_user_deletion(user.id)
     return {"status": "success"}
