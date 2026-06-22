@@ -30,12 +30,12 @@ def update_me(data: dict[str, Any], user: MCCUsers = Depends(keycloak.get_curren
     """
     try:
         MCCUsersWrapper().update(user.id, data)
-    except ValueError:
-        raise HTTPException(status_code=404, detail="User not found or field unavailable")
-    except TypeError:
-        raise HTTPException(status_code=422, detail="Field type mismatch")
-    except RuntimeError:
-        raise HTTPException(status_code=500, detail="Failed to update user")
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail="User not found or field unavailable") from e
+    except TypeError as e:
+        raise HTTPException(status_code=422, detail="Field type mismatch") from e
+    except RuntimeError as e:
+        raise HTTPException(status_code=500, detail="Failed to update user") from e
 
     keycloak.sync_user_changes(user.id, data)
 
@@ -49,8 +49,8 @@ def delete_me(user: MCCUsers = Depends(keycloak.get_current_user)) -> dict[str, 
     """
     try:
         MCCUsersWrapper().delete_by_id(user.id)
-    except ValueError:
-        raise HTTPException(status_code=404, detail="User not found")
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail="User not found") from e
 
     keycloak.sync_user_deletion(user.id)
     return {"status": "success"}
