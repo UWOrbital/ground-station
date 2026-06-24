@@ -1,4 +1,5 @@
 from typing import Annotated
+from uuid import UUID
 
 from data.tables.main_tables import MainCommand
 from data.tables.transactional_tables import Commands
@@ -50,3 +51,16 @@ class SatelliteStatusResponse(BaseModel):
     last_contact: str
     session_duration: str
     telemetry_data: list[TelemetryDataResponse]
+
+
+class UserInformationResponse(BaseModel):
+    """
+
+    The User Personal Account Details Response model
+    """
+
+    id: UUID
+    email: str
+    first_name: str | None = None
+    last_name: str | None = None
+    phone_number: str | None = None

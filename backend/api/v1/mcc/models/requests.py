@@ -23,3 +23,14 @@ class UpdateCommandRequest(BaseModel):
     status: Annotated[CommandStatus | None, Field(description="New command lifecycle status")] = None
     type_: Annotated[int | None, Field(description="Replacement MainCommand ID")] = None
     params: Annotated[str | None, Field(description="Replacement serialized command parameters")] = None
+
+
+class UpdateUserRequest(BaseModel):
+    """
+    Request model for partially updating an existing user
+    """
+
+    email: str | None = None
+    first_name: str | None = None
+    last_name: str | None = None
+    phone_number: str | None = None

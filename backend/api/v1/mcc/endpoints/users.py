@@ -1,33 +1,44 @@
-from typing import Any
-
 from data.data_wrappers.wrappers import MCCUsersWrapper
 from data.tables.mcc_user_tables import MCCUsers
 from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
 from mcc_keycloak.client import keycloak
 
+from api.v1.mcc.models.requests import UpdateUserRequest
+from api.v1.mcc.models.responses import UserInformationResponse
+
 mcc_users_router = APIRouter(tags=["MCC", "Users"], dependencies=[keycloak.require_auth])
 
 
 @mcc_users_router.get("/me")
-def get_me(user: MCCUsers = Depends(keycloak.get_current_user)) -> dict[str, Any]:
+def get_me(user: MCCUsers = Depends(keycloak.get_current_user)) -> UserInformationResponse:
     """
     Login endpoint for redirecting to keycloak's login/registration page
     """
-    return {
-        "id": str(user.id),
-        "email": user.email,
-        "first_name": user.first_name,
-        "last_name": user.last_name,
-        "phone_number": user.phone_number,
-    }
+    return UserInformationResponse(
+        id=str(user.id),
+        email=user.email,
+        first_name=user.first_name,
+        last_name=user.last_name,
+        phone_number=user.phone_number,
+    )
 
 
 @mcc_users_router.patch("/me")
-def update_me(data: dict[str, Any], user: MCCUsers = Depends(keycloak.get_current_user)) -> dict[str, Any]:
+def update_me(
+    request: UpdateUserRequest, user: MCCUsers = Depends(keycloak.get_current_user)
+) -> UserInformationResponse:
     """
     Callback endpoint redirected to by keycloak for tokens
     """
+
+    data = {
+        "email": request.email,
+        "first_name": request.first_name,
+        "last_name": request.last_name,
+        "phone_number": request.phone_number,
+    }
+
     try:
         MCCUsersWrapper().update(user.id, data)
     except ValueError as e:
