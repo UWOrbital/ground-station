@@ -2,7 +2,7 @@ import "./new-request-form.css";
 import InputForm from "./input-form";
 import MapView from "./map-view";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import  React, { useEffect } from "react";
+import React, { useEffect } from "react";
 
 export function isInvalidCoordinate(lat: number, lng: number) {
   if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
@@ -28,18 +28,24 @@ export async function getUserLocation(): Promise<{ latitude: number; longitude: 
       (error) => {
         console.error("Geolocation error:", error);
         reject(error);
-      }
+      },
     );
   });
 }
 
 const NewRequestForm = () => {
   useEffect(() => {
-    alert('Welcome to the new request form! Enter your coordinates on the left or select them on the map by holding Shift and clicking your desired location.');
+    alert(
+      "Welcome to the new request form! Enter your coordinates on the left or select them on the map by holding Shift and clicking your desired location.",
+    );
   }, []);
 
   const queryClient = useQueryClient();
-  const { data: location, isLoading, isError } = useQuery({
+  const {
+    data: location,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ["coords"],
     queryFn: getUserLocation,
     staleTime: Infinity,
@@ -88,18 +94,16 @@ const NewRequestForm = () => {
   }
 
   return (
-    <div className = "form-container flex mt-25">
+    <div className="form-container flex mt-25">
       <div className="w-1/4 max-h-500 overflow-auto">
-        <InputForm
-          handleSubmit={handleSubmit}
-        />
+        <InputForm handleSubmit={handleSubmit} />
       </div>
-    {latitude !== null && longitude !== null && (
-      <div className="flex-1">
-        <MapView/>
-      </div>
-    )}
-  </div>
+      {latitude !== null && longitude !== null && (
+        <div className="flex-1">
+          <MapView />
+        </div>
+      )}
+    </div>
   );
 };
 

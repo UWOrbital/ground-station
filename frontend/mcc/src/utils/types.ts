@@ -2,20 +2,16 @@
 
 // Enums matching database schema
 export type CommandStatus =
-  | 'pending'
-  | 'scheduled'
-  | 'ongoing'
-  | 'cancelled'
-  | 'failed'
-  | 'completed';
+  | "pending"
+  | "scheduled"
+  | "ongoing"
+  | "cancelled"
+  | "failed"
+  | "completed";
 
-export type SessionStatus =
-  | 'pending'
-  | 'scheduled'
-  | 'ongoing'
-  | 'completed';
+export type SessionStatus = "pending" | "scheduled" | "ongoing" | "completed";
 
-export type MainPacketType = 'uplink' | 'downlink';
+export type MainPacketType = "uplink" | "downlink";
 
 // Database table interfaces
 export interface Session {

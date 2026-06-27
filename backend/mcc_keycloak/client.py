@@ -9,7 +9,7 @@ from data.tables.mcc_user_tables import MCCUsers
 from fastapi import Depends, Request, status
 from fastapi.exceptions import HTTPException
 from jwcrypto.jwt import JWTExpired
-from keycloak import KeycloakError, KeycloakOpenID
+from keycloak import KeycloakAdmin, KeycloakError, KeycloakOpenID, KeycloakOpenIDConnection
 
 
 class KeycloakClient:
@@ -28,6 +28,15 @@ class KeycloakClient:
             realm_name=config.realm,
             client_id=config.client_id,
             client_secret_key=config.client_secret,
+        )
+        self.admin_client = KeycloakAdmin(
+            connection=KeycloakOpenIDConnection(
+                server_url=config.host,
+                realm_name=config.realm,
+                client_id=config.client_id,
+                client_secret_key=config.client_secret,
+                verify=True,
+            )
         )
         self.require_auth = Depends(self.authenticate)
 
@@ -88,6 +97,29 @@ class KeycloakClient:
         user_info = self.authenticate(request)
         try:
             return MCCUsersWrapper().get_by_id(UUID(user_info["sub"]))
+        except ValueError as e:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found") from e
+
+    def sync_user_changes(self, user_id: UUID, data: dict[str, Any]) -> None:
+        """Syncs user information changes to the Keycloak service"""
+        payload: dict[str, Any] = {
+            "email": "email",
+            "firstName": "first_name",
+            "lastName": "last_name",
+        }
+
+        for key, value in payload.items():
+            payload[key] = data[value]
+
+        try:
+            self.admin_client.update_user(user_id=str(user_id), payload=payload)
+        except ValueError as e:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found") from e
+
+    def sync_user_deletion(self, user_id: UUID) -> None:
+        """Syncs a user deletion to the Keycloak service"""
+        try:
+            self.admin_client.delete_user(user_id=str(user_id))
         except ValueError as e:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found") from e
 

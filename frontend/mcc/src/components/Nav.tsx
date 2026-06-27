@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import orbital_logo from "../assets/orbital_logo.png";
 import { NAVIGATION_LINKS } from "../utils/nav-links";
 import { useTheme } from "../contexts/ThemeContext";
+import SatelliteStatusIndicator from "./SatelliteStatusIndicator";
 
 /**
  * @brief Nav component displaying the navigation bar
@@ -22,18 +23,27 @@ function Nav() {
       {/* Navigation Links */}
       <div className="flex space-x-7">
         {NAVIGATION_LINKS.map((link) => (
-          <Link
-            key={link.url}
-            to={link.url}
-            className="hover:underline transition-colors"
-          >
+          <Link key={link.url} to={link.url} className="hover:underline transition-colors">
             {link.text}
           </Link>
         ))}
       </div>
 
-
       <div className="flex items-center gap-4">
+        {/* Satellite Status Indicator - Only shown when logged in */}
+        {isLoggedIn && (
+          <SatelliteStatusIndicator
+            status="online"
+            lastContact="2 min ago"
+            sessionDuration="1h 23m"
+            telemetryData={[
+              { label: "Battery Level", value: "85", unit: "%" },
+              { label: "Temperature", value: "42", unit: "°C" },
+              { label: "Signal Strength", value: "Strong", unit: "" },
+              { label: "Altitude", value: "450", unit: "km" },
+            ]}
+          />
+        )}
 
         <button
           onClick={toggleTheme}
@@ -42,7 +52,6 @@ function Nav() {
           title={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
         >
           {theme === "light" ? (
-
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="18"
@@ -57,7 +66,6 @@ function Nav() {
               <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
             </svg>
           ) : (
-
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="18"
@@ -81,7 +89,6 @@ function Nav() {
             </svg>
           )}
         </button>
-
 
         {isLoggedIn ? (
           <Link

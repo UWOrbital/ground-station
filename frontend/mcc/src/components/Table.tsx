@@ -10,6 +10,7 @@ import { useState } from "react";
 
 interface TableProps<T> {
   data: T[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   columns: ColumnDef<T, any>[];
   onRowClick?: (row: T) => void;
   showFilters?: boolean;
@@ -74,10 +75,7 @@ function Table<T>({
                   >
                     {header.isPlaceholder
                       ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                      : flexRender(header.column.columnDef.header, header.getContext())}
                   </th>
                 ))}
               </tr>

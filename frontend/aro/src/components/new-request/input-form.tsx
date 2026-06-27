@@ -5,7 +5,7 @@ interface MapViewProps {
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
 }
 
-const InputForm: React.FC<MapViewProps> = ({handleSubmit}) => {
+const InputForm: React.FC<MapViewProps> = ({ handleSubmit }) => {
   const queryClient = useQueryClient();
   const [localLat, setLocalLat] = useState<number | "">("");
   const [localLng, setLocalLng] = useState<number | "">("");
@@ -13,7 +13,7 @@ const InputForm: React.FC<MapViewProps> = ({handleSubmit}) => {
   const { data: location } = useQuery<{ latitude: number; longitude: number }, Error>({
     queryKey: ["coords"],
     queryFn: async () => {
-      const cached = queryClient.getQueryData<{ latitude:number, longitude:number }>(["coords"]);
+      const cached = queryClient.getQueryData<{ latitude: number; longitude: number }>(["coords"]);
       if (!cached) throw new Error("No coordinates yet");
       return cached;
     },
@@ -27,7 +27,6 @@ const InputForm: React.FC<MapViewProps> = ({handleSubmit}) => {
       setLocalLng(location.longitude);
     }
   }, [location]);
-
 
   const handleLatitudeChange = (event: ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
