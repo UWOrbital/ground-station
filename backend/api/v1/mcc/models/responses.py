@@ -1,7 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from data.tables.main_tables import MainCommand
+from data.tables.main_tables import MainCommand, MainTelemetry
 from data.tables.transactional_tables import Commands
 from pydantic import BaseModel, Field
 
@@ -10,6 +10,12 @@ class MainCommandsResponse(BaseModel):
     """Response model wrapping a list of MainCommand reference entries."""
 
     data: Annotated[list[MainCommand], Field(description="A list containing MainCommand objects")]
+
+
+class MainCommandResponse(BaseModel):
+    """Response model wrapping a single MainCommand."""
+
+    data: Annotated[MainCommand, Field(description="The retrieved MainCommand object")]
 
 
 class CommandsResponse(BaseModel):
@@ -28,6 +34,18 @@ class DeleteCommandResponse(BaseModel):
     """Response model confirming a command deletion."""
 
     message: Annotated[str, Field(description="Confirmation message including the deleted command ID")]
+
+
+class MainTelemetriesDataResponse(BaseModel):
+    """Response model for wrapping a list of main telemetries"""
+
+    data: Annotated[list[MainTelemetry], Field(description="A list containing MainTelemetry objects")]
+
+
+class MainTelemetryDataResponse(BaseModel):
+    """Response model for wrapping a single MainTelemetry"""
+
+    data: Annotated[MainTelemetry, Field(description="The retrieved MainTelemetry object")]
 
 
 class TelemetryDataResponse(BaseModel):
