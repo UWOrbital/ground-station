@@ -57,9 +57,7 @@ interface AuthProviderProps {
  */
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<AROUser | null>(null);
-  const [token, setToken] = useState<string | null>(() =>
-    localStorage.getItem(TOKEN_KEY),
-  );
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem(TOKEN_KEY));
   const [loading, setLoading] = useState(true);
 
   // Bootstrap: if a token exists, validate it by fetching the user
@@ -114,13 +112,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setUser(null);
   }, [token]);
 
-  const verifyCallsign = useCallback(
-    async (payload: CallsignPayload) => {
-      const res = await apiVerifyCallsign(payload);
-      setUser(res.data);
-    },
-    [],
-  );
+  const verifyCallsign = useCallback(async (payload: CallsignPayload) => {
+    const res = await apiVerifyCallsign(payload);
+    setUser(res.data);
+  }, []);
 
   const loginWithGoogle = useCallback(() => {
     redirectToGoogleLogin();
