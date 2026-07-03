@@ -113,3 +113,48 @@ export interface UserLogin {
   user_data_id: number;
   email_verification_token: string | null;
 }
+
+// Auth types
+
+export interface AROUser {
+  id: string;
+  call_sign: string | null;
+  google_id: string | null;
+  is_callsign_verified: boolean;
+  email: string;
+  first_name: string;
+  last_name: string | null;
+  phone_number: string | null;
+}
+
+export interface TokenResponse {
+  token: string;
+  user_id: string;
+  expires_at: string;
+}
+
+export interface RegisterPayload {
+  email: string;
+  password: string;
+  first_name: string;
+  last_name?: string;
+  phone_number?: string;
+}
+
+export interface LoginPayload {
+  email: string;
+  password: string;
+}
+
+export interface CallsignPayload {
+  call_sign: string;
+  qual_level_a: boolean;
+  qual_level_b: boolean;
+  qual_level_c: boolean;
+  qual_level_d: boolean;
+  qual_level_e: boolean;
+}
+
+export interface UserResponse {
+  data: AROUser;
+}
