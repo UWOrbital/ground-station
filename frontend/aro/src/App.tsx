@@ -7,6 +7,7 @@ import NewRequestForm from "./components/new-request/new-request-form.tsx";
 import Login from "./components/auth/login.tsx";
 import Signup from "./components/auth/sign-up.tsx";
 import Verify from "./components/auth/verify.tsx";
+import { AuthProvider } from "./contexts/AuthContext";
 import Home from "./components/Home.tsx";
 import PageNotFound from "./components/PageNotFound.tsx";
 import Gallery from "./components/profile/photo-gallery/gallery.tsx";
@@ -18,7 +19,7 @@ import ProfileForm from "./components/profile/profile-form/profile-form.tsx";
  */
 function App() {
   return (
-    <>
+    <AuthProvider>
       <Nav />
       <Background />
       <Routes>
@@ -38,7 +39,7 @@ function App() {
         <Route path="/profile/settings" element={<ProfileForm />} />
       </Routes>
       <ToastContainer />
-    </>
+    </AuthProvider>
   );
 }
 
