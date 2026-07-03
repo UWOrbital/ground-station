@@ -57,7 +57,7 @@ def verify_user_callsign(request: CallsignRequest, user: AROUsers) -> AROUsers:
     updated_user = users.update(
         user.id,
         {
-            "callsign": request.call_sign,
+            "call_sign": request.call_sign,
             "is_callsign_verified": True,
         },
     )
