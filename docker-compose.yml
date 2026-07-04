@@ -18,17 +18,17 @@ services:
     image: quay.io/keycloak/keycloak:latest
     entrypoint: ["/bin/bash", "-c"]
     command:
-    - |
-      /opt/keycloak/bin/kc.sh start-dev --import-realm &
-      until echo > /dev/tcp/localhost/8080; do sleep 2; done
-      sleep 5
-      /opt/keycloak/bin/kcadm.sh config credentials \
-        --server http://localhost:8080 \
-        --realm master \
-        --user mcc-admin \
-        --password uworbital
-      /opt/keycloak/bin/kcadm.sh update realms/master -s sslRequired=NONE
-      wait
+      - |
+        /opt/keycloak/bin/kc.sh start-dev --import-realm &
+        until echo > /dev/tcp/localhost/8080; do sleep 2; done
+        sleep 5
+        /opt/keycloak/bin/kcadm.sh config credentials \
+          --server http://localhost:8080 \
+          --realm master \
+          --user mcc-admin \
+          --password uworbital
+        /opt/keycloak/bin/kcadm.sh update realms/master -s sslRequired=NONE
+        wait
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: mcc-admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: uworbital
@@ -36,8 +36,8 @@ services:
     ports:
       - "8080:8080"
     volumes:
-    - keycloak_data:/opt/keycloak/data
-    - ./backend/mcc_keycloak/mcc-realm.json:/opt/keycloak/data/import/mcc-realm.json
+      - keycloak_data:/opt/keycloak/data
+      - ./backend/mcc_keycloak/mcc-realm.json:/opt/keycloak/data/import/mcc-realm.json
   aro-frontend:
     build:
       context: frontend/aro
@@ -58,5 +58,18 @@ services:
     volumes:
       - ./frontend/mcc:/app
       - /app/node_modules
+  postgres:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${GS_DATABASE_USER}
+      POSTGRES_PASSWORD: ${GS_DATABASE_PASSWORD}
+      POSTGRES_DB: ${GS_DATABASE_NAME}
+    ports:
+      - "${GS_DATABASE_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
 volumes:
   keycloak_data:
+  postgres_data:
