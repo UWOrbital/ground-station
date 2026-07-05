@@ -1,6 +1,7 @@
 from typing import Any, Self
+from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, model_validator
+from pydantic import BaseModel, EmailStr, Field, model_validator
 
 # -----------------------------------------------------------------------
 # Request & Responses
@@ -156,6 +157,40 @@ class GoogleRequest(BaseModel):
         if not self.google_id:
             raise ValueError("google_id cannot be empty.")
         return self
+
+
+class GenerateKeyRequest(BaseModel):
+    """
+    GenerateKeyRequest
+
+    Request body to generate a new ARO authentication key.
+
+    :param name: Optional friendly label for the key (e.g. "My Primary Key")
+    :type name: str | None
+    """
+
+    name: str | None = Field(default=None, max_length=50)
+
+    @model_validator(mode="before")
+    @classmethod
+    def sanitize_name(cls, data: dict[str, str]) -> dict[str, str]:
+        """Strip whitespace from the name if provided."""
+        if isinstance(data.get("name"), str):
+            data["name"] = data["name"].strip()
+        return data
+
+
+class SyncKeysRequest(BaseModel):
+    """
+    SyncKeysRequest
+
+    Request body to mark an ARO authentication key as synced to the OBC.
+
+    :param key_id: The UUID of the key to mark as synced
+    :type key_id: UUID
+    """
+
+    key_id: UUID
 
 
 class CallsignRequest(BaseModel):

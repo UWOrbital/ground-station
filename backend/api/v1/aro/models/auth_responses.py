@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Self
 from uuid import UUID
 
-from data.tables.aro_user_tables import AROUsers
+from data.tables.aro_user_tables import AROUserKey, AROUsers
 from pydantic import BaseModel, model_validator
 
 
@@ -45,3 +45,58 @@ class UserResponse(BaseModel):
     """
 
     data: AROUsers
+
+
+class GenerateKeyResponse(BaseModel):
+    """
+    GenerateKeyResponse
+
+    Response returned after successfully generating a new ARO key.
+
+    :param data: The newly created key
+    :type data: AROUserKey
+    """
+
+    data: AROUserKey
+
+
+class CurrentKeyResponse(BaseModel):
+    """
+    CurrentKeyResponse
+
+    Response containing the ARO user's currently active key, if one exists.
+
+    :param data: The active key, or None if no keys exist
+    :type data: AROUserKey | None
+    """
+
+    data: AROUserKey | None
+
+
+class GetAllKeysResponse(BaseModel):
+    """
+    GetAllKeysResponse
+
+    Response containing all keys belonging to the authenticated ARO user.
+
+    :param data: List of the user's keys
+    :type data: list[AROUserKey]
+    """
+
+    data: list[AROUserKey]
+
+
+class SyncKeysResponse(BaseModel):
+    """
+    SyncKeysResponse
+
+    Response returned after marking a key as synced to the OBC.
+
+    :param message: Confirmation message
+    :type message: str
+    :param key_id: UUID of the synced key
+    :type key_id: UUID
+    """
+
+    message: str
+    key_id: UUID
