@@ -1,12 +1,13 @@
+import secrets
 from datetime import datetime
 from uuid import UUID
 
 from pydantic import EmailStr
-from sqlmodel import col, select
+from sqlmodel import col, select, update
 
 from data.data_wrappers.abstract_wrapper import AbstractWrapper  # SEE abstract_wrapper.py FOR LOGIC
 from data.database.engine import get_db_session
-from data.tables.aro_user_tables import AROUserAuthToken, AROUserCallsigns, AROUserLogin, AROUsers
+from data.tables.aro_user_tables import AROUserAuthToken, AROUserCallsigns, AROUserKey, AROUserLogin, AROUsers
 from data.tables.main_tables import MainCommand, MainTelemetry
 from data.tables.mcc_user_tables import MCCUsers
 from data.tables.transactional_tables import (
@@ -122,6 +123,84 @@ class AROUserLoginWrapper(AbstractWrapper[AROUserLogin, UUID]):
         with get_db_session() as session:
             found_login = session.exec(select(AROUserLogin).where(AROUserLogin.email == email)).first()
         return found_login
+
+
+class AROUserKeyWrapper(AbstractWrapper[AROUserKey, UUID]):
+    """
+    Data wrapper for AROUserKey table.
+    """
+
+    model = AROUserKey
+
+    def generate(self, user_id: UUID, name: str | None = None) -> AROUserKey:
+        """
+        Generate a new 32-byte AES-256 key for a user.
+
+        Deactivates the user's current active key so only the new one is active.
+        The key is returned as a hex-encoded 64-character string.
+
+        :param user_id: The ARO user who will own this key
+        :type user_id: UUID
+        :param name: Optional friendly label
+        :type name: str | None
+        :return: The newly created AROUserKey
+        :rtype: AROUserKey
+        """
+        key_bytes = secrets.token_bytes(32)
+        key_hex = key_bytes.hex()
+        with get_db_session() as session:
+            # Deactivate the user's current active key
+            session.exec(
+                update(AROUserKey).where(AROUserKey.user_id == user_id, AROUserKey.is_active).values(is_active=False)
+            )
+            new_key = AROUserKey(
+                user_id=user_id,
+                key_data=key_hex,
+                name=name,
+                is_active=True,
+            )
+            session.add(new_key)
+            session.commit()
+            session.refresh(new_key)
+        return new_key
+
+    def get_active(self, user_id: UUID) -> AROUserKey | None:
+        """
+        Return the user's currently active key, if one exists.
+
+        :param user_id: The ARO user whose active key to retrieve
+        :type user_id: UUID
+        :return: The active key, or None
+        :rtype: AROUserKey | None
+        """
+        with get_db_session() as session:
+            return session.exec(
+                select(AROUserKey).where(
+                    AROUserKey.user_id == user_id,
+                    AROUserKey.is_active,
+                )
+            ).first()
+
+    def mark_synced(self, key_id: UUID) -> AROUserKey:
+        """
+        Record that a key was synced to the OBC.
+
+        Sets synced_to_obc_at to the current time.
+
+        :param key_id: UUID of the key to mark as synced
+        :type key_id: UUID
+        :return: The updated AROUserKey
+        :rtype: AROUserKey
+        :raises ValueError: If no key with the given ID exists
+        """
+        with get_db_session() as session:
+            key = session.get(AROUserKey, key_id)
+            if not key:
+                raise ValueError(f"AROUserKey with ID {key_id} not found.")
+            key.synced_to_obc_at = datetime.now()
+            session.commit()
+            session.refresh(key)
+        return key
 
 
 class ARORequestWrapper(AbstractWrapper[ARORequest, UUID]):

@@ -25,6 +25,7 @@ ARO_USER_TABLE_NAME: Final[str] = "users_data"
 ARO_USER_CALLSIGNS: Final[str] = "callsigns"
 ARO_USER_LOGIN: Final[str] = "user_login"
 ARO_AUTH_TOKEN: Final[str] = "auth_tokens"
+ARO_USER_KEY: Final[str] = "aro_user_keys"
 
 
 class AROUsers(BaseSQLModel, table=True):
@@ -148,4 +149,40 @@ class AROUserAuthToken(BaseSQLModel, table=True):
     type_: AROAuthToken = Field(sa_column=Column("type", Enum(AROAuthToken, name="auth_type"), nullable=False))
 
     __tablename__ = ARO_AUTH_TOKEN
+    __table_args__ = {"schema": ARO_USER_SCHEMA_NAME}
+
+
+class AROUserKey(BaseSQLModel, table=True):
+    """
+    ARO authentication keys for satellite direct communication.
+
+    Each ARO user can have multiple keys, but only one active at a time.
+    The active key is synced to the OBC before a pass so the satellite
+    can authenticate the operator.
+
+    :param id: Primary key
+    :type id: UUID
+    :param user_id: Foreign key to the ARO user who owns this key
+    :type user_id: UUID
+    :param key_data: Hex-encoded 32-byte AES-256 key (64 characters)
+    :type key_data: str
+    :param name: Optional friendly label
+    :type name: str | None
+    :param is_active: Whether this is the user's current active key
+    :type is_active: bool
+    :param created_at: When the key was generated
+    :type created_at: datetime
+    :param synced_to_obc_at: When the key was last uplinked to the satellite
+    :type synced_to_obc_at: datetime | None
+    """
+
+    id: UUID = Field(default_factory=uuid4, primary_key=True, index=True)
+    user_id: UUID = Column(DB_UUID, ForeignKey(AROUsers.id))
+    key_data: str = Field(max_length=64)
+    name: str | None = Field(max_length=50, default=None)
+    is_active: bool = Field(default=True)
+    created_at: datetime = Field(default_factory=datetime.now)
+    synced_to_obc_at: datetime | None = Field(default=None)
+
+    __tablename__ = ARO_USER_KEY
     __table_args__ = {"schema": ARO_USER_SCHEMA_NAME}
