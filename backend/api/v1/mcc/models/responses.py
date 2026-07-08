@@ -36,13 +36,13 @@ class DeleteCommandResponse(BaseModel):
     message: Annotated[str, Field(description="Confirmation message including the deleted command ID")]
 
 
-class MainTelemetriesDataResponse(BaseModel):
+class MainTelemetriesResponse(BaseModel):
     """Response model for wrapping a list of main telemetries"""
 
     data: Annotated[list[MainTelemetry], Field(description="A list containing MainTelemetry objects")]
 
 
-class MainTelemetryDataResponse(BaseModel):
+class MainTelemetryResponse(BaseModel):
     """Response model for wrapping a single MainTelemetry"""
 
     data: Annotated[MainTelemetry, Field(description="The retrieved MainTelemetry object")]
