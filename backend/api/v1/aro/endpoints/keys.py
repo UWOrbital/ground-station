@@ -11,10 +11,10 @@ from api.v1.aro.models.auth_responses import (
     SyncKeysResponse,
 )
 
-picture_requests_router = APIRouter(tags=["ARO", "Keys"])
+aro_keys_router = APIRouter(tags=["ARO", "Keys"])
 
 
-@picture_requests_router.post("/generate")
+@aro_keys_router.post("/generate")
 async def generate_key(
     payload: GenerateKeyRequest,
     user: AROUsers = Depends(get_current_user),
@@ -31,7 +31,7 @@ async def generate_key(
     return GenerateKeyResponse(data=user_keys.generate(user_id=user.id, name=payload.name))
 
 
-@picture_requests_router.post("/current")
+@aro_keys_router.post("/current")
 async def current_key(
     user: AROUsers = Depends(get_current_user),
 ) -> CurrentKeyResponse:
@@ -41,7 +41,7 @@ async def current_key(
     return CurrentKeyResponse(data=user_keys.get_active(user_id=user.id))
 
 
-@picture_requests_router.post("/all")
+@aro_keys_router.post("/all")
 async def get_all_keys(
     user: AROUsers = Depends(get_current_user),
 ) -> GetAllKeysResponse:
@@ -58,7 +58,7 @@ async def get_all_keys(
     )
 
 
-@picture_requests_router.post("/sync")
+@aro_keys_router.post("/sync")
 async def sync_keys(
     payload: SyncKeysRequest,
     user: AROUsers = Depends(get_current_user),
