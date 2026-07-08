@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "backend"
@@ -70,8 +70,9 @@ dev = [
     "pre-commit==4.6.0",
 ]
 
-[tool.setuptools]
-packages = ["backend"]
+[tool.hatch.build.targets]
+wheel.packages = ["backend"]
+sdist.only-include = ["backend"]
 
 [tool.pytest.ini_options]
 addopts = "-v"
