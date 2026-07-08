@@ -16,7 +16,7 @@ async def get_all_telemetries() -> MainTelemetriesDataResponse:
     :return: list of all telemetries
     """
     items = MainTelemetryWrapper().get_all()
-    return MainTelemetriesDataResponse(data=items)
+    return MainTelemetriesResponse(data=items)
 
 
 @main_telemetry_router.get("/{telemetry_id}", dependencies=[keycloak.require_auth])
@@ -31,4 +31,4 @@ async def get_telemetry_by_id(telemetry_id: int) -> MainTelemetryDataResponse:
         telemetry = MainTelemetryWrapper().get_by_id(telemetry_id)
     except ValueError as e:
         raise HTTPException(status_code=404, detail="Telemetry not found") from e
-    return MainTelemetryDataResponse(data=telemetry)
+    return MainTelemetryResponse(data=telemetry)
