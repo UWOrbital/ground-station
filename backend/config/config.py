@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from config.aro_auth_config import AROAuthConfig
 from config.cors_config import CORSConfig
 from config.database_config import DatabaseConfig
+from config.email_config import EmailConfig
 from config.keycloak_config import KeycloakConfig
 from config.logger_config import LoggerConfig
 
@@ -22,6 +23,7 @@ class BackendConfiguration:
         self.db = DatabaseConfig()
         self.keycloak = KeycloakConfig()
         self.auth = AROAuthConfig()
+        self.email = EmailConfig()
 
 
 settings = BackendConfiguration()
