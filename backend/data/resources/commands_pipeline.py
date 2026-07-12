@@ -4,7 +4,7 @@ import warnings
 from data.data_wrappers.wrappers import CommandsWrapper, MainCommandWrapper
 from data.enums.transactional import CommandStatus
 from data.resources.cli_commands import CLICommand
-from data.tables.transactional_tables import Commands
+from data.tables.transactional_tables import Command
 from interfaces import PADDING_REQUIRED
 from interfaces.obc_gs_interface.commands.python import CmdMsg
 from interfaces.obc_gs_interface.commands.python.command_framing import command_multi_pack
@@ -56,7 +56,7 @@ class CommandsPipeline:
 
         return self.packet_list
 
-    def build_queue(self) -> list[Commands]:
+    def build_queue(self) -> list[Command]:
         """
         Builds the queue from the database based on status.
         """

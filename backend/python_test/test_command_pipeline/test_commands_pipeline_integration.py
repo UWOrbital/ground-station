@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlmodel import Session
 from data.resources.commands_pipeline import CommandsPipeline
 from data.tables.main_tables import MainCommand
-from data.tables.transactional_tables import Commands
+from data.tables.transactional_tables import Command
 from data.enums.transactional import CommandStatus
 from data.data_wrappers.wrappers import CommandsWrapper
 
@@ -22,8 +22,8 @@ def test_build_queue_integration(db_session: Session, pipeline: CommandsPipeline
 
     # 2. Setup Commands (Pending)
     # Valid parameter names based on CLICommand logic: log_level, time_of_execution
-    cmd_low = Commands(type_=mc_low.id, params="rtc_time,12345678", status=CommandStatus.PENDING)
-    cmd_high = Commands(type_=mc_high.id, params="log_level,1,time_of_execution,0", status=CommandStatus.PENDING)
+    cmd_low = Command(type_=mc_low.id, params="rtc_time,12345678", status=CommandStatus.PENDING)
+    cmd_high = Command(type_=mc_high.id, params="log_level,1,time_of_execution,0", status=CommandStatus.PENDING)
     db_session.add(cmd_low)
     db_session.add(cmd_high)
     db_session.flush()
@@ -48,7 +48,7 @@ def test_queue_to_packet_integration(db_session: Session, pipeline: CommandsPipe
     db_session.add(mc)
     db_session.flush()
 
-    cmd = Commands(type_=mc.id, params="", status=CommandStatus.PENDING)
+    cmd = Command(type_=mc.id, params="", status=CommandStatus.PENDING)
     db_session.add(cmd)
     db_session.flush()
 

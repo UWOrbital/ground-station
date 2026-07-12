@@ -11,7 +11,7 @@ from data.tables.main_tables import MainCommand, MainTelemetry
 from data.tables.mcc_user_tables import MCCUsers
 from data.tables.transactional_tables import (
     ARORequest,
-    Commands,
+    Command,
     CommsSession,
     Packet,
     Telemetry,
@@ -174,14 +174,14 @@ class PacketWrapper(AbstractWrapper[Packet, UUID]):
     model = Packet
 
 
-class CommandsWrapper(AbstractWrapper[Commands, UUID]):
+class CommandsWrapper(AbstractWrapper[Command, UUID]):
     """
-    Data wrapper for Commands table.
+    Data wrapper for Command table.
     """
 
-    model = Commands
+    model = Command
 
-    def retrieve_floating_commands(self) -> list[Commands]:
+    def retrieve_floating_commands(self) -> list[Command]:
         """
         Retrieves all commands which have not yet been assigned to a packet.
         A floating command is any command whose `packet_id` is still null.

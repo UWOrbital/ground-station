@@ -8,7 +8,7 @@ from data.tables.aro_user_tables import AROUsers
 from data.tables.main_tables import MainCommand, MainTelemetry
 from data.tables.transactional_tables import (
     ARORequest,
-    Commands,
+    Command,
     CommsSession,
     Packet,
     Telemetry,
@@ -29,11 +29,11 @@ def test_commands_basic(db_session: Session):
 
     # Test the commands table
     id = uuid4()
-    command1 = Commands(id=id, type_=main_command1.id, params="1234567")
+    command1 = Command(id=id, type_=main_command1.id, params="1234567")
     db_session.add(command1)
     db_session.commit()
 
-    commands_query = select(Commands)
+    commands_query = select(Command)
     commands_items = db_session.exec(commands_query).all()
 
     assert len(commands_items) == 1
@@ -242,11 +242,11 @@ def test_commands_packet_link(db_session: Session, default_comms_session: CommsS
 
     # Commands now link directly to a packet with a sequence index
     id = uuid4()
-    command = Commands(id=id, type_=main_command.id, packet_id=packet.id, sequence_index=0)
+    command = Command(id=id, type_=main_command.id, packet_id=packet.id, sequence_index=0)
     db_session.add(command)
     db_session.commit()
 
-    returned = db_session.exec(select(Commands).where(Commands.id == id)).one()
+    returned = db_session.exec(select(Command).where(Command.id == id)).one()
     assert returned.packet_id == packet.id
     assert returned.sequence_index == 0
     assert returned.status == CommandStatus.PENDING
@@ -255,5 +255,5 @@ def test_commands_packet_link(db_session: Session, default_comms_session: CommsS
     db_session.delete(packet)
     db_session.commit()
     db_session.expire_all()
-    survivor = db_session.exec(select(Commands).where(Commands.id == id)).one()
+    survivor = db_session.exec(select(Command).where(Command.id == id)).one()
     assert survivor.packet_id is None
