@@ -1,7 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from data.data_wrappers.wrappers import CommandsWrapper
+from data.data_wrappers.wrappers import CommandsWrapper, CommsSessionWrapper
 from data.tables.mcc_user_tables import MCCUsers
 from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
@@ -47,6 +47,11 @@ async def create_command(
     :param current_user: Authenticated MCC user; their ID is recorded on the command.
     :return: The newly created command.
     """
+    try:
+        CommsSessionWrapper().get_by_id(request.session_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+
     try:
         assert_not_locked_out(request.session_id)
     except ValueError as e:

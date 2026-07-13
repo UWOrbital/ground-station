@@ -38,9 +38,9 @@ def test_retrieve_floating_commands_filters():
     )
 
     # A command assigned to a packet is no longer floating
-    cmd_in_packet = cw.create(dict(id=uuid4(), type_=cmd_type, packet_id=packet.id, sequence_index=0))
-    cmd_free = cw.create(dict(id=uuid4(), type_=cmd_type))
-    cmd_free2 = cw.create(dict(id=uuid4(), type_=cmd_type))
+    cmd_in_packet = cw.create(dict(id=uuid4(), type_=cmd_type, session_id=comms_session.id, packet_id=packet.id, sequence_index=0))
+    cmd_free = cw.create(dict(id=uuid4(), type_=cmd_type, session_id=comms_session.id))
+    cmd_free2 = cw.create(dict(id=uuid4(), type_=cmd_type, session_id=comms_session.id))
 
     result = cw.retrieve_floating_commands()
     result_ids = {command.id for command in result}
@@ -52,6 +52,8 @@ def test_retrieve_floating_commands_filters():
 def test_retrieve_floating_commands_no_packet():
     cw = CommandsWrapper()
     mc = MainCommandWrapper()
+    csw = CommsSessionWrapper()
+
     cmd_type = mc.create(
         dict(
             id=2,
@@ -61,8 +63,11 @@ def test_retrieve_floating_commands_no_packet():
         )
     ).id
 
-    cw.create(dict(id=uuid4(), type_=cmd_type))
-    cw.create(dict(id=uuid4(), type_=cmd_type))
+    # wrapper layer knows nothing about lockout, only endpoint does
+    comms_session = csw.create({"id": uuid4(), "start_time": datetime.now()})
+
+    cw.create(dict(id=uuid4(), type_=cmd_type, session_id=comms_session.id))
+    cw.create(dict(id=uuid4(), type_=cmd_type, session_id=comms_session.id))
 
     result = cw.retrieve_floating_commands()
     expected = cw.get_all()

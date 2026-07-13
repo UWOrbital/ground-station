@@ -1,9 +1,10 @@
 import pytest
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlmodel import Session
+from uuid import uuid4
 from data.resources.commands_pipeline import CommandsPipeline
 from data.tables.main_tables import MainCommand
-from data.tables.transactional_tables import Command
+from data.tables.transactional_tables import Command, CommsSession
 from data.enums.transactional import CommandStatus
 from data.data_wrappers.wrappers import CommandsWrapper
 
@@ -11,7 +12,21 @@ from data.data_wrappers.wrappers import CommandsWrapper
 def pipeline():
     return CommandsPipeline()
 
-def test_build_queue_integration(db_session: Session, pipeline: CommandsPipeline):
+
+@pytest.fixture
+def comms_session(db_session):
+    """Create a test comms session in the database."""
+    comms_session = CommsSession(
+        id=uuid4(),
+        start_time=datetime.now() + timedelta(minutes=30),
+        end_time=datetime.now() + timedelta(minutes=40),
+    )
+    db_session.add(comms_session)
+    db_session.commit()
+    return comms_session
+
+
+def test_build_queue_integration(db_session: Session, pipeline: CommandsPipeline, comms_session: CommsSession):
     # 1. Setup MainCommands (one high prio, one low prio)
     # Using valid CmdCallbackId values from the enum (e.g. 2 for RTC_SYNC, 3 for DOWNLINK_LOGS)
     mc_high = MainCommand(id=3, name="DownlinkLogs", data_size=1, total_size=1, priority=10)
@@ -22,8 +37,8 @@ def test_build_queue_integration(db_session: Session, pipeline: CommandsPipeline
 
     # 2. Setup Commands (Pending)
     # Valid parameter names based on CLICommand logic: log_level, time_of_execution
-    cmd_low = Command(type_=mc_low.id, params="rtc_time,12345678", status=CommandStatus.PENDING)
-    cmd_high = Command(type_=mc_high.id, params="log_level,1,time_of_execution,0", status=CommandStatus.PENDING)
+    cmd_low = Command(type_=mc_low.id, params="rtc_time,12345678", status=CommandStatus.PENDING, session_id=comms_session.id)
+    cmd_high = Command(type_=mc_high.id, params="log_level,1,time_of_execution,0", status=CommandStatus.PENDING, session_id=comms_session.id)
     db_session.add(cmd_low)
     db_session.add(cmd_high)
     db_session.flush()
@@ -42,13 +57,13 @@ def test_build_queue_integration(db_session: Session, pipeline: CommandsPipeline
     assert cmd_low.status == CommandStatus.SCHEDULED
     assert cmd_high.status == CommandStatus.SCHEDULED
 
-def test_queue_to_packet_integration(db_session: Session, pipeline: CommandsPipeline, monkeypatch):
+def test_queue_to_packet_integration(db_session: Session, pipeline: CommandsPipeline, monkeypatch, comms_session: CommsSession):
     # Setup
     mc = MainCommand(id=5, name="Ping", data_size=1, total_size=1, priority=1)
     db_session.add(mc)
     db_session.flush()
 
-    cmd = Command(type_=mc.id, params="", status=CommandStatus.PENDING)
+    cmd = Command(type_=mc.id, params="", status=CommandStatus.PENDING, session_id=comms_session.id)
     db_session.add(cmd)
     db_session.flush()
 
