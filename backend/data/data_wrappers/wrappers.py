@@ -1,6 +1,7 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from uuid import UUID
 
+from config.data_config import SESSION_LOCKOUT_SECONDS
 from pydantic import EmailStr
 from sqlmodel import col, select
 
@@ -164,6 +165,17 @@ class CommsSessionWrapper(AbstractWrapper[CommsSession, UUID]):
         """
         with get_db_session() as session:
             return session.exec(select(CommsSession).order_by(col(CommsSession.start_time).desc())).first()
+
+    def is_locked_out(self, session_id: UUID) -> bool:
+        """
+        Checks whether the given session is within its lockout window.
+
+        :param session_id: UUID of the target session.
+        :return: True if the session is locked out, False otherwise.
+        :raises ValueError: if no session with the given ID exists."""
+        session = self.get_by_id(session_id)
+        lockout_start = session.start_time - timedelta(seconds=SESSION_LOCKOUT_SECONDS)
+        return datetime.now() >= lockout_start
 
 
 class PacketWrapper(AbstractWrapper[Packet, UUID]):
