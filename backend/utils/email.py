@@ -22,10 +22,6 @@ _conf = ConnectionConfig(
 )
 
 
-def _get_conf() -> ConnectionConfig:
-    return _conf
-
-
 def _default_sender() -> NameEmail:
     return NameEmail(
         name=settings.email.mail_from_name,
@@ -134,6 +130,10 @@ def _create_message_schema_fields(email: Email) -> dict[str, Any]:
     return fields
 
 
+def _create_fastmail() -> FastMail:
+    return FastMail(_conf)
+
+
 async def send(email: Email) -> None:
     """
     Sends a single email using the provided `email` and SMTP connection configuration `conf`.
@@ -150,7 +150,7 @@ async def send_many(emails: list[Email]) -> None:
 
     :param emails: List of email messages as `Email` objects to send.
     """
-    fm = FastMail(_get_conf())
+    fm = _create_fastmail()
     await fm.send_message(
         [MessageSchema(**_create_message_schema_fields(email)) for email in emails],
     )
