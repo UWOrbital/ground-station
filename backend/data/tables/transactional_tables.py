@@ -36,9 +36,9 @@ from data.tables.mcc_user_tables import MCCUsers
 TRANSACTIONAL_SCHEMA_NAME: Final[str] = "transactional"
 
 # Table names in database
-ARO_REQUEST_TABLE_NAME: Final[str] = "aro_requests"
+ARO_REQUESTS_TABLE_NAME: Final[str] = "aro_requests"
 SESSIONS_TABLE_NAME: Final[str] = "sessions"
-PACKET_TABLE_NAME: Final[str] = "packets"
+PACKETS_TABLE_NAME: Final[str] = "packets"
 TELEMETRY_TABLE_NAME: Final[str] = "telemetry"
 COMMANDS_TABLE_NAME: Final[str] = "commands"
 
@@ -60,13 +60,13 @@ class ARORequest(BaseSQLModel, table=True):
     pic_transmitted_on: datetime | None = Field(default=None)
     packet_id: UUID | None = Field(
         default=None,
-        foreign_key=to_foreign_key_value(TRANSACTIONAL_SCHEMA_NAME, PACKET_TABLE_NAME),
+        foreign_key=to_foreign_key_value(TRANSACTIONAL_SCHEMA_NAME, PACKETS_TABLE_NAME),
         ondelete="CASCADE",
     )
     status: ARORequestStatus = Field(default=ARORequestStatus.PENDING)
 
     # table information
-    __tablename__ = ARO_REQUEST_TABLE_NAME
+    __tablename__ = ARO_REQUESTS_TABLE_NAME
     __table_args__ = (
         ForeignKeyConstraint(
             ["aro_id"],
@@ -78,7 +78,7 @@ class ARORequest(BaseSQLModel, table=True):
     )  # Since the table is in a different schema sqlmodel can't find the table normally
 
 
-class Commands(BaseSQLModel, table=True):
+class Command(BaseSQLModel, table=True):
     """
     An instance of a MainCommand.
     This table holds the data related to actual commands sent from the ground station up to the OBC.
@@ -86,13 +86,17 @@ class Commands(BaseSQLModel, table=True):
 
     id: UUID = Field(default_factory=uuid4, primary_key=True, index=True)
     user_id: UUID | None = Field(default=None, sa_column=Column("user_id", DB_UUID, nullable=True))
+    session_id: UUID = Field(
+        foreign_key=to_foreign_key_value(TRANSACTIONAL_SCHEMA_NAME, SESSIONS_TABLE_NAME),
+        ondelete="CASCADE",
+    )
     status: CommandStatus = Field(default=CommandStatus.PENDING)
     type_: MainTableID = Column(MainTableIDDatabase, ForeignKey(MainCommand.id))  # type: ignore
     params: str | None = None  # TODO: Make sure this matches the corresponding params in the main command table
     created_at: datetime = Field(default_factory=datetime.now, sa_column_kwargs={"server_default": func.now()})
     packet_id: UUID | None = Field(
         default=None,
-        foreign_key=to_foreign_key_value(TRANSACTIONAL_SCHEMA_NAME, PACKET_TABLE_NAME),
+        foreign_key=to_foreign_key_value(TRANSACTIONAL_SCHEMA_NAME, PACKETS_TABLE_NAME),
         ondelete="SET NULL",
     )
     sequence_index: int | None = Field(default=None)  # Position of this command within its packet
@@ -127,7 +131,7 @@ class Telemetry(BaseSQLModel, table=True):
     value: str | None = None  # TODO: Make sure this matches the corresponding params in the main command table
     packet_id: UUID | None = Field(
         default=None,
-        foreign_key=to_foreign_key_value(TRANSACTIONAL_SCHEMA_NAME, PACKET_TABLE_NAME),
+        foreign_key=to_foreign_key_value(TRANSACTIONAL_SCHEMA_NAME, PACKETS_TABLE_NAME),
         ondelete="SET NULL",
     )
     sequence_index: int | None = Field(default=None)  # Position of this telemetry within its packet
@@ -184,5 +188,5 @@ class Packet(BaseSQLModel, table=True):
     offset: int
 
     # table information
-    __tablename__ = PACKET_TABLE_NAME
+    __tablename__ = PACKETS_TABLE_NAME
     __table_args__ = {"schema": TRANSACTIONAL_SCHEMA_NAME}

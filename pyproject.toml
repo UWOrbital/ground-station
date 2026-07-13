@@ -110,7 +110,7 @@ follow_imports = "skip"
 
 [tool.ruff]
 include = ["pyproject.toml", "backend/*.py"]
-exclude = ["frontend/*", "backend/python_test", "backend/migrations"]
+exclude = ["frontend/*", "backend/python_test", "backend/migrations", "interfaces"]
 target-version = "py312"
 line-length = 120
 indent-width = 4

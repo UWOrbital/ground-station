@@ -1,6 +1,7 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from uuid import UUID
 
+from config.data_config import SESSION_LOCKOUT_SECONDS
 from pydantic import EmailStr
 from sqlmodel import col, select
 
@@ -11,7 +12,7 @@ from data.tables.main_tables import MainCommand, MainTelemetry
 from data.tables.mcc_user_tables import MCCUsers
 from data.tables.transactional_tables import (
     ARORequest,
-    Commands,
+    Command,
     CommsSession,
     Packet,
     Telemetry,
@@ -165,6 +166,17 @@ class CommsSessionWrapper(AbstractWrapper[CommsSession, UUID]):
         with get_db_session() as session:
             return session.exec(select(CommsSession).order_by(col(CommsSession.start_time).desc())).first()
 
+    def is_locked_out(self, session_id: UUID) -> bool:
+        """
+        Checks whether the given session is within its lockout window.
+
+        :param session_id: UUID of the target session.
+        :return: True if the session is locked out, False otherwise.
+        :raises ValueError: if no session with the given ID exists."""
+        session = self.get_by_id(session_id)
+        lockout_start = session.start_time - timedelta(seconds=SESSION_LOCKOUT_SECONDS)
+        return datetime.now() >= lockout_start
+
 
 class PacketWrapper(AbstractWrapper[Packet, UUID]):
     """
@@ -174,14 +186,24 @@ class PacketWrapper(AbstractWrapper[Packet, UUID]):
     model = Packet
 
 
-class CommandsWrapper(AbstractWrapper[Commands, UUID]):
+class CommandsWrapper(AbstractWrapper[Command, UUID]):
     """
-    Data wrapper for Commands table.
+    Data wrapper for Command table.
     """
 
-    model = Commands
+    model = Command
 
-    def retrieve_floating_commands(self) -> list[Commands]:
+    def get_by_session(self, session_id: UUID) -> list[Command]:
+        """
+        Retrieves all commands for a given session.
+
+        :param session_id: UUID of the target session.
+        :return: list of Command entries tied to that session.
+        """
+        with get_db_session() as session:
+            return list(session.exec(select(Command).where(Command.session_id == session_id)).all())
+
+    def retrieve_floating_commands(self) -> list[Command]:
         """
         Retrieves all commands which have not yet been assigned to a packet.
         A floating command is any command whose `packet_id` is still null.

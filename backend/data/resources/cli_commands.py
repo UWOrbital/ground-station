@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from data.tables.transactional_tables import Commands
+from data.tables.transactional_tables import Command
 from interfaces.obc_gs_interface.commands.python import CmdCallbackId
 from interfaces.obc_gs_interface.commands.python.command_factories import COMMAND_FACTORIES
 
@@ -24,7 +24,7 @@ class CLICommand:
                priorities we have. 1 is the highest priority
         :time: tracks the time at which a command has been created
         """
-        self.command: Commands | None = None
+        self.command: Command | None = None
         self.command_id: CmdCallbackId | None = None
         self.factory_args: list[str | int | bool | float] = []
 

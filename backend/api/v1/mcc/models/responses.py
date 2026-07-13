@@ -2,7 +2,7 @@ from typing import Annotated
 from uuid import UUID
 
 from data.tables.main_tables import MainCommand, MainTelemetry
-from data.tables.transactional_tables import Commands
+from data.tables.transactional_tables import Command
 from pydantic import BaseModel, Field
 
 
@@ -21,13 +21,13 @@ class MainCommandResponse(BaseModel):
 class CommandsResponse(BaseModel):
     """Response model wrapping a list of Commands."""
 
-    data: Annotated[list[Commands], Field(description="A list containing Command objects")]
+    data: Annotated[list[Command], Field(description="A list containing Command objects")]
 
 
 class CommandResponse(BaseModel):
     """Response model wrapping a single Command."""
 
-    data: Annotated[Commands, Field(description="The created or retrieved Command object")]
+    data: Annotated[Command, Field(description="The created or retrieved Command object")]
 
 
 class DeleteCommandResponse(BaseModel):
