@@ -42,6 +42,19 @@ def comms_session(db_session):
     return comms_session
 
 
+@pytest.fixture
+def locked_comms_session(db_session):
+    """Create a test comms session currently within its lockout window."""
+    comms_session = CommsSession(
+        id=uuid4(),
+        start_time=datetime.now() + timedelta(seconds=5),
+        end_time=datetime.now() + timedelta(minutes=10),
+    )
+    db_session.add(comms_session)
+    db_session.commit()
+    return comms_session
+
+
 @pytest.fixture(autouse=True)
 def setup_main_commands(db_session):
     """Setup MainCommand records needed for testing."""
@@ -139,9 +152,60 @@ def test_create_command_missing_session(client: TestClient) -> None:
         "params": "some_params",
     }
 
-    response = client.post("/api/v1/mcc/commands", json=payload)
+    response = client.post("/api/v1/mcc/commands/", json=payload)
 
     assert response.status_code == 422
+
+
+def test_create_command_session_locked_out(client: TestClient, locked_comms_session: CommsSession) -> None:
+    """Test that creating a command for a session within its lockout window fails."""
+    payload = {
+        "type_": 1,
+        "params": "test_params",
+        "session_id": str(locked_comms_session.id),
+    }
+
+    response = client.post("/api/v1/mcc/commands/", json=payload)
+
+    assert response.status_code == 409
+
+
+def test_create_command_session_not_found(client: TestClient) -> None:
+    """Test that creating a command with a nonexistent session fails."""
+    payload = {
+        "type_": 1,
+        "params": "test_params",
+        "session_id": str(uuid4()),
+    }
+
+    response = client.post("/api/v1/mcc/commands/", json=payload)
+
+    assert response.status_code == 404
+
+
+# ---------------------------------------------Testing the PATCH endpoint--------------------------------------------- #
+
+
+def test_update_command_session_locked_out(client: TestClient, comms_session: CommsSession, db_session) -> None:
+    """Test that updating a command whose session has since entered lockout fails."""
+    create_response = client.post("/api/v1/mcc/commands/", json={"type_": 4, "session_id": str(comms_session.id)})
+    assert create_response.status_code == 200
+    command_id = create_response.json()["data"]["id"]
+
+    comms_session.start_time = datetime.now() + timedelta(seconds=5)
+    db_session.add(comms_session)
+    db_session.commit()
+
+    response = client.patch(f"/api/v1/mcc/commands/{command_id}", json={"params": "updated"})
+
+    assert response.status_code == 409
+
+
+def test_update_command_not_found(client: TestClient) -> None:
+    """Test that updating a nonexistent command returns 404."""
+    response = client.patch(f"/api/v1/mcc/commands/{uuid4()}", json={"params": "updated"})
+
+    assert response.status_code == 404
 
 
 # ---------------------------------------------Testing the DELETE endpoint--------------------------------------------- #
@@ -187,3 +251,42 @@ def test_delete_command_twice(client: TestClient, comms_session: CommsSession) -
 
     delete_response2 = client.delete(f"/api/v1/mcc/commands/{command_id}")
     assert delete_response2.status_code == 404
+
+
+def test_delete_command_session_locked_out(client: TestClient, comms_session: CommsSession, db_session) -> None:
+    """Test that deleting a command whose session has since entered lockout fails."""
+    create_response = client.post("/api/v1/mcc/commands/", json={"type_": 5, "session_id": str(comms_session.id)})
+    assert create_response.status_code == 200
+    command_id = create_response.json()["data"]["id"]
+
+    comms_session.start_time = datetime.now() + timedelta(seconds=5)
+    db_session.add(comms_session)
+    db_session.commit()
+
+    response = client.delete(f"/api/v1/mcc/commands/{command_id}")
+
+    assert response.status_code == 409
+
+
+# ---------------------------------------------Testing the GET by session endpoint--------------------------------------------- #
+
+
+def test_get_commands_by_session(client: TestClient, comms_session: CommsSession) -> None:
+    """Test retrieving all commands for a given session."""
+    client.post("/api/v1/mcc/commands/", json={"type_": 1, "session_id": str(comms_session.id)})
+    client.post("/api/v1/mcc/commands/", json={"type_": 2, "session_id": str(comms_session.id)})
+
+    response = client.get(f"/api/v1/mcc/commands/session/{comms_session.id}")
+
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert len(data) == 2
+    assert all(cmd["session_id"] == str(comms_session.id) for cmd in data)
+
+
+def test_get_commands_by_session_empty(client: TestClient, comms_session: CommsSession) -> None:
+    """Test that a session with no commands returns an empty list."""
+    response = client.get(f"/api/v1/mcc/commands/session/{comms_session.id}")
+
+    assert response.status_code == 200
+    assert response.json()["data"] == []
