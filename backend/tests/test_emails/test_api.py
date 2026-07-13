@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 from pydantic import NameEmail
-from utils.email import Email, send, send_many
+from utils.email import Email, EmailType, send, send_many
 
 
 def get_name_email() -> NameEmail:
@@ -13,6 +13,7 @@ async def test_send_calls_send_many():
     email = Email(
         subject="Hello",
         recipients=[get_name_email()],
+        type=EmailType.TEST,
         text="world!",
     )
 
@@ -26,6 +27,7 @@ async def test_send_many_sends_emails():
     email = Email(
         subject="fizz",
         recipients=[get_name_email()],
+        type=EmailType.TEST,
         text="buzz!",
     )
 

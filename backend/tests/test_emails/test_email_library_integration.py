@@ -4,7 +4,7 @@ import pytest
 from fastapi import UploadFile
 from fastapi_mail import MessageSchema, MessageType, MultipartSubtypeEnum
 from pydantic import NameEmail
-from utils.email import Email, _create_message_schema_fields, _default_sender
+from utils.email import Email, EmailType, _create_message_schema_fields, _default_sender
 
 
 def get_name_email(name: str = "John Doe") -> NameEmail:
@@ -15,7 +15,8 @@ def test_plaintext_email_to_message_schema():
     email = Email(
         subject="John subject",
         recipients=[get_name_email()],
-        text="John body"
+        type=EmailType.TEST,
+        text="John body",
     )
 
     default_sender = _default_sender()
@@ -40,7 +41,8 @@ def test_html_email_to_message_schema():
     email = Email(
         subject="John subject",
         recipients=[get_name_email()],
-        html="<p>John body</p>"
+        type=EmailType.TEST,
+        html="<p>John body</p>",
     )
 
     default_sender = _default_sender()
@@ -65,8 +67,9 @@ def test_multipart_email_to_message_schema():
     email = Email(
         subject="John subject",
         recipients=[get_name_email()],
+        type=EmailType.TEST,
         text="John plaintext",
-        html="<p>John html</p>"
+        html="<p>John html</p>",
     )
 
     default_sender = _default_sender()
@@ -93,6 +96,7 @@ def test_optional_fields_are_preserved():
     email = Email(
         subject="John subject",
         recipients=[get_name_email()],
+        type=EmailType.TEST,
         text="John text",
         cc=[get_name_email("John cc")],
         bcc=[get_name_email("John bcc")],
@@ -114,8 +118,9 @@ def test_attachments_are_preserved():
     email = Email(
         subject="John subject",
         recipients=[get_name_email()],
+        type=EmailType.TEST,
         text="John text",
-        attachments=[file]
+        attachments=[file],
     )
 
     message_fields = _create_message_schema_fields(email)

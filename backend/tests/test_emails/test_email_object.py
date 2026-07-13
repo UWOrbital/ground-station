@@ -1,7 +1,7 @@
 import pytest
 from config.config import settings
 from pydantic import NameEmail
-from utils.email import Email, _default_sender
+from utils.email import Email, EmailType, _default_sender
 
 
 def get_name_email() -> NameEmail:
@@ -12,6 +12,7 @@ def test_email_requires_subject():
         Email(
             subject="",
             recipients=[get_name_email()],
+            type=EmailType.TEST,
             text="skibidi toilet",
         )
 
@@ -20,6 +21,7 @@ def test_email_requires_recipients():
         Email(
             subject="six",
             recipients=[],
+            type=EmailType.TEST,
             text="seven",
         )
 
@@ -28,12 +30,14 @@ def test_email_requires_body():
         Email(
             subject="test",
             recipients=[get_name_email()],
+            type=EmailType.TEST,
         )
 
 def test_email_accepts_plaintext():
     email = Email(
         subject="hey wanna play some video games",
         recipients=[get_name_email()],
+        type=EmailType.TEST,
         text="i know i do",
     )
 
@@ -44,6 +48,7 @@ def test_email_accepts_html():
     email = Email(
         subject="hey wanna play some video games",
         recipients=[get_name_email()],
+        type=EmailType.TEST,
         html="<p>i know i do</p>",
     )
 
@@ -54,6 +59,7 @@ def test_email_accepts_both_plaintext_and_html():
     email = Email(
         subject="hey wanna play some video games",
         recipients=[get_name_email()],
+        type=EmailType.TEST,
         text="i know i do",
         html="<p>i havent seen the sun in years</p>",
     )
@@ -71,6 +77,7 @@ def test_sender_defaults_to_settings():
     email = Email(
         subject="subject",
         recipients=[get_name_email()],
+        type=EmailType.TEST,
         text="text",
     )
 
@@ -85,6 +92,7 @@ def test_custom_sender():
     email = Email(
         subject="subject",
         recipients=[get_name_email()],
+        type=EmailType.TEST,
         text="text",
         sender=sender,
     )

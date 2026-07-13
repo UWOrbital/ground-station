@@ -1,9 +1,12 @@
 from dataclasses import dataclass, field
+from datetime import datetime
+from enum import StrEnum
 from typing import Any
 
 from config.config import settings
 from fastapi import UploadFile
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType, MultipartSubtypeEnum
+from loguru import logger
 from pydantic import NameEmail
 
 _conf = ConnectionConfig(
@@ -29,6 +32,20 @@ def _default_sender() -> NameEmail:
     )
 
 
+class EmailType(StrEnum):
+    """
+    Enum representing the type of email to be sent. Used for logging purposes.
+    If none of the types accurately describes the email, please create a custom type.
+    """
+
+    USER_WELCOME = "user.welcome"
+
+    EMAIL_VERIFICATION = "auth.email_verification"
+    PASSWORD_RESET = "auth.password_reset"
+
+    TEST = "testing.test_email"
+
+
 @dataclass(frozen=True)
 class Email:
     """
@@ -42,6 +59,10 @@ class Email:
 
     :param recipients: List of recipients in RFC 5322 format
     :type recipients: list[NameEmail]
+
+    :param type: Type of email. If none of the types accurately describes the email, please create
+        a custom type. Used for logging purposes.
+    :type type: EmailType
 
     :param text: Plain text body of the email
     :type text: str | None
@@ -71,6 +92,7 @@ class Email:
 
     subject: str
     recipients: list[NameEmail]
+    type: EmailType
 
     text: str | None = None
     html: str | None = None
@@ -136,21 +158,60 @@ def _create_fastmail() -> FastMail:
 
 async def send(email: Email) -> None:
     """
-    Sends a single email using the provided `email` and SMTP connection configuration `conf`.
+    Sends a single email using the provided `email`.
 
     :param email: The email message as a `Email` object to send.
-    :param conf: SMTP connection configuration. Defaults to the configuration loaded from environment variables.
     """
     await send_many([email])
 
 
 async def send_many(emails: list[Email]) -> None:
     """
-    Send multiple emails in a single call while reusing the same SMTP connection.
+    Send multiple emails in a single call.
 
     :param emails: List of email messages as `Email` objects to send.
     """
+    if not emails:
+        return
+
     fm = _create_fastmail()
-    await fm.send_message(
-        [MessageSchema(**_create_message_schema_fields(email)) for email in emails],
-    )
+
+    def t() -> str:
+        return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    for email in emails:
+        logger.info(
+            " | ".join(
+                [
+                    "EMAIL SEND START",
+                    f"Type: {email.type}",
+                    f"Recipients: {[str(m) for m in email.recipients]}",
+                    f"Time: {t()}",
+                ]
+            )
+        )
+
+        try:
+            await fm.send_message(MessageSchema(**_create_message_schema_fields(email)))
+        except Exception:
+            logger.exception(
+                " | ".join(
+                    [
+                        "EMAIL SEND FAIL",
+                        f"Type: {email.type}",
+                        f"Recipients: {[str(m) for m in email.recipients]}",
+                        f"Time: {t()}",
+                    ]
+                )
+            )
+        else:
+            logger.info(
+                " | ".join(
+                    [
+                        "EMAIL SEND SUCCESS",
+                        f"Type: {email.type}",
+                        f"Recipients: {[str(m) for m in email.recipients]}",
+                        f"Time: {t()}",
+                    ]
+                )
+            )
