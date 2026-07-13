@@ -1,4 +1,5 @@
 from typing import Annotated
+from uuid import UUID
 
 from data.enums.transactional import CommandStatus
 from pydantic import BaseModel, Field
@@ -11,6 +12,7 @@ class CreateCommandRequest(BaseModel):
     params: Annotated[
         str | None, Field(description="Serialized command parameters matching the main command schema")
     ] = None
+    session_id: Annotated[UUID, Field(description="Session this command is scheduled for")]
 
 
 class UpdateCommandRequest(BaseModel):

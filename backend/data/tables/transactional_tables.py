@@ -86,6 +86,10 @@ class Command(BaseSQLModel, table=True):
 
     id: UUID = Field(default_factory=uuid4, primary_key=True, index=True)
     user_id: UUID | None = Field(default=None, sa_column=Column("user_id", DB_UUID, nullable=True))
+    session_id: UUID = Field(
+        foreign_key=to_foreign_key_value(TRANSACTIONAL_SCHEMA_NAME, SESSIONS_TABLE_NAME),
+        ondelete="CASCADE",
+    )
     status: CommandStatus = Field(default=CommandStatus.PENDING)
     type_: MainTableID = Column(MainTableIDDatabase, ForeignKey(MainCommand.id))  # type: ignore
     params: str | None = None  # TODO: Make sure this matches the corresponding params in the main command table
