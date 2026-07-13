@@ -39,5 +39,11 @@ jobs:
           KEYCLOAK_CLIENT_ID: ground-station
           KEYCLOAK_CLIENT_SECRET: foobar676767brainrot
           KEYCLOAK_CALLBACK_URL: http://localhost:8000/callback
+          EMAIL_MAIL_USERNAME: ""
+          EMAIL_MAIL_PASSWORD: ""
+          EMAIL_MAIL_SERVER: ""
+          EMAIL_MAIL_PORT: 465
+          EMAIL_MAIL_FROM: "john.doe@example.com"
+          EMAIL_MAIL_FROM_NAME: "John Doe"
         run: |
           uv run pytest
