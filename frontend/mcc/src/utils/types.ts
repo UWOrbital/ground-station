@@ -15,72 +15,60 @@ export type MainPacketType = "uplink" | "downlink";
 
 // Database table interfaces
 export interface Session {
-  id: number;
+  id: string;
   start_time: string; // ISO datetime string
   end_time: string | null;
   status: SessionStatus;
 }
 
 export interface Packet {
-  id: number;
-  session_id: number;
+  id: string;
+  session_id: string;
   raw_data: string;
-  type: MainPacketType;
-  subtype: string; // enum - TODO: Define specific values when known
+  type_: MainPacketType;
+  subtype: string | null; // enum - TODO: Define specific values when known
   payload_data: string;
   created_on: string;
   offset: number;
 }
 
 export interface Command {
-  name: string;
-  id: number;
-  params: string;
-  format: string;
-  data_size: number;
-  total_size: number;
-}
-
-export interface SentCommand extends Command {
-  type: number; // References master.commands.id
+  id: string;
+  user_id: string | null;
+  session_id: string;
   status: CommandStatus;
+  type_: number;
+  params: string | null;
+  created_at: string;
+  packet_id: string | null;
+  sequence_index: number | null;
 }
 
 export interface Telemetry {
-  id: number;
-  type: number; // References master.telemetry.id
-  value: string;
+  id: string;
+  type_: number;
+  value: string | null;
+  packet_id: string | null;
+  sequence_index: number | null;
+  timestamp: string;
 }
 
-// Master table interfaces
-export interface MasterCommand {
-  id: number;
-  name: string;
-  params: string;
-  format: string;
-  data_size: number;
-  total_size: number;
-}
-
-export interface MasterTelemetry {
+export interface MainCommand {
   id: number;
   name: string;
-  format: string;
+  params: string | null;
+  format: string | null;
   data_size: number;
   total_size: number;
+  priority: number;
 }
 
-// Extended interfaces with joined data (for frontend display)
-export interface TelemetryWithMaster extends Telemetry {
-  telemetry_name?: string;
-  telemetry_format?: string;
-  created_on?: string;
-}
-
-export interface CommandWithMaster extends Command {
-  command_name?: string;
-  command_format?: string;
-  created_on?: string;
+export interface MainTelemetry {
+  id: number;
+  name: string;
+  format: string | null;
+  data_size: number;
+  total_size: number;
 }
 
 // User-related interfaces
