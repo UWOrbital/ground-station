@@ -1,9 +1,4 @@
 import React, { useState, useEffect } from "react";
-import {
-  mockCommandsList,
-  type ExtendedCommand,
-  type CommandParameter,
-} from "../../../utils/mock-data";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { Button } from "@/components/ui/button";

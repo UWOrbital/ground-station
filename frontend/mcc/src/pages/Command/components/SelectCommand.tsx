@@ -1,6 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
-import { mockCommandsList } from "../../../utils/mock-data.ts"; // temporary commands list
 import type { Command } from "../../../utils/types.ts";
 
 import { Button } from "@/components/ui/button";
