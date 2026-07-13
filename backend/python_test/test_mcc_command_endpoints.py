@@ -1,9 +1,11 @@
+from datetime import datetime, timedelta
 from uuid import UUID, uuid4
 
 import pytest
 from data.enums.transactional import CommandStatus
 from data.tables.main_tables import MainCommand
 from data.tables.mcc_user_tables import MCCUsers
+from data.tables.transactional_tables import CommsSession
 from fastapi.testclient import TestClient
 from main import app
 from mcc_keycloak.client import keycloak
@@ -27,6 +29,19 @@ def client(mcc_user):
     app.dependency_overrides.clear()
 
 
+@pytest.fixture
+def comms_session(db_session):
+    """Create a test comms session in the database."""
+    comms_session = CommsSession(
+        id=uuid4(),
+        start_time=datetime.now() + timedelta(minutes=30),
+        end_time=datetime.now() + timedelta(minutes=40),
+    )
+    db_session.add(comms_session)
+    db_session.commit()
+    return comms_session
+
+
 @pytest.fixture(autouse=True)
 def setup_main_commands(db_session):
     """Setup MainCommand records needed for testing."""
@@ -48,11 +63,12 @@ def setup_main_commands(db_session):
 # ---------------------------------------------Testing the POST endpoint--------------------------------------------- #
 
 
-def test_create_command_success(client: TestClient) -> None:
+def test_create_command_success(client: TestClient, comms_session: CommsSession) -> None:
     """Test successful creation of a new command."""
     payload = {
         "type_": 1,
         "params": "test_params",
+        "session_id": str(comms_session.id)
     }
 
     response = client.post("/api/v1/mcc/commands/", json=payload)
@@ -66,9 +82,13 @@ def test_create_command_success(client: TestClient) -> None:
     UUID(data["id"])
 
 
-def test_create_command_duplicate(client: TestClient) -> None:
+def test_create_command_duplicate(client: TestClient, comms_session: CommsSession) -> None:
     """Test that creating a duplicate command is allowed and succeeds."""
-    payload = {"type_": 2, "params": "duplicate_test"}
+    payload = {
+        "type_": 2,
+        "params": "duplicate_test",
+        "session_id": str(comms_session.id)
+    }
 
     response1 = client.post("/api/v1/mcc/commands/", json=payload)
     assert response1.status_code == 200
@@ -84,9 +104,13 @@ def test_create_command_duplicate(client: TestClient) -> None:
     assert response2.json()["data"]["params"] == "duplicate_test"
 
 
-def test_create_command_with_null_params(client: TestClient) -> None:
+def test_create_command_with_null_params(client: TestClient, comms_session: CommsSession) -> None:
     """Test creating a command with null params."""
-    payload = {"type_": 3, "params": None}
+    payload = {
+        "type_": 3,
+        "params": None,
+        "session_id": str(comms_session.id),
+    }
 
     response = client.post("/api/v1/mcc/commands/", json=payload)
 
@@ -96,11 +120,26 @@ def test_create_command_with_null_params(client: TestClient) -> None:
     assert data["status"] == CommandStatus.PENDING
 
 
-def test_create_command_missing_type(client: TestClient) -> None:
+def test_create_command_missing_type(client: TestClient, comms_session: CommsSession) -> None:
     """Test that omitting the required type_ field returns a validation error."""
-    payload = {"params": "some_params"}
+    payload = {
+        "params": "some_params",
+        "session_id": str(comms_session.id),
+    }
 
     response = client.post("/api/v1/mcc/commands/", json=payload)
+
+    assert response.status_code == 422
+
+
+def test_create_command_missing_session(client: TestClient) -> None:
+    """Test that omitting the required session_id returns a validation error."""
+    payload = {
+        "type_": 1,
+        "params": "some_params",
+    }
+
+    response = client.post("/api/v1/mcc/commands", json=payload)
 
     assert response.status_code == 422
 
@@ -108,9 +147,9 @@ def test_create_command_missing_type(client: TestClient) -> None:
 # ---------------------------------------------Testing the DELETE endpoint--------------------------------------------- #
 
 
-def test_delete_command_success(client: TestClient) -> None:
+def test_delete_command_success(client: TestClient, comms_session: CommsSession) -> None:
     """Test successful deletion of an existing command."""
-    create_response = client.post("/api/v1/mcc/commands/", json={"type_": 10})
+    create_response = client.post("/api/v1/mcc/commands/", json={"type_": 10, "session_id": str(comms_session.id)})
     assert create_response.status_code == 200
     command_id = create_response.json()["data"]["id"]
 
@@ -137,9 +176,9 @@ def test_delete_command_invalid_uuid(client: TestClient) -> None:
     assert response.status_code == 422
 
 
-def test_delete_command_twice(client: TestClient) -> None:
+def test_delete_command_twice(client: TestClient, comms_session: CommsSession) -> None:
     """Test that deleting the same command twice fails on the second attempt."""
-    create_response = client.post("/api/v1/mcc/commands/", json={"type_": 11})
+    create_response = client.post("/api/v1/mcc/commands/", json={"type_": 11, "session_id": str(comms_session.id)})
     assert create_response.status_code == 200
     command_id = create_response.json()["data"]["id"]
 
