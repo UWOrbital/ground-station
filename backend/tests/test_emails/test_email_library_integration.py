@@ -1,9 +1,9 @@
 from io import BytesIO
+
 import pytest
+from fastapi import UploadFile
 from fastapi_mail import MessageSchema, MessageType, MultipartSubtypeEnum
 from pydantic import NameEmail
-from fastapi import UploadFile
-
 from utils.email import Email, _create_message_schema_fields, _default_sender
 
 
@@ -60,7 +60,6 @@ def test_html_email_to_message_schema():
         "subtype": MessageType.html,
     }
     MessageSchema(**message_fields)
-
 
 def test_multipart_email_to_message_schema():
     email = Email(

@@ -1,12 +1,11 @@
 import pytest
-from pydantic import NameEmail
-
-from utils.email import Email, _default_sender
 from config.config import settings
+from pydantic import NameEmail
+from utils.email import Email, _default_sender
+
 
 def get_name_email() -> NameEmail:
     return NameEmail(name="John Doe", email=f"john.doe@example.com")
-
 
 def test_email_requires_subject():
     with pytest.raises(ValueError, match="Subject cannot be empty"):
@@ -79,7 +78,6 @@ def test_sender_defaults_to_settings():
 
     assert email.sender.name == default_sender.name
     assert email.sender.email == default_sender.email
-
 
 def test_custom_sender():
     sender = NameEmail("John Tester", "john.tester@example.com")
