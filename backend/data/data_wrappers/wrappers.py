@@ -193,6 +193,16 @@ class CommandsWrapper(AbstractWrapper[Command, UUID]):
 
     model = Command
 
+    def get_by_session(self, session_id: UUID) -> list[Command]:
+        """
+        Retrieves all commands for a given session.
+
+        :param session_id: UUID of the target session.
+        :return: list of Command entries tied to that session.
+        """
+        with get_db_session() as session:
+            return list(session.exec(select(Command).where(Command.session_id == session_id)).all())
+
     def retrieve_floating_commands(self) -> list[Command]:
         """
         Retrieves all commands which have not yet been assigned to a packet.
