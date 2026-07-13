@@ -84,7 +84,7 @@ class Email:
 
     headers: dict[str, str] = field(default_factory=dict)
 
-    def __post_init__(self):  # noqa: ANN204, D105
+    def __post_init__(self) -> None:  # noqa: D105
         if not self.subject:
             raise ValueError("Subject cannot be empty")
 
