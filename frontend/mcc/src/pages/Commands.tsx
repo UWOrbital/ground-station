@@ -2,7 +2,7 @@ import { createColumnHelper } from "@tanstack/react-table";
 import Table from "../components/Table";
 // import SelectCommand from "./components/SelectCommand";
 // import SendCommand from "./components/SendCommand";
-import { useState } from "react";
+// import { useState } from "react";
 
 type CommandData = {
   session: string;
@@ -83,7 +83,7 @@ const data: CommandData[] = [
  * @return tsx element of Commands component
  */
 function Commands() {
-  const [selectedCommand, setSelectedCommand] = useState<string>("");
+  // const [selectedCommand, setSelectedCommand] = useState<string>("");
   const handleCommandSelect = (command: CommandData) => {
     console.log("Selected command:", command.command);
   };
