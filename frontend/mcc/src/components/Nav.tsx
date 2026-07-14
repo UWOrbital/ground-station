@@ -4,7 +4,7 @@ import { NAVIGATION_LINKS } from "../utils/nav-links";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import SatelliteStatusIndicator from "./SatelliteStatusIndicator";
-import { LogoutButton } from "./LogoutButton";
+import LogoutButton from "./LogoutButton";
 
 /**
  * @brief Nav component displaying the navigation bar

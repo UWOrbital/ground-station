@@ -1,6 +1,6 @@
 import { API_BASE_URL } from "@/utils/api/config";
 
-export function LogoutButton() {
+function LogoutButton() {
   const handleLogout = () => {
     window.location.href = `${API_BASE_URL}/auth/logout`;
   };
@@ -14,3 +14,5 @@ export function LogoutButton() {
     </button>
   )
 }
+
+export default LogoutButton;
