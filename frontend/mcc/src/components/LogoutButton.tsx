@@ -12,7 +12,7 @@ function LogoutButton() {
     >
       Logout
     </button>
-  )
+  );
 }
 
 export default LogoutButton;

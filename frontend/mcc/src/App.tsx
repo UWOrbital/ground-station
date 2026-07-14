@@ -28,7 +28,14 @@ function App() {
         <div className="pt-16">
           <Routes>
             <Route path="/" element={<Dashboard />} />
-            <Route path="/commands" element={<ProtectedRoute><Commands /></ProtectedRoute>} />
+            <Route
+              path="/commands"
+              element={
+                <ProtectedRoute>
+                  <Commands />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/telemetry-data" element={<AROAdmin />} />
             <Route path="/aro-requests" element={<LiveSession />} />
             <Route path="/login" element={<Login />} />
