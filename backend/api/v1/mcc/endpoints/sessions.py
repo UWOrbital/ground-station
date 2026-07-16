@@ -21,7 +21,7 @@ async def get_comms_sessions(
 
     :param start_after: only return sessions starting at or after this time
     :param start_before: only return sessions starting before this time
-    :param limit: maximum mumber of sessions to return (1-500, default 100)
+    :param limit: maximum number of sessions to return (1-500, default 100)
     :return: matching session entries
     """
     items = CommsSessionWrapper().get_in_range(start_after, start_before, limit)
