@@ -178,7 +178,7 @@ class CommsSession(BaseSQLModel, table=True):
 
     id: UUID = Field(default_factory=uuid4, primary_key=True, index=True)
     start_time: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
-    end_time: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
+    end_time: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
     status: SessionStatus = Field(default=SessionStatus.PENDING)
 
     # table information
