@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from config.data_config import SESSION_LOCKOUT_SECONDS
@@ -86,7 +86,7 @@ class AROUserAuthTokenWrapper(AbstractWrapper[AROUserAuthToken, UUID]):
             return session.exec(
                 select(AROUserAuthToken)
                 .where(AROUserAuthToken.user_id == user_id)
-                .where(AROUserAuthToken.expiry > datetime.now())
+                .where(AROUserAuthToken.expiry > datetime.now(UTC))
             ).first()
 
 
@@ -194,7 +194,7 @@ class CommsSessionWrapper(AbstractWrapper[CommsSession, UUID]):
         :raises ValueError: if no session with the given ID exists."""
         session = self.get_by_id(session_id)
         lockout_start = session.start_time - timedelta(seconds=SESSION_LOCKOUT_SECONDS)
-        return datetime.now() >= lockout_start
+        return datetime.now(UTC) >= lockout_start
 
 
 class PacketWrapper(AbstractWrapper[Packet, UUID]):

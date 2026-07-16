@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 from data.data_wrappers.wrappers import (
@@ -25,7 +25,7 @@ def test_retrieve_floating_commands_filters():
         )
     ).id
 
-    comms_session = csw.create({"id": uuid4(), "start_time": datetime.now()})
+    comms_session = csw.create({"id": uuid4(), "start_time": datetime.now(UTC), "end_time": datetime.now(UTC) + timedelta(minutes=5)})
     packet = pw.create(
         dict(
             id=uuid4(),
@@ -64,7 +64,7 @@ def test_retrieve_floating_commands_no_packet():
     ).id
 
     # wrapper layer knows nothing about lockout, only endpoint does
-    comms_session = csw.create({"id": uuid4(), "start_time": datetime.now()})
+    comms_session = csw.create({"id": uuid4(), "start_time": datetime.now(UTC), "end_time": datetime.now(UTC) + timedelta(minutes=5)})
 
     cw.create(dict(id=uuid4(), type_=cmd_type, session_id=comms_session.id))
     cw.create(dict(id=uuid4(), type_=cmd_type, session_id=comms_session.id))
