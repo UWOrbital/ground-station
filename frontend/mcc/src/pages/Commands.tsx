@@ -131,11 +131,7 @@ function Commands() {
         {loading ? (
           <p className="text-gray-400">Loading commands...</p>
         ) : (
-          <Table
-            data={rows}
-            columns={columns}
-            showFilters={true}
-          />
+          <Table data={rows} columns={columns} showFilters={true} />
         )}
       </div>
       {/* <SelectCommand selectedCommand={selectedCommand} setCommand={setSelectedCommand} /> */}

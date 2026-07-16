@@ -6,7 +6,11 @@ interface SessionsResponse {
   data: Session[];
 }
 
-export async function getSessionsInRange(startAfter: Date, startBefore: Date, limit: number = 100): Promise<Session[]> {
+export async function getSessionsInRange(
+  startAfter: Date,
+  startBefore: Date,
+  limit: number = 100,
+): Promise<Session[]> {
   const params = new URLSearchParams({
     start_after: startAfter.toISOString(),
     start_before: startBefore.toISOString(),
