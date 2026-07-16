@@ -5,17 +5,21 @@ from data.data_wrappers.wrappers import (
     AROUsersWrapper,
 )
 from data.tables.aro_user_tables import AROUsers
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 
 from api.v1.aro.models.auth_responses import UserResponse
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
 
-async def get_current_user(token: str) -> AROUsers:
+async def get_current_user(token: str = Header(alias="X-Auth-Token")) -> AROUsers:
     """
-    Dependency: resolve a token string to the authenticated AROUsers record.
-    Raises HTTP 401/404 on invalid or expired tokens.
+    Dependency: resolve an X-Auth-Token header to the authenticated AROUsers record.
+
+    :param token: The auth token sent via the X-Auth-Token request header.
+    :return: The authenticated AROUsers record.
+    :raises HTTPException 404: If the token is not found or the user doesn't exist.
+    :raises HTTPException 401: If the token has expired.
     """
     token_wrapper = AROUserAuthTokenWrapper()
     user_wrapper = AROUsersWrapper()

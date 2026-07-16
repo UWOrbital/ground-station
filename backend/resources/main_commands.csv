@@ -17,3 +17,4 @@ on next pass","Time tag (UTC), Roll angle off nadir (float)","datetime, float",1
 13,"Manually activate an emergency mode for a
 specified amount of time","Emergency mode state number, time tag (UTC)","int, datetime",8,9
 14,Downlink full system logs on next pass,Log level,enum,1,2
+15,ARO Key Sync,key_data (hex),str,32,33

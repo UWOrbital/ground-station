@@ -31,17 +31,22 @@ async def generate_key(
     return GenerateKeyResponse(data=user_keys.generate(user_id=user.id, name=payload.name))
 
 
-@aro_keys_router.post("/current")
+@aro_keys_router.get("/current")
 async def current_key(
     user: AROUsers = Depends(get_current_user),
 ) -> CurrentKeyResponse:
-    """Get the current ARO key"""
+    """
+    Get the current active ARO key for the authenticated user.
+
+    :param user: Authenticated user, resolved from the X-Auth-Token header.
+    :return: The user's currently active key, or None if no keys exist.
+    """
     user_keys = AROUserKeyWrapper()
 
     return CurrentKeyResponse(data=user_keys.get_active(user_id=user.id))
 
 
-@aro_keys_router.post("/all")
+@aro_keys_router.get("/all")
 async def get_all_keys(
     user: AROUsers = Depends(get_current_user),
 ) -> GetAllKeysResponse:
