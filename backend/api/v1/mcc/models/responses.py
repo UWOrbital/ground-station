@@ -2,7 +2,7 @@ from typing import Annotated
 from uuid import UUID
 
 from data.tables.main_tables import MainCommand, MainTelemetry
-from data.tables.transactional_tables import Command
+from data.tables.transactional_tables import Command, CommsSession
 from pydantic import BaseModel, Field
 
 
@@ -34,6 +34,12 @@ class DeleteCommandResponse(BaseModel):
     """Response model confirming a command deletion."""
 
     message: Annotated[str, Field(description="Confirmation message including the deleted command ID")]
+
+
+class CommsSessionsResponse(BaseModel):
+    """Response model wrapping a list of CommsSessions."""
+
+    data: Annotated[list[CommsSession], Field(description="A list containing CommsSession objects")]
 
 
 class MainTelemetriesResponse(BaseModel):
