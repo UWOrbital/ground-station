@@ -2,7 +2,6 @@ import { API_BASE_URL } from "./config";
 import { jsonHeaders, parseOrThrow } from "./auth";
 import type { Command } from "../types";
 
-
 interface CommandResponse {
   data: Command;
 }

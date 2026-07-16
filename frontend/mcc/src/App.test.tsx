@@ -12,7 +12,7 @@ describe("App", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByRole("navigation")).toBeInTheDocument()
-    })
+      expect(screen.getByRole("navigation")).toBeInTheDocument();
+    });
   });
 });

@@ -3,10 +3,7 @@ import { API_BASE_URL } from "./config";
 export class ApiError extends Error {
   status: number;
 
-  constructor(
-    status: number,
-    message: string,
-  ) {
+  constructor(status: number, message: string) {
     super(message);
     this.status = status;
   }

@@ -9,8 +9,8 @@ beforeAll(() => {
       ok: false,
       status: 401,
       json: async () => ({}),
-    })
-  )
+    }),
+  );
   Object.defineProperty(window, "localStorage", {
     value: {
       getItem: vi.fn(),
