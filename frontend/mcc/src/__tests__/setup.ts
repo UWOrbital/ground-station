@@ -3,6 +3,14 @@ import { cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
 beforeAll(() => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      json: async () => ({}),
+    }),
+  );
   Object.defineProperty(window, "localStorage", {
     value: {
       getItem: vi.fn(),
