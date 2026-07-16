@@ -1,16 +1,17 @@
 import { Link } from "react-router-dom";
 import orbital_logo from "../assets/orbital_logo.png";
 import { NAVIGATION_LINKS } from "../utils/nav-links";
+import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import SatelliteStatusIndicator from "./SatelliteStatusIndicator";
+import LogoutButton from "./LogoutButton";
 
 /**
  * @brief Nav component displaying the navigation bar
  * @return tsx element of Nav component
  */
 function Nav() {
-  // TODO: create user auth that checks if the user is logged in
-  const isLoggedIn = false;
+  const { isAuthenticated } = useAuth();
   const { theme, toggleTheme } = useTheme();
 
   return (
@@ -31,7 +32,7 @@ function Nav() {
 
       <div className="flex items-center gap-4">
         {/* Satellite Status Indicator - Only shown when logged in */}
-        {isLoggedIn && (
+        {isAuthenticated && (
           <SatelliteStatusIndicator
             status="online"
             lastContact="2 min ago"
@@ -90,7 +91,7 @@ function Nav() {
           )}
         </button>
 
-        {isLoggedIn ? (
+        {isAuthenticated ? (
           <Link
             to="/profile"
             className="border border-foreground/20 rounded-xl px-4 py-2 hover:bg-accent transition-colors"
@@ -105,6 +106,8 @@ function Nav() {
             Login
           </Link>
         )}
+
+        {isAuthenticated && <LogoutButton />}
       </div>
     </nav>
   );

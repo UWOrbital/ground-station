@@ -3,27 +3,32 @@ import { render, screen } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import "@testing-library/jest-dom";
 import Nav from "./Nav";
+import { AuthProvider } from "../contexts/AuthContext";
 import { ThemeProvider } from "../contexts/ThemeContext";
 
 describe("Nav", () => {
   it("renders logo", () => {
     render(
-      <ThemeProvider>
-        <BrowserRouter>
-          <Nav />
-        </BrowserRouter>
-      </ThemeProvider>,
+      <AuthProvider>
+        <ThemeProvider>
+          <BrowserRouter>
+            <Nav />
+          </BrowserRouter>
+        </ThemeProvider>
+      </AuthProvider>,
     );
     expect(screen.getByAltText("orbital logo")).toBeInTheDocument();
   });
 
   it("renders navigation links", () => {
     render(
-      <ThemeProvider>
-        <BrowserRouter>
-          <Nav />
-        </BrowserRouter>
-      </ThemeProvider>,
+      <AuthProvider>
+        <ThemeProvider>
+          <BrowserRouter>
+            <Nav />
+          </BrowserRouter>
+        </ThemeProvider>
+      </AuthProvider>,
     );
     expect(screen.getByText("Dashboard")).toBeInTheDocument();
     expect(screen.getByText("Commands")).toBeInTheDocument();
