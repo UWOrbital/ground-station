@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Final
 from uuid import UUID, uuid4
@@ -10,9 +10,9 @@ from config.data_config import (
     PACKET_DATA_LENGTH,
     PACKET_RAW_LENGTH,
 )
-from sqlalchemy import func
+from sqlalchemy import Column, DateTime, func
 from sqlalchemy.dialects.postgresql import UUID as DB_UUID
-from sqlalchemy.schema import Column, ForeignKey, ForeignKeyConstraint
+from sqlalchemy.schema import ForeignKey, ForeignKeyConstraint
 from sqlmodel import Field
 
 from data.database.utils import to_foreign_key_value
@@ -54,10 +54,14 @@ class ARORequest(BaseSQLModel, table=True):
     aro_id: UUID = Column(DB_UUID, ForeignKey(AROUsers.id))  # type: ignore
     latitude: Decimal = Field(max_digits=LATITUDE_MAX_DIGIT_NUMBER, decimal_places=COORDINATE_DECIMAL_NUMBER)
     longitude: Decimal = Field(max_digits=LONGITUDE_MAX_DIGIT_NUMBER, decimal_places=COORDINATE_DECIMAL_NUMBER)
-    created_on: datetime = Field(default_factory=datetime.now)
-    request_sent_to_obc_on: datetime | None = Field(default=None)
-    pic_taken_on: datetime | None = Field(default=None)
-    pic_transmitted_on: datetime | None = Field(default=None)
+    created_on: datetime = Field(
+        default_factory=lambda: datetime.now(UTC), sa_column=Column(DateTime(timezone=True), nullable=False)
+    )
+    request_sent_to_obc_on: datetime | None = Field(
+        default=None, sa_column=Column(DateTime(timezone=True), nullable=True)
+    )
+    pic_taken_on: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
+    pic_transmitted_on: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
     packet_id: UUID | None = Field(
         default=None,
         foreign_key=to_foreign_key_value(TRANSACTIONAL_SCHEMA_NAME, PACKETS_TABLE_NAME),
@@ -93,7 +97,14 @@ class Command(BaseSQLModel, table=True):
     status: CommandStatus = Field(default=CommandStatus.PENDING)
     type_: MainTableID = Column(MainTableIDDatabase, ForeignKey(MainCommand.id))  # type: ignore
     params: str | None = None  # TODO: Make sure this matches the corresponding params in the main command table
-    created_at: datetime = Field(default_factory=datetime.now, sa_column_kwargs={"server_default": func.now()})
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(
+            DateTime(timezone=True),
+            server_default=func.now(),
+            nullable=False,
+        ),
+    )
     packet_id: UUID | None = Field(
         default=None,
         foreign_key=to_foreign_key_value(TRANSACTIONAL_SCHEMA_NAME, PACKETS_TABLE_NAME),
@@ -135,7 +146,14 @@ class Telemetry(BaseSQLModel, table=True):
         ondelete="SET NULL",
     )
     sequence_index: int | None = Field(default=None)  # Position of this telemetry within its packet
-    timestamp: datetime = Field(default_factory=datetime.now, sa_column_kwargs={"server_default": func.now()})
+    timestamp: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(
+            DateTime(timezone=True),
+            server_default=func.now(),
+            nullable=False,
+        ),
+    )
 
     # table information
     __tablename__ = TELEMETRY_TABLE_NAME
@@ -159,8 +177,8 @@ class CommsSession(BaseSQLModel, table=True):
     """
 
     id: UUID = Field(default_factory=uuid4, primary_key=True, index=True)
-    start_time: datetime = Field(unique=True)
-    end_time: datetime | None = Field(unique=True, default=None)
+    start_time: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
+    end_time: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
     status: SessionStatus = Field(default=SessionStatus.PENDING)
 
     # table information
@@ -184,7 +202,9 @@ class Packet(BaseSQLModel, table=True):
     type_: MainPacketType
     subtype: str | None = Field(default=None)  # CSDC requirement. TODO: Promote to an enum once subtypes are defined
     payload_data: bytes = Field(max_length=PACKET_DATA_LENGTH)
-    created_on: datetime = Field(default_factory=datetime.now)
+    created_on: datetime = Field(
+        default_factory=lambda: datetime.now(UTC), sa_column=Column(DateTime(timezone=True), nullable=False)
+    )
     offset: int
 
     # table information
