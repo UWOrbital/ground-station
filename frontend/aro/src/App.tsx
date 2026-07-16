@@ -11,6 +11,7 @@ import Home from "./components/Home.tsx";
 import PageNotFound from "./components/PageNotFound.tsx";
 import Gallery from "./components/profile/photo-gallery/gallery.tsx";
 import ProfileForm from "./components/profile/profile-form/profile-form.tsx";
+import KeysDashboard from "./components/keys/KeysDashboard.tsx";
 
 /**
  * @brief App component displaying the main application
@@ -36,6 +37,7 @@ function App() {
         <Route path="*" element={<PageNotFound />} />
         <Route path="/profile/gallery" element={<Gallery />} />
         <Route path="/profile/settings" element={<ProfileForm />} />
+        <Route path="/keys" element={<KeysDashboard />} />
       </Routes>
       <ToastContainer />
     </>

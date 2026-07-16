@@ -20,4 +20,8 @@ export const NAVIGATION_LINKS: Route[] = [
     text: "Requests",
     url: "/requests",
   },
+  {
+    text: "Keys",
+    url: "/keys",
+  },
 ];

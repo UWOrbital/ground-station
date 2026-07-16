@@ -113,3 +113,13 @@ export interface UserLogin {
   user_data_id: number;
   email_verification_token: string | null;
 }
+
+export interface AROUserKey {
+  id: string; // UUID
+  name: string | null;
+  key_data: string;
+  is_active: boolean;
+  synced_to_obc_at: string | null;
+  created_on: string; // ISO datetime string
+  user_id: string; // UUID
+}

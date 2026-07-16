@@ -28,6 +28,9 @@ function Nav() {
               {link.text}
             </Link>
           ))}
+          <Link to="/keys" className="mt-1 hover:underline">
+            Keys
+          </Link>
           <div className="border-1 border-white rounded-xl p-1 px-2 hover:bg-white hover:text-black">
             <Link to="/profile" className="">
               Profile
@@ -41,6 +44,9 @@ function Nav() {
               {link.text}
             </Link>
           ))}
+          <Link to="/keys" className="mt-1 hover:underline">
+            Keys
+          </Link>
           <div className="border-1 border-white rounded-xl p-1 px-2 hover:bg-white hover:text-black">
             <Link to="/login" className="">
               Login
