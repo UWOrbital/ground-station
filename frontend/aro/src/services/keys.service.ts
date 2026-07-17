@@ -6,43 +6,63 @@ import type { AROUserKey } from "../types";
 const KEYS_QUERY_KEY = ["aro-keys"] as const;
 const CURRENT_KEY_QUERY_KEY = ["aro-current-key"] as const;
 
+/* ── API response wrappers (backend wraps list/get in { data: ... }) ── */
+
+interface DataResponse<T> {
+  data: T;
+}
+
+interface SyncResponse {
+  message: string;
+  key_id: string;
+}
+
+/* ── Raw fetch functions ── */
+
 /**
- * @brief Fetch the current active key
- * @return the current active AROUserKey
+ * @brief Fetch the current active key.
+ * @return the current active AROUserKey, or null if none exists.
  */
-async function fetchCurrentKey(): Promise<AROUserKey> {
-  return apiGet<AROUserKey>("/keys/current");
+async function fetchCurrentKey(): Promise<AROUserKey | null> {
+  const response = await apiGet<DataResponse<AROUserKey | null>>("/keys/current");
+  return response.data;
 }
 
 /**
- * @brief Fetch all keys
- * @return array of all AROUserKey
+ * @brief Fetch all keys for the authenticated user.
+ * @return array of all AROUserKey.
  */
 async function fetchAllKeys(): Promise<AROUserKey[]> {
-  return apiGet<AROUserKey[]>("/keys/all");
+  const response = await apiGet<DataResponse<AROUserKey[]>>("/keys/all");
+  return response.data;
 }
 
 /**
- * @brief Generate a new key
- * @param name optional label for the new key
- * @return the newly created AROUserKey
+ * @brief Generate a new key.
+ * @param name optional label for the new key.
+ * @return the newly created AROUserKey.
  */
 async function generateKey(name?: string): Promise<AROUserKey> {
-  return apiPost<AROUserKey>("/keys/generate", { name: name ?? null });
+  const response = await apiPost<DataResponse<AROUserKey>>("/keys/generate", {
+    name: name ?? null,
+  });
+  return response.data;
 }
 
 /**
- * @brief Mark a key as synced
- * @param keyId the UUID of the key to mark synced
- * @return the updated AROUserKey
+ * @brief Mark a key as synced to the OBC.
+ * @param keyId the UUID of the key to mark synced.
+ * @return confirmation message and key ID.
  */
-async function syncKey(keyId: string): Promise<AROUserKey> {
-  return apiPost<AROUserKey>("/keys/sync", { key_id: keyId });
+async function syncKey(keyId: string): Promise<SyncResponse> {
+  return apiPost<SyncResponse>("/keys/sync", { key_id: keyId });
 }
 
+/* ── React Query hooks ── */
+
 /**
- * @brief React Query hook to fetch the current active key
- * @return query result with the current active key
+ * @brief React Query hook to fetch the current active key.
+ * @return query result with the current active key (or null).
  */
 export function useCurrentKey() {
   return useQuery({
@@ -53,8 +73,8 @@ export function useCurrentKey() {
 }
 
 /**
- * @brief React Query hook to fetch all keys
- * @return query result with all keys
+ * @brief React Query hook to fetch all keys.
+ * @return query result with all keys.
  */
 export function useAllKeys() {
   return useQuery({
@@ -65,8 +85,8 @@ export function useAllKeys() {
 }
 
 /**
- * @brief React Query mutation to generate a new key
- * @return mutation object with mutate function
+ * @brief React Query mutation to generate a new key.
+ * @return mutation object with mutate function.
  */
 export function useGenerateKey() {
   const queryClient = useQueryClient();
@@ -85,8 +105,8 @@ export function useGenerateKey() {
 }
 
 /**
- * @brief React Query mutation to sync a key
- * @return mutation object with mutate function
+ * @brief React Query mutation to sync a key to the OBC.
+ * @return mutation object with mutate function.
  */
 export function useSyncKey() {
   const queryClient = useQueryClient();

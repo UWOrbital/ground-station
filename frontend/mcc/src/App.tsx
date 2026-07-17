@@ -11,6 +11,7 @@ import Login from "./pages/Login";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import PageNotFound from "./components/PageNotFound";
 import Telemetry from "./pages/Telemetry";
+import PassesDashboard from "./pages/Passes/PassesDashboard";
 
 /**
  * @brief App component displaying the main application
@@ -28,6 +29,7 @@ function App() {
           <Route path="/telemetry-data" element={<AROAdmin />} />
           <Route path="/aro-requests" element={<LiveSession />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/passes" element={<PassesDashboard />} />
           <Route path="/telemetry" element={<Telemetry />} />
           <Route path="*" element={<PageNotFound />} />
         </Routes>

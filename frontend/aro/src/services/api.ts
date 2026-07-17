@@ -45,7 +45,10 @@ export async function apiGet<T>(path: string): Promise<T> {
 
   if (!response.ok) {
     const errorBody = await response.text().catch(() => "Unknown error");
-    throw new Error(`GET ${path} failed (${response.status}): ${errorBody}`);
+    const hint = response.status === 404
+      ? " - is the backend running the zaid/direct-requests-backend branch?"
+      : "";
+    throw new Error(`GET ${path} failed (${response.status}): ${errorBody}${hint}`);
   }
 
   return response.json() as Promise<T>;
@@ -67,7 +70,10 @@ export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
 
   if (!response.ok) {
     const errorBody = await response.text().catch(() => "Unknown error");
-    throw new Error(`POST ${path} failed (${response.status}): ${errorBody}`);
+    const hint = response.status === 404
+      ? " - is the backend running the zaid/direct-requests-backend branch?"
+      : "";
+    throw new Error(`POST ${path} failed (${response.status}): ${errorBody}${hint}`);
   }
 
   return response.json() as Promise<T>;
