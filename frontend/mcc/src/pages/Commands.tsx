@@ -1,24 +1,33 @@
 import { createColumnHelper } from "@tanstack/react-table";
 import Table from "../components/Table";
+import type { Command, MainCommand, Session } from "../utils/types";
 // import SelectCommand from "./components/SelectCommand";
 // import SendCommand from "./components/SendCommand";
-// import { useState } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { getSessionsInRange } from "../utils/api/sessions";
+import { getMainCommands } from "../utils/api/mainCommands";
+import { getCommandsBySession } from "@/utils/api/commands";
 
-type CommandData = {
-  session: string;
+type CommandRow = {
+  id: string;
   command: string;
-  status: "Pending" | "Sent" | "Responded" | "Failed";
-  type: string;
-  parameters: string;
+  status: Command["status"];
+  params: string;
+  created_at: string;
 };
 
-const columnHelper = createColumnHelper<CommandData>();
+const statusColors: Record<string, string> = {
+  pending: "text-yellow-400",
+  scheduled: "text-blue-400",
+  ongoing: "text-green-400",
+  cancelled: "text-gray-400",
+  failed: "text-red-400",
+  completed: "text-teal-400",
+};
+
+const columnHelper = createColumnHelper<CommandRow>();
 
 const columns = [
-  columnHelper.accessor("session", {
-    header: "Session",
-    cell: (info) => info.getValue(),
-  }),
   columnHelper.accessor("command", {
     header: "Command",
     cell: (info) => info.getValue(),
@@ -27,55 +36,17 @@ const columns = [
     header: "Status",
     cell: (info) => {
       const status = info.getValue();
-      const statusColors: Record<string, string> = {
-        Pending: "text-yellow-400",
-        Sent: "text-green-400",
-        Responded: "text-blue-400",
-        Failed: "text-red-400",
-      };
       return <span className={statusColors[status] || "text-gray-400"}>{status}</span>;
     },
   }),
-  columnHelper.accessor("type", {
-    header: "Type",
-    cell: (info) => info.getValue(),
-  }),
-  columnHelper.accessor("parameters", {
+  columnHelper.accessor("params", {
     header: "Parameters",
     cell: (info) => info.getValue(),
   }),
-];
-
-// Demo data
-const data: CommandData[] = [
-  {
-    session: "Session 1",
-    command: "PING",
-    status: "Pending",
-    type: "Diagnostic",
-    parameters: "{}",
-  },
-  {
-    session: "Session 2",
-    command: "SET_MODE",
-    status: "Sent",
-    type: "Configuration",
-    parameters: '{"mode": "autonomous"}',
-  },
-  {
-    session: "Session 3",
-    command: "GET_STATUS",
-    status: "Responded",
-    type: "Query",
-    parameters: "{}",
-  },
-  {
-    session: "Session 4",
-    command: "DEPLOY",
-    status: "Failed",
-    type: "Action",
-    parameters: '{"component": "solar_panel_2"}',
-  },
+  columnHelper.accessor("created_at", {
+    header: "Created",
+    cell: (info) => new Date(info.getValue()).toLocaleString(),
+  }),
 ];
 
 /**
@@ -83,14 +54,85 @@ const data: CommandData[] = [
  * @return tsx element of Commands component
  */
 function Commands() {
-  // const [selectedCommand, setSelectedCommand] = useState<string>("");
-  const handleCommandSelect = (command: CommandData) => {
-    console.log("Selected command:", command.command);
-  };
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [mainCommands, setMainCommands] = useState<MainCommand[]>([]);
+  const [commands, setCommands] = useState<Command[]>([]);
+  // const [selectedCommandId, setSelectedCommandId] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const now = new Date();
+    const in72Hours = new Date(now.getTime() + 72 * 60 * 60 * 1000);
+    getSessionsInRange(now, in72Hours)
+      .then((data) => {
+        setSessions(data);
+        if (data.length > 0) setSelectedSessionId(data[0].id);
+      })
+      .catch((e) => setError(e instanceof Error ? e.message : "Failed to load sessions"));
+
+    getMainCommands()
+      .then(setMainCommands)
+      .catch((e) => setError(e instanceof Error ? e.message : "Failed to load command catalog"));
+  }, []);
+
+  const refetchCommands = useCallback(() => {
+    if (!selectedSessionId) return;
+    setLoading(true);
+    getCommandsBySession(selectedSessionId)
+      .then(setCommands)
+      .catch((e) => setError(e instanceof Error ? e.message : "Failed to load commands"))
+      .finally(() => setLoading(false));
+  }, [selectedSessionId]);
+
+  useEffect(() => {
+    refetchCommands();
+  }, [refetchCommands]);
+
+  const mainCommandsById = useMemo(
+    () => new Map(mainCommands.map((mc) => [mc.id, mc])),
+    [mainCommands],
+  );
+
+  const rows: CommandRow[] = commands.map((cmd) => ({
+    id: cmd.id,
+    command: mainCommandsById.get(cmd.type_)?.name ?? `Unknown (#${cmd.type_})`,
+    status: cmd.status,
+    params: cmd.params ?? "",
+    created_at: cmd.created_at,
+  }));
+
+  // const selectedSession = sessions.find((s) => s.id === selectedCommandId) ?? null;
+  // const selectedMainCommand = mainCommands.find((mc) => mc.id === selectedCommandId) ?? null;
+
   return (
     <div>
+      <div className="flex justify-center pt-6">
+        <select
+          className="bg-gray-800 text-white px-3 py-2 rounded-md border border-gray-600"
+          value={selectedSessionId ?? ""}
+          onChange={(e) => setSelectedSessionId(e.target.value || null)}
+        >
+          <option value="" disabled>
+            Select a session
+          </option>
+          {sessions.map((s) => (
+            <option key={s.id} value={s.id}>
+              {new Date(s.start_time).toLocaleString()} ({s.status})
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {error && <p className="text-red-400 text-center mt-4">{error}</p>}
+
       <div className="min-h-screen w-full flex justify-center items-center space-x-10">
-        <Table data={data} columns={columns} onRowClick={handleCommandSelect} showFilters={true} />
+        {loading ? (
+          <p className="text-gray-400">Loading commands...</p>
+        ) : (
+          <Table data={rows} columns={columns} showFilters={true} />
+        )}
       </div>
       {/* <SelectCommand selectedCommand={selectedCommand} setCommand={setSelectedCommand} /> */}
     </div>

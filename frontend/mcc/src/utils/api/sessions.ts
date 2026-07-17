@@ -6,8 +6,17 @@ interface SessionsResponse {
   data: Session[];
 }
 
-export async function getSessions(): Promise<Session[]> {
-  const res = await fetch(`${API_BASE_URL}/sessions/`, {
+export async function getSessionsInRange(
+  startAfter: Date,
+  startBefore: Date,
+  limit: number = 100,
+): Promise<Session[]> {
+  const params = new URLSearchParams({
+    start_after: startAfter.toISOString(),
+    start_before: startBefore.toISOString(),
+    limit: String(limit),
+  });
+  const res = await fetch(`${API_BASE_URL}/sessions/?${params}`, {
     credentials: "include",
     headers: jsonHeaders(),
   });

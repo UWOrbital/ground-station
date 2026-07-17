@@ -1,6 +1,6 @@
 import os
 import subprocess
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 
 os.environ.setdefault("ARO_AUTH_GOOGLE_CLIENT_ID", "dummy")
 os.environ.setdefault("ARO_AUTH_GOOGLE_CLIENT_SECRET", "dummy")
@@ -87,7 +87,7 @@ def db_session(db_engine: Engine) -> Session:
 
 @pytest.fixture
 def default_start_time() -> datetime:
-    return datetime(2025, 1, 1, 12, 25, 38)
+    return datetime(2025, 1, 1, 12, 25, 38, tzinfo=UTC)
 
 
 @pytest.fixture
@@ -96,7 +96,7 @@ def default_comms_session(default_start_time: datetime) -> CommsSession:
     Creates the comms session
     This is a function level fixture.
     """
-    comms_session_item = CommsSession(start_time=default_start_time)
+    comms_session_item = CommsSession(start_time=default_start_time, end_time=default_start_time + timedelta(minutes=5))
     return comms_session_item
 
 

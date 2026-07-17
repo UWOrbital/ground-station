@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 from uuid import uuid4
 
@@ -108,7 +108,7 @@ def test_comms_session_basic(db_session: Session, default_start_time: datetime, 
     returned_item1 = comms_session_items[0]
     assert returned_item1.id == id
     assert returned_item1.start_time == default_start_time
-    assert returned_item1.end_time is None
+    assert returned_item1.end_time == default_start_time + timedelta(minutes=5)
     assert returned_item1.status == SessionStatus.PENDING
 
 

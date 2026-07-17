@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from config.data_config import SESSION_LOCKOUT_SECONDS
@@ -86,7 +86,7 @@ class AROUserAuthTokenWrapper(AbstractWrapper[AROUserAuthToken, UUID]):
             return session.exec(
                 select(AROUserAuthToken)
                 .where(AROUserAuthToken.user_id == user_id)
-                .where(AROUserAuthToken.expiry > datetime.now())
+                .where(AROUserAuthToken.expiry > datetime.now(UTC))
             ).first()
 
 
@@ -166,6 +166,25 @@ class CommsSessionWrapper(AbstractWrapper[CommsSession, UUID]):
         with get_db_session() as session:
             return session.exec(select(CommsSession).order_by(col(CommsSession.start_time).desc())).first()
 
+    def get_in_range(
+        self, start_after: datetime | None, start_before: datetime | None, limit: int = 100
+    ) -> list[CommsSession]:
+        """
+        Retrieves sessions whose start_time falls within the given range
+
+        :param start_after: only return sessions starting at or after this time
+        :param start_before: only return sessions starting before this time
+        :param limit: maximum number of rows to return
+        :return: matching session entries, ordered by start_time ascending
+        """
+        with get_db_session() as session:
+            query = select(CommsSession)
+            if start_after:
+                query = query.where(CommsSession.start_time >= start_after)
+            if start_before:
+                query = query.where(CommsSession.start_time < start_before)
+            return list(session.exec(query.order_by(col(CommsSession.start_time).asc()).limit(limit)).all())
+
     def is_locked_out(self, session_id: UUID) -> bool:
         """
         Checks whether the given session is within its lockout window.
@@ -175,7 +194,7 @@ class CommsSessionWrapper(AbstractWrapper[CommsSession, UUID]):
         :raises ValueError: if no session with the given ID exists."""
         session = self.get_by_id(session_id)
         lockout_start = session.start_time - timedelta(seconds=SESSION_LOCKOUT_SECONDS)
-        return datetime.now() >= lockout_start
+        return datetime.now(UTC) >= lockout_start
 
 
 class PacketWrapper(AbstractWrapper[Packet, UUID]):

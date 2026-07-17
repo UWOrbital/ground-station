@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
 import pytest
@@ -34,8 +34,8 @@ def comms_session(db_session):
     """Create a test comms session in the database."""
     comms_session = CommsSession(
         id=uuid4(),
-        start_time=datetime.now() + timedelta(minutes=30),
-        end_time=datetime.now() + timedelta(minutes=40),
+        start_time=datetime.now(UTC) + timedelta(minutes=30),
+        end_time=datetime.now(UTC) + timedelta(minutes=40),
     )
     db_session.add(comms_session)
     db_session.commit()
@@ -47,8 +47,8 @@ def locked_comms_session(db_session):
     """Create a test comms session currently within its lockout window."""
     comms_session = CommsSession(
         id=uuid4(),
-        start_time=datetime.now() + timedelta(seconds=5),
-        end_time=datetime.now() + timedelta(minutes=10),
+        start_time=datetime.now(UTC) + timedelta(seconds=5),
+        end_time=datetime.now(UTC) + timedelta(minutes=10),
     )
     db_session.add(comms_session)
     db_session.commit()
@@ -192,7 +192,7 @@ def test_update_command_session_locked_out(client: TestClient, comms_session: Co
     assert create_response.status_code == 200
     command_id = create_response.json()["data"]["id"]
 
-    comms_session.start_time = datetime.now() + timedelta(seconds=5)
+    comms_session.start_time = datetime.now(UTC) + timedelta(seconds=5)
     db_session.add(comms_session)
     db_session.commit()
 
@@ -259,7 +259,7 @@ def test_delete_command_session_locked_out(client: TestClient, comms_session: Co
     assert create_response.status_code == 200
     command_id = create_response.json()["data"]["id"]
 
-    comms_session.start_time = datetime.now() + timedelta(seconds=5)
+    comms_session.start_time = datetime.now(UTC) + timedelta(seconds=5)
     db_session.add(comms_session)
     db_session.commit()
 
