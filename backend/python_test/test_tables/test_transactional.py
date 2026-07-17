@@ -10,6 +10,7 @@ from data.tables.transactional_tables import (
     ARORequest,
     Command,
     CommsSession,
+    Image,
     Packet,
     Telemetry,
 )
@@ -246,7 +247,9 @@ def test_commands_packet_link(db_session: Session, default_comms_session: CommsS
 
     # Commands now link directly to a packet with a sequence index
     id = uuid4()
-    command = Command(id=id, type_=main_command.id, packet_id=packet.id, sequence_index=0, session_id=default_comms_session.id)
+    command = Command(
+        id=id, type_=main_command.id, packet_id=packet.id, sequence_index=0, session_id=default_comms_session.id
+    )
     db_session.add(command)
     db_session.commit()
 
@@ -261,3 +264,91 @@ def test_commands_packet_link(db_session: Session, default_comms_session: CommsS
     db_session.expire_all()
     survivor = db_session.exec(select(Command).where(Command.id == id)).one()
     assert survivor.packet_id is None
+
+
+def test_command_response_defaults_none(db_session: Session, default_comms_session: CommsSession):
+    # Setup the database
+    main_command = MainCommand(id=1, name="Test 1", data_size=1, total_size=2, format="int 7 bytes", params="time")
+    db_session.add(main_command)
+    db_session.commit()
+    db_session.add(default_comms_session)
+    db_session.commit()
+
+    # A command is queued before the OBC has replied, so response starts empty
+    id = uuid4()
+    command = Command(id=id, type_=main_command.id, params="1234567", session_id=default_comms_session.id)
+    db_session.add(command)
+    db_session.commit()
+
+    returned = db_session.exec(select(Command).where(Command.id == id)).one()
+    assert returned.response is None
+
+    # The response is filled in once the downlink carrying it is decoded
+    returned.response = "ACK"
+    db_session.add(returned)
+    db_session.commit()
+    refetched = db_session.exec(select(Command).where(Command.id == id)).one()
+    assert refetched.response == "ACK"
+
+
+def _make_aro_request(db_session: Session) -> ARORequest:
+    """Persist an ARO user and a picture request, returning the request."""
+    user_data = AROUsers(call_sign="123456", email="bob@test.com", first_name="Bob", phone_number="123456789")
+    db_session.add(user_data)
+    db_session.commit()
+
+    aro_request = ARORequest(aro_id=user_data.id, latitude=Decimal(30), longitude=Decimal(40))
+    db_session.add(aro_request)
+    db_session.commit()
+    return aro_request
+
+
+def test_image_basic(db_session: Session, default_comms_session: CommsSession):
+    # Setup the database
+    packet = _make_packet(db_session, default_comms_session)
+    aro_request = _make_aro_request(db_session)
+
+    # Test the images table
+    id = uuid4()
+    image = Image(id=id, data="base64-encoded-pixels", packet_id=packet.id, aro_id=aro_request.id)
+    db_session.add(image)
+    db_session.commit()
+
+    returned = db_session.exec(select(Image).where(Image.id == id)).one()
+    assert returned.data == "base64-encoded-pixels"
+    assert returned.packet_id == packet.id
+    assert returned.aro_id == aro_request.id
+
+
+def test_image_links_default_none(db_session: Session):
+    # An image can be stored before it is matched to a packet or a request
+    id = uuid4()
+    image = Image(id=id, data="base64-encoded-pixels")
+    db_session.add(image)
+    db_session.commit()
+
+    returned = db_session.exec(select(Image).where(Image.id == id)).one()
+    assert returned.packet_id is None
+    assert returned.aro_id is None
+
+
+def test_image_survives_packet_and_request_delete(db_session: Session, default_comms_session: CommsSession):
+    # Setup the database
+    packet = _make_packet(db_session, default_comms_session)
+    aro_request = _make_aro_request(db_session)
+
+    id = uuid4()
+    image = Image(id=id, data="base64-encoded-pixels", packet_id=packet.id, aro_id=aro_request.id)
+    db_session.add(image)
+    db_session.commit()
+
+    # Deleting either link sets it to null but keeps the downlinked image itself
+    db_session.delete(packet)
+    db_session.delete(aro_request)
+    db_session.commit()
+    db_session.expire_all()
+
+    survivor = db_session.exec(select(Image).where(Image.id == id)).one()
+    assert survivor.data == "base64-encoded-pixels"
+    assert survivor.packet_id is None
+    assert survivor.aro_id is None
