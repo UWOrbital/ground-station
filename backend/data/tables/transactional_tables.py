@@ -41,6 +41,7 @@ SESSIONS_TABLE_NAME: Final[str] = "sessions"
 PACKETS_TABLE_NAME: Final[str] = "packets"
 TELEMETRY_TABLE_NAME: Final[str] = "telemetry"
 COMMANDS_TABLE_NAME: Final[str] = "commands"
+IMAGES_TABLE_NAME: Final[str] = "images"
 
 # Transactional data tables
 
@@ -111,6 +112,7 @@ class Command(BaseSQLModel, table=True):
         ondelete="SET NULL",
     )
     sequence_index: int | None = Field(default=None)  # Position of this command within its packet
+    response: str | None = Field(default=None)  # Reply from the OBC, populated on downlink
 
     # table information
     __tablename__ = COMMANDS_TABLE_NAME
@@ -209,4 +211,26 @@ class Packet(BaseSQLModel, table=True):
 
     # table information
     __tablename__ = PACKETS_TABLE_NAME
+    __table_args__ = {"schema": TRANSACTIONAL_SCHEMA_NAME}
+
+
+class Image(BaseSQLModel, table=True):
+    """
+    Holds the information about an image downlinked from the OBC
+    """
+
+    id: UUID = Field(default_factory=uuid4, primary_key=True, index=True)
+    data: str
+    packet_id: UUID | None = Field(
+        default=None,
+        foreign_key=to_foreign_key_value(TRANSACTIONAL_SCHEMA_NAME, PACKETS_TABLE_NAME),
+        ondelete="SET NULL",
+    )
+    aro_id: UUID | None = Field(
+        default=None,
+        foreign_key=to_foreign_key_value(TRANSACTIONAL_SCHEMA_NAME, ARO_REQUESTS_TABLE_NAME),
+        ondelete="SET NULL",
+    )
+
+    __tablename__ = IMAGES_TABLE_NAME
     __table_args__ = {"schema": TRANSACTIONAL_SCHEMA_NAME}
