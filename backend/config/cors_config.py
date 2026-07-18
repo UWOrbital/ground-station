@@ -8,7 +8,11 @@ class CORSConfig(BaseSettings):
 
     model_config = SettingsConfigDict(env_prefix="CORS_")
 
-    allow_origins: list[str] = ["http://localhost:5173", "http://localhost:5174"]
+    allow_origins: list[str] = [
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "https://ground-station-nine.vercel.app",
+    ]
     allow_credentials: bool = True
     allow_methods: list[str] = ["*"]
     allow_headers: list[str] = ["*"]

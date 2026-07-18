@@ -18,7 +18,7 @@ def test_logger_config_default():
 def test_cors_config_default():
     cfg = CORSConfig()
 
-    assert cfg.allow_origins == ["http://localhost:5173", "http://localhost:5174"]
+    assert cfg.allow_origins == ["http://localhost:5173", "http://localhost:5174", "https://ground-station-nine.vercel.app"]
     assert cfg.allow_credentials == True
     assert cfg.allow_methods == ["*"]
     assert cfg.allow_headers == ["*"]
