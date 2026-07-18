@@ -2,7 +2,7 @@ import { createColumnHelper } from "@tanstack/react-table";
 import Table from "../components/Table";
 import type { Command, MainCommand, Session } from "../utils/types";
 import SelectCommand from "./SelectCommand";
-// import SendCommand from "./components/SendCommand";
+import SendCommand from "./SendCommand";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { getSessionsInRange } from "../utils/api/sessions";
 import { getMainCommands } from "../utils/api/mainCommands";
@@ -103,8 +103,8 @@ function Commands() {
     created_at: cmd.created_at,
   }));
 
-  // const selectedSession = sessions.find((s) => s.id === selectedCommandId) ?? null;
-  // const selectedMainCommand = mainCommands.find((mc) => mc.id === selectedCommandId) ?? null;
+  const selectedSession = sessions.find((s) => s.id === selectedSessionId) ?? null;
+  const selectedMainCommand = mainCommands.find((mc) => mc.id === selectedCommandId) ?? null;
 
   return (
     <div>
@@ -127,14 +127,33 @@ function Commands() {
 
       {error && <p className="text-red-400 text-center mt-4">{error}</p>}
 
-      <div className="min-h-screen w-full flex justify-center items-center space-x-10">
-        {loading ? (
+      <div className="w-full flex justify-center items-start gap-10 pt-6">
+        {selectedCommandId && (
+        <SendCommand
+          mainCommand={selectedMainCommand}
+          selectedSessionId={selectedSessionId}
+          sessionStartTime={selectedSession?.start_time ?? null}
+          setSelectedCommandId={setSelectedCommandId}
+          onSubmitted={refetchCommands}
+        />
+      )}
+      <Table data={rows} columns={columns} showFilters={true} />
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm">
+          <p className="text-gray-400">Loading commands...</p>
+          </div>
+      )}
+        {/* {loading ? (
           <p className="text-gray-400">Loading commands...</p>
         ) : (
           <Table data={rows} columns={columns} showFilters={true} />
-        )}
+        )} */}
       </div>
-      <SelectCommand mainCommands={mainCommands} selectedCommandId={selectedCommandId} setSelectedCommandId={setSelectedCommandId} />
+      <SelectCommand
+        mainCommands={mainCommands}
+        selectedCommandId={selectedCommandId}
+        setSelectedCommandId={setSelectedCommandId}
+      />
     </div>
   );
 }
