@@ -63,6 +63,7 @@ async def create_command(
             "params": request.params,
             "user_id": current_user.id,
             "session_id": request.session_id,
+            "sequence_index": request.sequence_index,
         }
     )
     return CommandResponse(data=created_command)

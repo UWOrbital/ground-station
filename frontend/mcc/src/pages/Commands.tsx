@@ -14,6 +14,8 @@ type CommandRow = {
   status: Command["status"];
   params: string;
   created_at: string;
+  sequence_index: number;
+  response: string;
 };
 
 const statusColors: Record<string, string> = {
@@ -46,6 +48,14 @@ const columns = [
   columnHelper.accessor("created_at", {
     header: "Created",
     cell: (info) => new Date(info.getValue()).toLocaleString(),
+  }),
+  columnHelper.accessor("sequence_index", {
+    header: "Sequence index",
+    cell: (info) => info.getValue().toLocaleString(),
+  }),
+  columnHelper.accessor("response", {
+    header: "Response",
+    cell: (info) => info.getValue(),
   }),
 ];
 
@@ -101,6 +111,8 @@ function Commands() {
     status: cmd.status,
     params: cmd.params ?? "",
     created_at: cmd.created_at,
+    sequence_index: cmd.sequence_index ?? 0,
+    response: cmd.response ?? "",
   }));
 
   const selectedSession = sessions.find((s) => s.id === selectedSessionId) ?? null;
@@ -129,25 +141,20 @@ function Commands() {
 
       <div className="w-full flex justify-center items-start gap-10 pt-6">
         {selectedCommandId && (
-        <SendCommand
-          mainCommand={selectedMainCommand}
-          selectedSessionId={selectedSessionId}
-          sessionStartTime={selectedSession?.start_time ?? null}
-          setSelectedCommandId={setSelectedCommandId}
-          onSubmitted={refetchCommands}
-        />
-      )}
-      <Table data={rows} columns={columns} showFilters={true} />
-      {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm">
-          <p className="text-gray-400">Loading commands...</p>
+          <SendCommand
+            mainCommand={selectedMainCommand}
+            selectedSessionId={selectedSessionId}
+            sessionStartTime={selectedSession?.start_time ?? null}
+            setSelectedCommandId={setSelectedCommandId}
+            onSubmitted={refetchCommands}
+          />
+        )}
+        <Table data={rows} columns={columns} showFilters={true} />
+        {loading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm">
+            <p className="text-gray-400">Loading commands...</p>
           </div>
-      )}
-        {/* {loading ? (
-          <p className="text-gray-400">Loading commands...</p>
-        ) : (
-          <Table data={rows} columns={columns} showFilters={true} />
-        )} */}
+        )}
       </div>
       <SelectCommand
         mainCommands={mainCommands}

@@ -27,6 +27,7 @@ export async function createCommand(payload: {
   type_: number;
   params?: string;
   session_id: string;
+  sequence_index?: number;
 }): Promise<Command> {
   const res = await fetch(`${API_BASE_URL}/commands/`, {
     method: "POST",

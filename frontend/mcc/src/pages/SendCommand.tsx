@@ -88,6 +88,7 @@ function SendCommand({
   onSubmitted: () => void;
 }) {
   const [parameterValues, setParameterValues] = useState<ParameterValues>({});
+  const [sequenceIndex, setSequenceIndex] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [currentSubmitStatus, setCurrentSubmitStatus] = useState<SubmitStatus>(SubmitStatus.None);
 
@@ -143,10 +144,12 @@ function SendCommand({
         type_: mainCommand.id,
         params: paramsString,
         session_id: selectedSessionId,
+        sequence_index: sequenceIndex.trim() ? parseInt(sequenceIndex, 10) : undefined,
       });
 
       setCurrentSubmitStatus(SubmitStatus.Success);
       setParameterValues({});
+      setSequenceIndex("");
       onSubmitted();
     } catch (error) {
       if (error instanceof ApiError && error.status === 409) {
@@ -260,6 +263,16 @@ function SendCommand({
               })}
             </FieldGroup>
           </FieldSet>
+          <Field>
+            <FieldLabel htmlFor="sequence-index">Sequence index (optional)</FieldLabel>
+            <Input
+              id="sequence-index"
+              type="number"
+              value={sequenceIndex}
+              onChange={(e) => setSequenceIndex(e.target.value)}
+              placeholder="e.g. 0, 1, 2..."
+            />
+          </Field>
           <Field orientation="horizontal">
             <Button type="submit" disabled={!isFormValid() || isSubmitting}>
               Submit
