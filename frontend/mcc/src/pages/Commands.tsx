@@ -1,7 +1,7 @@
 import { createColumnHelper } from "@tanstack/react-table";
 import Table from "../components/Table";
 import type { Command, MainCommand, Session } from "../utils/types";
-// import SelectCommand from "./components/SelectCommand";
+import SelectCommand from "./SelectCommand";
 // import SendCommand from "./components/SendCommand";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { getSessionsInRange } from "../utils/api/sessions";
@@ -58,7 +58,7 @@ function Commands() {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [mainCommands, setMainCommands] = useState<MainCommand[]>([]);
   const [commands, setCommands] = useState<Command[]>([]);
-  // const [selectedCommandId, setSelectedCommandId] = useState<number | null>(null);
+  const [selectedCommandId, setSelectedCommandId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -134,7 +134,7 @@ function Commands() {
           <Table data={rows} columns={columns} showFilters={true} />
         )}
       </div>
-      {/* <SelectCommand selectedCommand={selectedCommand} setCommand={setSelectedCommand} /> */}
+      <SelectCommand mainCommands={mainCommands} selectedCommandId={selectedCommandId} setSelectedCommandId={setSelectedCommandId} />
     </div>
   );
 }
