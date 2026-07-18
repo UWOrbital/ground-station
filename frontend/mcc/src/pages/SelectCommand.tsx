@@ -17,7 +17,7 @@ function SelectCommand({
   selectedCommandId,
   setSelectedCommandId,
 }: {
-  mainCommands: MainCommand[]
+  mainCommands: MainCommand[];
   selectedCommandId: number | null;
   setSelectedCommandId: (id: number | null) => void;
 }) {
@@ -41,7 +41,9 @@ function SelectCommand({
           <DropdownMenuCheckboxItem
             key={command.id}
             checked={selectedCommandId === command.id}
-            onCheckedChange={() => setSelectedCommandId(selectedCommandId === command.id ? null : command.id)}
+            onCheckedChange={() =>
+              setSelectedCommandId(selectedCommandId === command.id ? null : command.id)
+            }
           >
             {command.name}
           </DropdownMenuCheckboxItem>
