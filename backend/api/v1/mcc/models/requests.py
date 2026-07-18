@@ -13,6 +13,7 @@ class CreateCommandRequest(BaseModel):
         str | None, Field(description="Serialized command parameters matching the main command schema")
     ] = None
     session_id: Annotated[UUID, Field(description="Session this command is scheduled for")]
+    sequence_index: Annotated[int | None, Field(description="Rudimentary send-order hint before packetization")] = None
 
 
 class UpdateCommandRequest(BaseModel):

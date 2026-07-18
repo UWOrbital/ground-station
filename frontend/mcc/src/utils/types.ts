@@ -42,6 +42,7 @@ export interface Command {
   created_at: string;
   packet_id: string | null;
   sequence_index: number | null;
+  response: string | null;
 }
 
 export interface Telemetry {

@@ -1,8 +1,8 @@
 import { createColumnHelper } from "@tanstack/react-table";
 import Table from "../components/Table";
 import type { Command, MainCommand, Session } from "../utils/types";
-// import SelectCommand from "./components/SelectCommand";
-// import SendCommand from "./components/SendCommand";
+import SelectCommand from "./SelectCommand";
+import SendCommand from "./SendCommand";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { getSessionsInRange } from "../utils/api/sessions";
 import { getMainCommands } from "../utils/api/mainCommands";
@@ -14,6 +14,8 @@ type CommandRow = {
   status: Command["status"];
   params: string;
   created_at: string;
+  sequence_index: number;
+  response: string;
 };
 
 const statusColors: Record<string, string> = {
@@ -47,6 +49,14 @@ const columns = [
     header: "Created",
     cell: (info) => new Date(info.getValue()).toLocaleString(),
   }),
+  columnHelper.accessor("sequence_index", {
+    header: "Sequence index",
+    cell: (info) => info.getValue().toLocaleString(),
+  }),
+  columnHelper.accessor("response", {
+    header: "Response",
+    cell: (info) => info.getValue(),
+  }),
 ];
 
 /**
@@ -58,7 +68,7 @@ function Commands() {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [mainCommands, setMainCommands] = useState<MainCommand[]>([]);
   const [commands, setCommands] = useState<Command[]>([]);
-  // const [selectedCommandId, setSelectedCommandId] = useState<number | null>(null);
+  const [selectedCommandId, setSelectedCommandId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -101,10 +111,12 @@ function Commands() {
     status: cmd.status,
     params: cmd.params ?? "",
     created_at: cmd.created_at,
+    sequence_index: cmd.sequence_index ?? 0,
+    response: cmd.response ?? "",
   }));
 
-  // const selectedSession = sessions.find((s) => s.id === selectedCommandId) ?? null;
-  // const selectedMainCommand = mainCommands.find((mc) => mc.id === selectedCommandId) ?? null;
+  const selectedSession = sessions.find((s) => s.id === selectedSessionId) ?? null;
+  const selectedMainCommand = mainCommands.find((mc) => mc.id === selectedCommandId) ?? null;
 
   return (
     <div>
@@ -127,14 +139,28 @@ function Commands() {
 
       {error && <p className="text-red-400 text-center mt-4">{error}</p>}
 
-      <div className="min-h-screen w-full flex justify-center items-center space-x-10">
-        {loading ? (
-          <p className="text-gray-400">Loading commands...</p>
-        ) : (
-          <Table data={rows} columns={columns} showFilters={true} />
+      <div className="w-full flex justify-center items-start gap-10 pt-6">
+        {selectedCommandId && (
+          <SendCommand
+            mainCommand={selectedMainCommand}
+            selectedSessionId={selectedSessionId}
+            sessionStartTime={selectedSession?.start_time ?? null}
+            setSelectedCommandId={setSelectedCommandId}
+            onSubmitted={refetchCommands}
+          />
+        )}
+        <Table data={rows} columns={columns} showFilters={true} />
+        {loading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm">
+            <p className="text-gray-400">Loading commands...</p>
+          </div>
         )}
       </div>
-      {/* <SelectCommand selectedCommand={selectedCommand} setCommand={setSelectedCommand} /> */}
+      <SelectCommand
+        mainCommands={mainCommands}
+        selectedCommandId={selectedCommandId}
+        setSelectedCommandId={setSelectedCommandId}
+      />
     </div>
   );
 }
