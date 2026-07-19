@@ -335,7 +335,7 @@ function Telemetry() {
                       else rowRefs.current.delete(row.id);
                     }}
                     className={`flex flex-row gap-2 cursor-pointer ${
-                      selectedRowId === row.id ? "bg-white text-[#1C1F1B]" : ""
+                      selectedRowId === row.id && row.depth === 0 ? "bg-white text-[#1C1F1B]" : ""
                     }`}
                     onClick={() => setSelectedRowId(row.id)}
                   >
