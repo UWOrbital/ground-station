@@ -109,6 +109,13 @@ class UserInformationResponse(BaseModel):
     phone_number: str | None = None
 
 
+class ImageResponse(BaseModel):
+    """Response model wrapping a single downlinked image."""
+
+    id: Annotated[UUID, Field(description="Image UUID")]
+    data: Annotated[str, Field(description="Base64-encoded JPEG image data")]
+
+
 class TelemetrySubrow(BaseModel):
     """
 

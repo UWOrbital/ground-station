@@ -15,6 +15,7 @@ from data.tables.transactional_tables import (
     ARORequest,
     Command,
     CommsSession,
+    Image,
     Packet,
     Telemetry,
 )
@@ -296,3 +297,20 @@ class TelemetryWrapper(AbstractWrapper[Telemetry, UUID]):
                 )
                 for t, name, session_id, status in results
             ]
+
+
+class ImageWrapper(AbstractWrapper[Image, UUID]):
+    """
+    Data wrapper for Image table.
+    """
+
+    model = Image
+
+    def get_latest(self) -> Image | None:
+        """
+        Return the most recently inserted image, or None if the table is empty.
+
+        :return: the newest Image row, or None.
+        """
+        with get_db_session() as session:
+            return session.exec(select(Image).order_by(col(Image.id).desc())).first()
