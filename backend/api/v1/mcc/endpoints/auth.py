@@ -54,14 +54,19 @@ def auth_token_callback(code: str) -> Response:
     )
 
     response.set_cookie(
-        "id_token", tokens["id_token"], httponly=True, secure=keycloak.config.secure_cookies, samesite="lax", path="/"
+        "id_token",
+        tokens["id_token"],
+        httponly=True,
+        secure=keycloak.config.secure_cookies,
+        samesite="none" if keycloak.config.secure_cookies else "lax",
+        path="/",
     )
     response.set_cookie(
         "access_token",
         tokens["access_token"],
         httponly=True,
         secure=keycloak.config.secure_cookies,
-        samesite="lax",
+        samesite="none" if keycloak.config.secure_cookies else "lax",
         path="/",
     )
 
@@ -76,6 +81,16 @@ def logout(request: Request) -> RedirectResponse:
     id_token = request.cookies.get("id_token")
     url = keycloak.logout_url(id_token) if id_token else keycloak.config.redirect_uri
     response = RedirectResponse(url=url)
-    response.delete_cookie("id_token")
-    response.delete_cookie("access_token")
+    response.delete_cookie(
+        "id_token",
+        path="/",
+        secure=keycloak.config.secure_cookies,
+        samesite="none" if keycloak.config.secure_cookies else "lax",
+    )
+    response.delete_cookie(
+        "access_token",
+        path="/",
+        secure=keycloak.config.secure_cookies,
+        samesite="none" if keycloak.config.secure_cookies else "lax",
+    )
     return response
