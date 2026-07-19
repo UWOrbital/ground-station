@@ -11,10 +11,9 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
+import { useTelemetry } from "../hooks/useTelemetry";
 
-import rawData from "../utils/telemetry-mock-data.json";
-
-type telemetryData = {
+type TelemetryRow = {
   type?: string;
   timestamp?: string;
   value?: number;
@@ -23,14 +22,10 @@ type telemetryData = {
   packet?: string;
   obc_state?: string;
   epc_state?: string;
-  subRows?: telemetryData[];
+  subRows?: TelemetryRow[];
 };
 
-const uniqueTypes = Array.from(new Set(rawData.map((row) => row.type))).sort();
-
-const data: telemetryData[] = rawData;
-
-const columnHelper = createColumnHelper<telemetryData>();
+const columnHelper = createColumnHelper<TelemetryRow>();
 
 const columns = [
   columnHelper.accessor("type", {
@@ -102,6 +97,10 @@ const columns = [
 
 function Telemetry() {
   const type: string = "< log >";
+  const { data: response, isLoading, isError, error } = useTelemetry();
+  const data: TelemetryRow[] = response?.data ?? [];
+  const uniqueTypes = Array.from(new Set(data.map((row) => row.type).filter(Boolean))).sort() as string[];
+
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
@@ -126,7 +125,7 @@ function Telemetry() {
     globalFilterFn: (row, _columnId, filterValue) => {
       const search = (filterValue as string).toLowerCase();
 
-      const matchesRow = (r: telemetryData): boolean => {
+      const matchesRow = (r: TelemetryRow): boolean => {
         return [
           r.type,
           r.timestamp,
@@ -163,6 +162,23 @@ function Telemetry() {
       container.scrollTop = rowBottom - container.clientHeight;
     }
   }, [selectedRowId]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-[88vh]">
+        <p className="text-gray-400 text-lg">Loading telemetry data…</p>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[88vh] gap-4">
+        <p className="text-red-400 text-lg">Failed to load telemetry.</p>
+        <p className="text-gray-500 text-sm">{(error as Error)?.message}</p>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -257,38 +273,44 @@ function Telemetry() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((row) => (
-                <tr
-                  key={row.id}
-                  ref={(el) => {
-                    if (el) rowRefs.current.set(row.id, el);
-                    else rowRefs.current.delete(row.id);
-                  }}
-                  className={`flex flex-row gap-2 cursor-pointer ${
-                    selectedRowId === row.id ? "bg-white text-[#1C1F1B]" : ""
-                  }`}
-                  onClick={() => setSelectedRowId(row.id)}
-                >
-                  <td className="flex flex-row justify-between pl-2 w-1/2 text-center">
+              {rows.length === 0 ? (
+                <tr>
+                  <td colSpan={3} className="text-center py-8 text-gray-400">
+                    No telemetry data matches your search or filter.
+                  </td>
+                </tr>
+              ) : (
+                rows.map((row) => (
+                  <tr
+                    key={row.id}
+                    ref={(el) => {
+                      if (el) rowRefs.current.set(row.id, el);
+                      else rowRefs.current.delete(row.id);
+                    }}
+                    className={`flex flex-row gap-2 cursor-pointer ${selectedRowId === row.id ? "bg-white text-[#1C1F1B]" : ""
+                      }`}
+                    onClick={() => setSelectedRowId(row.id)}
+                  >
+                    <td className="flex flex-row justify-between pl-2 w-1/2 text-center">
+                      {row
+                        .getVisibleCells()
+                        .filter((cell) => ["type", "timestamp"].includes(cell.column.id))
+                        .map((cell) => (
+                          <span key={cell.id} className="w-1/2">
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </span>
+                        ))}
+                    </td>
                     {row
                       .getVisibleCells()
-                      .filter((cell) => ["type", "timestamp"].includes(cell.column.id))
+                      .filter((cell) => cell.column.id === "value")
                       .map((cell) => (
-                        <span key={cell.id} className="w-1/2">
+                        <td key={cell.id} className="flex-1 text-center">
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </span>
+                        </td>
                       ))}
-                  </td>
-                  {row
-                    .getVisibleCells()
-                    .filter((cell) => cell.column.id === "value")
-                    .map((cell) => (
-                      <td key={cell.id} className="flex-1 text-center">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
-                    ))}
-                </tr>
-              ))}
+                  </tr>
+                )))}
             </tbody>
           </table>
         </div>
