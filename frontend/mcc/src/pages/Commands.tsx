@@ -95,9 +95,9 @@ function Commands() {
     refetchInterval: COMMANDS_POLL_INTERVAL_MS,
   });
 
-  const sessions = useMemo(() => sessionsQuery.data ?? [], [sessionsQuery.data])
-  const mainCommands = useMemo(() => mainCommandsQuery.data ?? [], [mainCommandsQuery.data])
-  const commands = useMemo(() => commandsQuery.data ?? [], [commandsQuery.data])
+  const sessions = useMemo(() => sessionsQuery.data ?? [], [sessionsQuery.data]);
+  const mainCommands = useMemo(() => mainCommandsQuery.data ?? [], [mainCommandsQuery.data]);
+  const commands = useMemo(() => commandsQuery.data ?? [], [commandsQuery.data]);
 
   useEffect(() => {
     if (!selectedSessionId && sessions.length > 0) {
@@ -105,9 +105,11 @@ function Commands() {
     }
   }, [sessions, selectedSessionId]);
 
-  const error = (sessionsQuery.error as Error | undefined)?.message ??
-  (mainCommandsQuery.error as Error | undefined)?.message ??
-  (commandsQuery.error as Error | undefined)?.message ?? null;
+  const error =
+    (sessionsQuery.error as Error | undefined)?.message ??
+    (mainCommandsQuery.error as Error | undefined)?.message ??
+    (commandsQuery.error as Error | undefined)?.message ??
+    null;
 
   const mainCommandsById = useMemo(
     () => new Map(mainCommands.map((mc) => [mc.id, mc])),
@@ -128,7 +130,7 @@ function Commands() {
   const selectedMainCommand = mainCommands.find((mc) => mc.id === selectedCommandId) ?? null;
 
   const handleSubmitted = () => {
-    queryClient.invalidateQueries( { queryKey: ["commands", selectedSessionId ]});
+    queryClient.invalidateQueries({ queryKey: ["commands", selectedSessionId] });
   };
 
   return (
