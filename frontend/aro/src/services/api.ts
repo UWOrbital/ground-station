@@ -59,6 +59,9 @@ async function request<T>(path: string, method: HttpMethod = "GET", body?: unkno
       ? " - is the backend running the zaid/direct-requests-backend branch?"
       : "";
     throw new Error(`${detail}${hint}`);
+  }
+
+  return response.json() as Promise<T>;
 }
 
 /**
