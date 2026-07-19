@@ -274,13 +274,10 @@ class TelemetryWrapper(AbstractWrapper[Telemetry, UUID]):
         """
         with get_db_session() as session:
             results = session.execute(
-                select(Telemetry, MainTelemetry.name, Packet.session_id, CommsSession.status).join(
-                    MainTelemetry, Telemetry.type_ == MainTelemetry.id
-                ).join(
-                    Packet, Telemetry.packet_id == Packet.id
-                ).join(
-                    CommsSession, Packet.session_id == CommsSession.id
-                )
+                select(Telemetry, MainTelemetry.name, Packet.session_id, CommsSession.status)
+                .join(MainTelemetry, Telemetry.type_ == MainTelemetry.id)
+                .join(Packet, Telemetry.packet_id == Packet.id)
+                .join(CommsSession, Packet.session_id == CommsSession.id)
             ).all()
             return [
                 TelemetryEntry(
@@ -288,11 +285,13 @@ class TelemetryWrapper(AbstractWrapper[Telemetry, UUID]):
                     type=name,
                     value=t.value,
                     timestamp=t.timestamp,
-                    subrows=[TelemetrySubrow(
-                        packet=str(t.packet_id),
-                        session=str(session_id),
-                        obc_state=str(status),
-                    )],
+                    subrows=[
+                        TelemetrySubrow(
+                            packet=str(t.packet_id),
+                            session=str(session_id),
+                            obc_state=str(status),
+                        )
+                    ],
                 )
                 for t, name, session_id, status in results
             ]
