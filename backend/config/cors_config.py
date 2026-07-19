@@ -11,7 +11,7 @@ class CORSConfig(BaseSettings):
     allow_origins: list[str] = [
         "http://localhost:5173",
         "http://localhost:5174",
-        "https://ground-station-nine.vercel.app",
+        "https://app.uworbital.org",
     ]
     allow_credentials: bool = True
     allow_methods: list[str] = ["*"]
