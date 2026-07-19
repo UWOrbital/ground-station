@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 from config.config import settings
 from sqlalchemy import Engine
 from sqlmodel import Session, create_engine, text
@@ -7,26 +9,31 @@ from data.tables.main_tables import MAIN_SCHEMA_NAME
 from data.tables.transactional_tables import TRANSACTIONAL_SCHEMA_NAME
 
 
+@lru_cache(maxsize=1)
 def get_db_engine() -> Engine:
     """
-    Creates the database engine
+    Creates (once) and returns the database engine
+    Cached so the connection pool is reused across requests
 
     :return: engine
     """
-    return create_engine(settings.db.connection_string)
+    return create_engine(
+        settings.db.connection_string,
+        pool_size=5,
+        max_overflow=10,
+        pool_pre_ping=True,
+        pool_recycle=1800,
+    )
 
 
 def get_db_session() -> Session:
     """
-    Creates the database session.
-
-    :warning: This function depends on the `get_db_engine`.
+    Creates a new session bound to the shared engine
 
     :return: session
     """
     engine = get_db_engine()
-    with Session(engine) as session:
-        return session
+    return Session(engine)
 
 
 def _create_schemas(session: Session) -> None:
