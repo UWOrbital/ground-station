@@ -14,7 +14,7 @@ export const useTelemetryApi = () => {
 
     const response = await fetch(url, {
       method: "GET",
-      headers
+      headers,
     });
 
     if (!response.ok) {

@@ -99,7 +99,9 @@ function Telemetry() {
   const type: string = "< log >";
   const { data: response, isLoading, isError, error } = useTelemetry();
   const data: TelemetryRow[] = response?.data ?? [];
-  const uniqueTypes = Array.from(new Set(data.map((row) => row.type).filter(Boolean))).sort() as string[];
+  const uniqueTypes = Array.from(
+    new Set(data.map((row) => row.type).filter(Boolean)),
+  ).sort() as string[];
 
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -287,8 +289,9 @@ function Telemetry() {
                       if (el) rowRefs.current.set(row.id, el);
                       else rowRefs.current.delete(row.id);
                     }}
-                    className={`flex flex-row gap-2 cursor-pointer ${selectedRowId === row.id ? "bg-white text-[#1C1F1B]" : ""
-                      }`}
+                    className={`flex flex-row gap-2 cursor-pointer ${
+                      selectedRowId === row.id ? "bg-white text-[#1C1F1B]" : ""
+                    }`}
                     onClick={() => setSelectedRowId(row.id)}
                   >
                     <td className="flex flex-row justify-between pl-2 w-1/2 text-center">
@@ -310,7 +313,8 @@ function Telemetry() {
                         </td>
                       ))}
                   </tr>
-                )))}
+                ))
+              )}
             </tbody>
           </table>
         </div>
