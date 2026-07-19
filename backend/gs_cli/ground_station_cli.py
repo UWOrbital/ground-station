@@ -89,7 +89,7 @@ class GroundStationShell(Cmd):
 
         cmd_response = send_command(line, self._com_port, 1)
         print(cmd_response)
-        if cmd_response is not None and cmd_response.cmd_id == CmdCallbackId.CMD_EXEC_OBC_RESET:
+        if cmd_response is not None and cmd_response.cmd_id == CmdCallbackId.CMD_EXEC_OBC_RESET:  # type: ignore[misc]
             self._conn_request_sent = False
 
         self._restart_logging()

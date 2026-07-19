@@ -1,5 +1,3 @@
-from typing import cast
-
 from ax25 import Frame, FrameType
 from interfaces import (
     CUBE_SAT_CALLSIGN,
@@ -57,7 +55,7 @@ class CommandPackaging:
         # Stuff the frame as per the standard
         send_frame_stuffed = self._ax25.stuff(send_frame)
 
-        return cast(bytes, send_frame_stuffed)
+        return send_frame_stuffed
 
     def decode_frame(self, data: bytes) -> Frame | None:
         """
