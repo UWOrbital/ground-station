@@ -77,21 +77,16 @@ const columns = [
           )}
           {isChild ? (
             <div className="border-b-2 border-t-2 border-[#898989] py-2 text-left w-full">
-              <p>ID: {row.id}</p>
-              <p>{row.session}</p>
-              <p>Packet: {row.packet}</p>
-              <p>
-                OBC_State:{" "}
-                <span className={statusColors[row.obc_state ?? ""] ?? "text-gray-400"}>
-                  {row.obc_state}
-                </span>
-              </p>
-              <p>
-                EPS_State:{" "}
-                <span className={statusColors[row.epc_state ?? ""] ?? "text-gray-400"}>
-                  {row.epc_state}
-                </span>
-              </p>
+              <p>Session: {row.session}</p>
+              {row.packet && <p>Packet: {row.packet}</p>}
+              {row.obc_state && (
+                <p>
+                  OBC_State:{" "}
+                  <span className={statusColors[row.obc_state ?? ""] ?? "text-gray-400"}>
+                    {row.obc_state}
+                  </span>
+                </p>
+              )}
             </div>
           ) : (
             row.type
@@ -127,7 +122,7 @@ function Telemetry() {
         value: entry.value,
         timestamp: entry.timestamp,
         subrows: entry.subrows?.map((sub: TelemetrySubrow) => ({
-          id: entry.id,
+          id: sub.packet || `${entry.id}-sub`,
           session: sub.session,
           packet: sub.packet,
           obc_state: sub.obc_state,
@@ -151,10 +146,6 @@ function Telemetry() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [expanded, setExpanded] = useState<ExpandedState>({});
 
-  /* Stable row ID lets TanStack Table track rows across renders by their
-     UUID instead of array index, avoiding unnecessary DOM teardown. */
-  const getRowId = (row: TelemetryRow) => row.id ?? "";
-
   const table = useReactTable({
     data,
     columns,
@@ -164,7 +155,7 @@ function Telemetry() {
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
     getSubRows: (row) => row.subrows,
-    getRowId,
+    autoResetExpanded: false,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getExpandedRowModel: getExpandedRowModel(),

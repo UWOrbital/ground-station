@@ -270,14 +270,18 @@ class TelemetryWrapper(AbstractWrapper[Telemetry, UUID]):
         """
         Retrieves all telemetry entries, joined with MainTelemetry to expose the type name.
 
+        Uses left outer joins for Packet and CommsSession so that telemetry rows
+        without a packet or session assignment are still returned (with subrows
+        set to None).
+
         :return: list[TelemetryEntry]
         """
         with get_db_session() as session:
             results = session.execute(
                 select(Telemetry, MainTelemetry.name, Packet.session_id, CommsSession.status)
                 .join(MainTelemetry, Telemetry.type_ == MainTelemetry.id)
-                .join(Packet, Telemetry.packet_id == Packet.id)
-                .join(CommsSession, Packet.session_id == CommsSession.id)
+                .join(Packet, Telemetry.packet_id == Packet.id, isouter=True)
+                .join(CommsSession, Packet.session_id == CommsSession.id, isouter=True)
             ).all()
             return [
                 TelemetryEntry(
@@ -287,9 +291,9 @@ class TelemetryWrapper(AbstractWrapper[Telemetry, UUID]):
                     timestamp=t.timestamp,
                     subrows=[
                         TelemetrySubrow(
-                            packet=str(t.packet_id),
-                            session=str(session_id),
-                            obc_state=str(status),
+                            packet=str(t.packet_id) if t.packet_id else "",
+                            session=str(session_id) if session_id else "",
+                            obc_state=str(status) if status else "",
                         )
                     ],
                 )
