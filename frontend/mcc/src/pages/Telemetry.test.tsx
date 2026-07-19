@@ -106,9 +106,7 @@ describe("Telemetry Page", () => {
     renderTelemetry();
 
     await waitFor(() => {
-      expect(
-        screen.getByText(/no telemetry data matches/i),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/no telemetry data matches/i)).toBeInTheDocument();
     });
   });
 
