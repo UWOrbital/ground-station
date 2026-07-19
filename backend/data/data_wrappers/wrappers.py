@@ -252,3 +252,22 @@ class TelemetryWrapper(AbstractWrapper[Telemetry, UUID]):
 
         with get_db_session() as session:
             return session.exec(select(Telemetry).where(Telemetry.type_ == telemetry_id)).first()
+
+    def get_all_by_type(self, telemetry_id: int) -> list[Telemetry]:
+        """
+        Retrieves all telemetry filtered by the type id.
+
+        :param telemetry_id: The MainTelemetryID to filter by.
+            Note: fragile, may break if spreadsheet IDs change.
+        :return: list[Telemetry]
+        """
+        with get_db_session() as session:
+            return list(session.exec(select(Telemetry).where(Telemetry.type_ == telemetry_id)).all())
+
+    def get_all(self) -> list[Telemetry]:
+        """
+        Retrieves all telemetry.
+        :return: list[Telemetry]
+        """
+        with get_db_session() as session:
+            return list(session.exec(select(Telemetry)).all())
