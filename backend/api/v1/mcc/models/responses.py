@@ -2,7 +2,7 @@ from typing import Annotated
 from uuid import UUID
 
 from data.tables.main_tables import MainCommand
-from data.tables.transactional_tables import Commands
+from data.tables.transactional_tables import Commands, Telemetry
 from pydantic import BaseModel, Field
 
 
@@ -64,3 +64,12 @@ class UserInformationResponse(BaseModel):
     first_name: str | None = None
     last_name: str | None = None
     phone_number: str | None = None
+
+
+class TelemetryListResponse(BaseModel):
+    """
+
+    The Telemetry List Response model
+    """
+
+    data: Annotated[list[Telemetry], Field(description="A list containing Telemetry objects")]
