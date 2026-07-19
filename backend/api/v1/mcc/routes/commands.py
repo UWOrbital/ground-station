@@ -47,12 +47,12 @@ async def create_command(
     :return: The newly created command.
     """
     try:
-        CommsSessionWrapper().get_by_id(request.session_id)
+        session = CommsSessionWrapper().get_by_id(request.session_id)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
 
     try:
-        assert_not_locked_out(request.session_id)
+        assert_not_locked_out(session)
     except ValueError as e:
         raise HTTPException(status_code=409, detail=str(e)) from e
 
