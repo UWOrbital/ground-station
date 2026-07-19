@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
@@ -90,10 +91,22 @@ class UserInformationResponse(BaseModel):
     phone_number: str | None = None
 
 
+class TelemetryEntry(BaseModel):
+    """
+
+    The Telemetry Entry Response model
+    """
+
+    id: UUID
+    type: str
+    value: str | None
+    timestamp: datetime
+
+
 class TelemetryListResponse(BaseModel):
     """
 
     The Telemetry List Response model
     """
 
-    data: Annotated[list[Telemetry], Field(description="A list containing Telemetry objects")]
+    data: Annotated[list[TelemetryEntry], Field(description="A list containing Telemetry objects")]

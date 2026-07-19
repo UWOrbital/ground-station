@@ -1,9 +1,11 @@
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
+from api.v1.mcc.models.responses import TelemetryEntry
 from config.data_config import SESSION_LOCKOUT_SECONDS
 from pydantic import EmailStr
-from sqlmodel import col, select
+from sqlalchemy import select
+from sqlmodel import col
 
 from data.data_wrappers.abstract_wrapper import AbstractWrapper  # SEE abstract_wrapper.py FOR LOGIC
 from data.database.engine import get_db_session
@@ -264,10 +266,24 @@ class TelemetryWrapper(AbstractWrapper[Telemetry, UUID]):
         with get_db_session() as session:
             return list(session.exec(select(Telemetry).where(Telemetry.type_ == telemetry_id)).all())
 
-    def get_all(self) -> list[Telemetry]:
+    def get_all(self) -> list[TelemetryEntry]:  # type: ignore[override]
         """
-        Retrieves all telemetry.
-        :return: list[Telemetry]
+        Retrieves all telemetry entries, joined with MainTelemetry to expose the type name.
+
+        :return: list[TelemetryEntry]
         """
         with get_db_session() as session:
-            return list(session.exec(select(Telemetry)).all())
+            results = session.execute(
+                select(Telemetry, MainTelemetry.name).join(
+                    MainTelemetry, Telemetry.type_ == MainTelemetry.id
+                )
+            ).all()
+            return [
+                TelemetryEntry(
+                    id=t.id,
+                    type=name,
+                    value=t.value,
+                    timestamp=t.timestamp,
+                )
+                for t, name in results
+            ]
