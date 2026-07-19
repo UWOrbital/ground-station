@@ -1,18 +1,18 @@
-"""add aro_user_keys table
+"""add_aro_user_keys_table
 
-Revision ID: a0b1c2d3e4f5
-Revises: merge_001
-Create Date: 2026-07-08 12:00:00.000000
+Revision ID: 380a0576264a
+Revises: c7f2a91b4d3e
+Create Date: 2026-07-18 22:24:59.143133
 
 """
-
+from alembic import op
 import sqlalchemy as sa
 import sqlmodel
-from alembic import op
+
 
 # revision identifiers, used by Alembic.
-revision = "a0b1c2d3e4f5"
-down_revision = "merge_001"
+revision = '380a0576264a'
+down_revision = 'c7f2a91b4d3e'
 branch_labels = None
 depends_on = None
 
