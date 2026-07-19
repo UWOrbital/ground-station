@@ -28,4 +28,8 @@ export const NAVIGATION_LINKS: NavLink[] = [
     text: "Telemetry",
     url: "/telemetry",
   },
+  {
+    text: "Images",
+    url: "/images",
+  },
 ];

@@ -8,6 +8,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import Commands from "./pages/Commands";
 import AROAdmin from "./pages/AROAdmin";
+import Images from "./pages/Images";
 import LiveSession from "./pages/LiveSession";
 import Login from "./pages/Login";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -40,6 +41,7 @@ function App() {
             <Route path="/aro-requests" element={<LiveSession />} />
             <Route path="/login" element={<Login />} />
             <Route path="/telemetry" element={<Telemetry />} />
+            <Route path="/images" element={<Images />} />
             <Route path="*" element={<PageNotFound />} />
           </Routes>
         </div>
