@@ -7,6 +7,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from api.middleware.cors_middleware import add_cors_middleware
 from api.middleware.logger_middleware import LoggerMiddleware
+from api.v1.aro.auth.dependencies import router as aro_auth_deps_router
 from api.v1.aro.auth.oauth import router as aro_auth_router
 from api.v1.aro.endpoints.keys import aro_keys_router
 from api.v1.aro.endpoints.picture_requests import picture_requests_router
@@ -31,6 +32,7 @@ def setup_routes(app: FastAPI) -> None:
     app.include_router(picture_requests_router, prefix=f"{aro_prefix}/requests")
     app.include_router(aro_auth_router, prefix=aro_prefix)
     app.include_router(aro_keys_router, prefix=f"{aro_prefix}/keys")
+    app.include_router(aro_auth_deps_router, prefix=aro_prefix)
 
     # MCC routes
     mcc_prefix = f"{version_1}/mcc"
