@@ -1,9 +1,10 @@
 import { createColumnHelper } from "@tanstack/react-table";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Table from "../components/Table";
-import type { Command, MainCommand, Session } from "../utils/types";
+import type { Command } from "../utils/types";
 import SelectCommand from "./SelectCommand";
 import SendCommand from "./SendCommand";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { getSessionsInRange } from "../utils/api/sessions";
 import { getMainCommands } from "../utils/api/mainCommands";
 import { getCommandsBySession } from "@/utils/api/commands";
@@ -59,46 +60,56 @@ const columns = [
   }),
 ];
 
+const SESSIONS_POLL_INTERVAL_MS = 10_000;
+const COMMANDS_POLL_INTERVAL_MS = 2_000;
+
 /**
  * @brief Commands component displaying the commands table
  * @return tsx element of Commands component
  */
 function Commands() {
-  const [sessions, setSessions] = useState<Session[]>([]);
+  const queryClient = useQueryClient();
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
-  const [mainCommands, setMainCommands] = useState<MainCommand[]>([]);
-  const [commands, setCommands] = useState<Command[]>([]);
   const [selectedCommandId, setSelectedCommandId] = useState<number | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+
+  const sessionsQuery = useQuery({
+    queryKey: ["sessions", "upcoming-and-recent"],
+    queryFn: () => {
+      const now = new Date();
+      const past30Min = new Date(now.getTime() - 30 * 60 * 1000);
+      const in72Hours = new Date(now.getTime() + 72 * 60 * 60 * 1000);
+      return getSessionsInRange(past30Min, in72Hours, 100);
+    },
+    refetchInterval: SESSIONS_POLL_INTERVAL_MS,
+  });
+
+  const mainCommandsQuery = useQuery({
+    queryKey: ["mainCommands"],
+    queryFn: getMainCommands,
+  });
+
+  const commandsQuery = useQuery({
+    queryKey: ["commands", selectedSessionId],
+    queryFn: () => getCommandsBySession(selectedSessionId as string),
+    enabled: !!selectedSessionId,
+    refetchInterval: COMMANDS_POLL_INTERVAL_MS,
+  });
+
+  const sessions = useMemo(() => sessionsQuery.data ?? [], [sessionsQuery.data]);
+  const mainCommands = useMemo(() => mainCommandsQuery.data ?? [], [mainCommandsQuery.data]);
+  const commands = useMemo(() => commandsQuery.data ?? [], [commandsQuery.data]);
 
   useEffect(() => {
-    const now = new Date();
-    const in72Hours = new Date(now.getTime() + 72 * 60 * 60 * 1000);
-    getSessionsInRange(now, in72Hours)
-      .then((data) => {
-        setSessions(data);
-        if (data.length > 0) setSelectedSessionId(data[0].id);
-      })
-      .catch((e) => setError(e instanceof Error ? e.message : "Failed to load sessions"));
+    if (!selectedSessionId && sessions.length > 0) {
+      setSelectedSessionId(sessions[0].id);
+    }
+  }, [sessions, selectedSessionId]);
 
-    getMainCommands()
-      .then(setMainCommands)
-      .catch((e) => setError(e instanceof Error ? e.message : "Failed to load command catalog"));
-  }, []);
-
-  const refetchCommands = useCallback(() => {
-    if (!selectedSessionId) return;
-    setLoading(true);
-    getCommandsBySession(selectedSessionId)
-      .then(setCommands)
-      .catch((e) => setError(e instanceof Error ? e.message : "Failed to load commands"))
-      .finally(() => setLoading(false));
-  }, [selectedSessionId]);
-
-  useEffect(() => {
-    refetchCommands();
-  }, [refetchCommands]);
+  const error =
+    (sessionsQuery.error as Error | undefined)?.message ??
+    (mainCommandsQuery.error as Error | undefined)?.message ??
+    (commandsQuery.error as Error | undefined)?.message ??
+    null;
 
   const mainCommandsById = useMemo(
     () => new Map(mainCommands.map((mc) => [mc.id, mc])),
@@ -117,6 +128,10 @@ function Commands() {
 
   const selectedSession = sessions.find((s) => s.id === selectedSessionId) ?? null;
   const selectedMainCommand = mainCommands.find((mc) => mc.id === selectedCommandId) ?? null;
+
+  const handleSubmitted = () => {
+    queryClient.invalidateQueries({ queryKey: ["commands", selectedSessionId] });
+  };
 
   return (
     <div>
@@ -146,11 +161,11 @@ function Commands() {
             selectedSessionId={selectedSessionId}
             sessionStartTime={selectedSession?.start_time ?? null}
             setSelectedCommandId={setSelectedCommandId}
-            onSubmitted={refetchCommands}
+            onSubmitted={handleSubmitted}
           />
         )}
         <Table data={rows} columns={columns} showFilters={true} />
-        {loading && (
+        {commandsQuery.isLoading && !!selectedSessionId && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm">
             <p className="text-gray-400">Loading commands...</p>
           </div>
