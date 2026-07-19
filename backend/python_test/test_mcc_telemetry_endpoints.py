@@ -61,22 +61,31 @@ def packet(db_session, comms_session: CommsSession) -> Packet:
 # ---------------------------------------------Testing the GET / endpoint--------------------------------------------- #
 
 
-def test_get_telemetry_unknown_type_dropped(client: TestClient, db_session) -> None:
-    """Test that telemetry with a type_ not in MainTelemetry is silently dropped by the inner join."""
-    telemetry = Telemetry(
+def test_get_telemetry_duplicate_types(client: TestClient, db_session) -> None:
+    """Test that multiple telemetry entries sharing the same type_ are all returned (no deduplication)."""
+    t1 = Telemetry(
         id=uuid4(),
-        type_=999,  # Does not exist in MainTelemetry
+        type_=1,  # Battery Voltage
         value="3.7",
         timestamp=datetime(2025, 6, 1, 12, 0, 5, tzinfo=UTC),
     )
-    db_session.add(telemetry)
+    t2 = Telemetry(
+        id=uuid4(),
+        type_=1,  # Battery Voltage (same type)
+        value="3.8",
+        timestamp=datetime(2025, 6, 1, 12, 0, 10, tzinfo=UTC),
+    )
+    db_session.add(t1)
+    db_session.add(t2)
     db_session.commit()
 
     response = client.get("/api/v1/mcc/telemetry/")
 
     assert response.status_code == 200
-    # Row is silently omitted because the inner join on MainTelemetry finds no match
-    assert response.json()["data"] == []
+    data = response.json()["data"]
+    assert len(data) == 2
+    assert data[0]["type"] == "Battery Voltage"
+    assert data[1]["type"] == "Battery Voltage"
 
 
 def test_get_telemetry_value_none(client: TestClient, db_session) -> None:
