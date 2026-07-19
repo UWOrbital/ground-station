@@ -1,6 +1,7 @@
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
+from api.v1.mcc.models.responses import TelemetryEntry, TelemetrySubrow
 from config.data_config import SESSION_LOCKOUT_SECONDS
 from pydantic import EmailStr
 from sqlmodel import col, select
@@ -252,3 +253,46 @@ class TelemetryWrapper(AbstractWrapper[Telemetry, UUID]):
 
         with get_db_session() as session:
             return session.exec(select(Telemetry).where(Telemetry.type_ == telemetry_id)).first()
+
+    def get_all_by_type(self, telemetry_id: int) -> list[Telemetry]:
+        """
+        Retrieves all telemetry filtered by the type id.
+
+        :param telemetry_id: The MainTelemetryID to filter by.
+        :return: list[Telemetry]
+        """
+        return self.get_all_by(type_=telemetry_id)
+
+    def get_all(self) -> list[TelemetryEntry]:  # type: ignore[override]
+        """
+        Retrieves all telemetry entries, joined with MainTelemetry to expose the type name.
+
+        Uses left outer joins for Packet and CommsSession so that telemetry rows
+        without a packet or session assignment are still returned (with subrows
+        set to None).
+
+        :return: list[TelemetryEntry]
+        """
+        with get_db_session() as session:
+            results = session.execute(
+                select(Telemetry, MainTelemetry.name, Packet.session_id, CommsSession.status)
+                .join(MainTelemetry, Telemetry.type_ == MainTelemetry.id)  # type: ignore[arg-type]
+                .join(Packet, Telemetry.packet_id == Packet.id, isouter=True)  # type: ignore[arg-type]
+                .join(CommsSession, Packet.session_id == CommsSession.id, isouter=True)  # type: ignore[arg-type]
+            ).all()
+            return [
+                TelemetryEntry(
+                    id=t.id,
+                    type=name,
+                    value=t.value,
+                    timestamp=t.timestamp,
+                    subrows=[
+                        TelemetrySubrow(
+                            packet=str(t.packet_id) if t.packet_id else "",
+                            session=str(session_id) if session_id else "",
+                            obc_state=str(status) if status else "",
+                        )
+                    ],
+                )
+                for t, name, session_id, status in results
+            ]

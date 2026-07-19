@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import {
   createColumnHelper,
   type ColumnFiltersState,
@@ -11,26 +11,38 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
+import { useTelemetry } from "../hooks/useTelemetry";
 
-import rawData from "../utils/telemetry-mock-data.json";
+/** Backend shape of a subrow inside a telemetry entry. */
+interface TelemetrySubrow {
+  packet: string;
+  session: string;
+  obc_state: string;
+}
 
-type telemetryData = {
+/** Backend shape of a single telemetry entry from GET /api/v1/mcc/telemetry/. */
+interface TelemetryEntry {
+  id: string;
+  type: string;
+  value: string | null;
+  timestamp: string;
+  subrows: TelemetrySubrow[] | null;
+}
+
+/** Frontend row shape after transforming the backend response. */
+type TelemetryRow = {
   type?: string;
   timestamp?: string;
-  value?: number;
-  id?: number;
+  value?: string | null;
+  id?: string;
   session?: string;
   packet?: string;
   obc_state?: string;
   epc_state?: string;
-  subRows?: telemetryData[];
+  subrows?: TelemetryRow[];
 };
 
-const uniqueTypes = Array.from(new Set(rawData.map((row) => row.type))).sort();
-
-const data: telemetryData[] = rawData;
-
-const columnHelper = createColumnHelper<telemetryData>();
+const columnHelper = createColumnHelper<TelemetryRow>();
 
 const columns = [
   columnHelper.accessor("type", {
@@ -65,21 +77,16 @@ const columns = [
           )}
           {isChild ? (
             <div className="border-b-2 border-t-2 border-[#898989] py-2 text-left w-full">
-              <p>ID: {row.id}</p>
-              <p>{row.session}</p>
-              <p>Packet: {row.packet}</p>
-              <p>
-                OBC_State:{" "}
-                <span className={statusColors[row.obc_state ?? ""] ?? "text-gray-400"}>
-                  {row.obc_state}
-                </span>
-              </p>
-              <p>
-                EPS_State:{" "}
-                <span className={statusColors[row.epc_state ?? ""] ?? "text-gray-400"}>
-                  {row.epc_state}
-                </span>
-              </p>
+              <p>Session: {row.session}</p>
+              {row.packet && <p>Packet: {row.packet}</p>}
+              {row.obc_state && (
+                <p>
+                  OBC_State:{" "}
+                  <span className={statusColors[row.obc_state ?? ""] ?? "text-gray-400"}>
+                    {row.obc_state}
+                  </span>
+                </p>
+              )}
             </div>
           ) : (
             row.type
@@ -102,6 +109,34 @@ const columns = [
 
 function Telemetry() {
   const type: string = "< log >";
+  const { data: response, isLoading, isError, error } = useTelemetry();
+
+  /* Memoize the data transform so it only runs when the API response changes.
+     Without this, every state change (e.g. expanding a row) recreates every
+     object, forcing TanStack Table to re-render the entire visible DOM. */
+  const data: TelemetryRow[] = useMemo(
+    () =>
+      (response?.data ?? []).map((entry: TelemetryEntry) => ({
+        id: entry.id,
+        type: entry.type,
+        value: entry.value,
+        timestamp: entry.timestamp,
+        subrows: entry.subrows?.map((sub: TelemetrySubrow) => ({
+          id: sub.packet || `${entry.id}-sub`,
+          session: sub.session,
+          packet: sub.packet,
+          obc_state: sub.obc_state,
+          epc_state: "",
+        })),
+      })),
+    [response],
+  );
+
+  const uniqueTypes = useMemo(
+    () => Array.from(new Set(data.map((row) => row.type).filter(Boolean))).sort() as string[],
+    [data],
+  );
+
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
@@ -118,7 +153,8 @@ function Telemetry() {
     onExpandedChange: setExpanded,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
-    getSubRows: (row) => row.subRows,
+    getSubRows: (row) => row.subrows,
+    autoResetExpanded: false,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
@@ -126,7 +162,7 @@ function Telemetry() {
     globalFilterFn: (row, _columnId, filterValue) => {
       const search = (filterValue as string).toLowerCase();
 
-      const matchesRow = (r: telemetryData): boolean => {
+      const matchesRow = (r: TelemetryRow): boolean => {
         return [
           r.type,
           r.timestamp,
@@ -139,7 +175,7 @@ function Telemetry() {
         ].some((val) => val?.toLowerCase().includes(search));
       };
 
-      return matchesRow(row.original) || (row.original.subRows?.some(matchesRow) ?? false);
+      return matchesRow(row.original) || (row.original.subrows?.some(matchesRow) ?? false);
     },
   });
 
@@ -163,6 +199,23 @@ function Telemetry() {
       container.scrollTop = rowBottom - container.clientHeight;
     }
   }, [selectedRowId]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-[88vh]">
+        <p className="text-gray-400 text-lg">Loading telemetry data…</p>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[88vh] gap-4">
+        <p className="text-red-400 text-lg">Failed to load telemetry.</p>
+        <p className="text-gray-500 text-sm">{(error as Error)?.message}</p>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -257,38 +310,46 @@ function Telemetry() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((row) => (
-                <tr
-                  key={row.id}
-                  ref={(el) => {
-                    if (el) rowRefs.current.set(row.id, el);
-                    else rowRefs.current.delete(row.id);
-                  }}
-                  className={`flex flex-row gap-2 cursor-pointer ${
-                    selectedRowId === row.id ? "bg-white text-[#1C1F1B]" : ""
-                  }`}
-                  onClick={() => setSelectedRowId(row.id)}
-                >
-                  <td className="flex flex-row justify-between pl-2 w-1/2 text-center">
+              {rows.length === 0 ? (
+                <tr>
+                  <td colSpan={3} className="text-center py-8 text-gray-400">
+                    No telemetry data matches your search or filter.
+                  </td>
+                </tr>
+              ) : (
+                rows.map((row) => (
+                  <tr
+                    key={row.id}
+                    ref={(el) => {
+                      if (el) rowRefs.current.set(row.id, el);
+                      else rowRefs.current.delete(row.id);
+                    }}
+                    className={`flex flex-row gap-2 cursor-pointer ${
+                      selectedRowId === row.id && row.depth === 0 ? "bg-white text-[#1C1F1B]" : ""
+                    }`}
+                    onClick={() => setSelectedRowId(row.id)}
+                  >
+                    <td className="flex flex-row justify-between pl-2 w-1/2 text-center">
+                      {row
+                        .getVisibleCells()
+                        .filter((cell) => ["type", "timestamp"].includes(cell.column.id))
+                        .map((cell) => (
+                          <span key={cell.id} className="w-1/2">
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </span>
+                        ))}
+                    </td>
                     {row
                       .getVisibleCells()
-                      .filter((cell) => ["type", "timestamp"].includes(cell.column.id))
+                      .filter((cell) => cell.column.id === "value")
                       .map((cell) => (
-                        <span key={cell.id} className="w-1/2">
+                        <td key={cell.id} className="flex-1 text-center">
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </span>
+                        </td>
                       ))}
-                  </td>
-                  {row
-                    .getVisibleCells()
-                    .filter((cell) => cell.column.id === "value")
-                    .map((cell) => (
-                      <td key={cell.id} className="flex-1 text-center">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
-                    ))}
-                </tr>
-              ))}
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
