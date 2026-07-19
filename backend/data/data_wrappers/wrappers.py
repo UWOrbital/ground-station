@@ -4,8 +4,7 @@ from uuid import UUID
 from api.v1.mcc.models.responses import TelemetryEntry, TelemetrySubrow
 from config.data_config import SESSION_LOCKOUT_SECONDS
 from pydantic import EmailStr
-from sqlalchemy import select
-from sqlmodel import col
+from sqlmodel import col, select
 
 from data.data_wrappers.abstract_wrapper import AbstractWrapper  # SEE abstract_wrapper.py FOR LOGIC
 from data.database.engine import get_db_session
@@ -260,11 +259,9 @@ class TelemetryWrapper(AbstractWrapper[Telemetry, UUID]):
         Retrieves all telemetry filtered by the type id.
 
         :param telemetry_id: The MainTelemetryID to filter by.
-            Note: fragile, may break if spreadsheet IDs change.
         :return: list[Telemetry]
         """
-        with get_db_session() as session:
-            return list(session.exec(select(Telemetry).where(Telemetry.type_ == telemetry_id)).all())
+        return self.get_all_by(type_=telemetry_id)
 
     def get_all(self) -> list[TelemetryEntry]:  # type: ignore[override]
         """
@@ -279,9 +276,9 @@ class TelemetryWrapper(AbstractWrapper[Telemetry, UUID]):
         with get_db_session() as session:
             results = session.execute(
                 select(Telemetry, MainTelemetry.name, Packet.session_id, CommsSession.status)
-                .join(MainTelemetry, Telemetry.type_ == MainTelemetry.id)
-                .join(Packet, Telemetry.packet_id == Packet.id, isouter=True)
-                .join(CommsSession, Packet.session_id == CommsSession.id, isouter=True)
+                .join(MainTelemetry, Telemetry.type_ == MainTelemetry.id)  # type: ignore[arg-type]
+                .join(Packet, Telemetry.packet_id == Packet.id, isouter=True)  # type: ignore[arg-type]
+                .join(CommsSession, Packet.session_id == CommsSession.id, isouter=True)  # type: ignore[arg-type]
             ).all()
             return [
                 TelemetryEntry(

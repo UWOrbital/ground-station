@@ -2,9 +2,27 @@ from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
+from data.enums.transactional import CommandStatus
 from data.tables.main_tables import MainCommand, MainTelemetry
-from data.tables.transactional_tables import Command, CommsSession
+from data.tables.transactional_tables import CommsSession
 from pydantic import BaseModel, Field
+
+
+class CommandItem(BaseModel):
+    """Pydantic response model for a serialized Command (non-table)."""
+
+    model_config = {"from_attributes": True}
+
+    id: UUID
+    user_id: UUID | None = None
+    session_id: UUID
+    status: CommandStatus
+    type_: int
+    params: str | None = None
+    created_at: datetime
+    packet_id: UUID | None = None
+    sequence_index: int | None = None
+    response: str | None = None
 
 
 class MainCommandsResponse(BaseModel):
@@ -22,13 +40,13 @@ class MainCommandResponse(BaseModel):
 class CommandsResponse(BaseModel):
     """Response model wrapping a list of Commands."""
 
-    data: Annotated[list[Command], Field(description="A list containing Command objects")]
+    data: Annotated[list[CommandItem], Field(description="A list containing Command objects")]
 
 
 class CommandResponse(BaseModel):
     """Response model wrapping a single Command."""
 
-    data: Annotated[Command, Field(description="The created or retrieved Command object")]
+    data: Annotated[CommandItem, Field(description="The created or retrieved Command object")]
 
 
 class DeleteCommandResponse(BaseModel):
