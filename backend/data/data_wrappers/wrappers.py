@@ -274,9 +274,7 @@ class TelemetryWrapper(AbstractWrapper[Telemetry, UUID]):
         """
         with get_db_session() as session:
             results = session.execute(
-                select(Telemetry, MainTelemetry.name).join(
-                    MainTelemetry, Telemetry.type_ == MainTelemetry.id
-                )
+                select(Telemetry, MainTelemetry.name).join(MainTelemetry, Telemetry.type_ == MainTelemetry.id)
             ).all()
             return [
                 TelemetryEntry(

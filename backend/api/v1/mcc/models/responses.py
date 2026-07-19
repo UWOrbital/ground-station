@@ -3,7 +3,7 @@ from typing import Annotated
 from uuid import UUID
 
 from data.tables.main_tables import MainCommand, MainTelemetry
-from data.tables.transactional_tables import Command, CommsSession, Telemetry
+from data.tables.transactional_tables import Command, CommsSession
 from pydantic import BaseModel, Field
 
 
