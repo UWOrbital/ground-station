@@ -91,6 +91,17 @@ class UserInformationResponse(BaseModel):
     phone_number: str | None = None
 
 
+class TelemetrySubrow(BaseModel):
+    """
+
+    The Telemetry Subrow Response model
+    """
+
+    packet: str
+    session: str
+    obc_state: str
+
+
 class TelemetryEntry(BaseModel):
     """
 
@@ -101,6 +112,7 @@ class TelemetryEntry(BaseModel):
     type: str
     value: str | None
     timestamp: datetime
+    subrows: list[TelemetrySubrow] | None
 
 
 class TelemetryListResponse(BaseModel):

@@ -1,7 +1,7 @@
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
-from api.v1.mcc.models.responses import TelemetryEntry
+from api.v1.mcc.models.responses import TelemetryEntry, TelemetrySubrow
 from config.data_config import SESSION_LOCKOUT_SECONDS
 from pydantic import EmailStr
 from sqlalchemy import select
@@ -274,7 +274,13 @@ class TelemetryWrapper(AbstractWrapper[Telemetry, UUID]):
         """
         with get_db_session() as session:
             results = session.execute(
-                select(Telemetry, MainTelemetry.name).join(MainTelemetry, Telemetry.type_ == MainTelemetry.id)
+                select(Telemetry, MainTelemetry.name, Packet.session_id, CommsSession.status).join(
+                    MainTelemetry, Telemetry.type_ == MainTelemetry.id
+                ).join(
+                    Packet, Telemetry.packet_id == Packet.id
+                ).join(
+                    CommsSession, Packet.session_id == CommsSession.id
+                )
             ).all()
             return [
                 TelemetryEntry(
@@ -282,6 +288,11 @@ class TelemetryWrapper(AbstractWrapper[Telemetry, UUID]):
                     type=name,
                     value=t.value,
                     timestamp=t.timestamp,
+                    subrows=[TelemetrySubrow(
+                        packet=str(t.packet_id),
+                        session=str(session_id),
+                        obc_state=str(status),
+                    )],
                 )
-                for t, name in results
+                for t, name, session_id, status in results
             ]
