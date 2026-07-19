@@ -1,20 +1,15 @@
+import { API_BASE_URL } from "../utils/api/config";
+
 export const useTelemetryApi = () => {
-  const getAuthHeaders = () => {
-    const token = localStorage.getItem("token");
-
-    return {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    };
-  };
-
   const getTelemetry = async () => {
-    const headers = getAuthHeaders();
-    const url = import.meta.env.VITE_BACKEND_URL + "/api/v1/mcc/telemetry/";
+    const url = `${API_BASE_URL}/telemetry/`;
 
     const response = await fetch(url, {
       method: "GET",
-      headers,
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
     });
 
     if (!response.ok) {
