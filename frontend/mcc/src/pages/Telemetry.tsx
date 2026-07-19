@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import {
   createColumnHelper,
   type ColumnFiltersState,
@@ -13,16 +13,33 @@ import {
 } from "@tanstack/react-table";
 import { useTelemetry } from "../hooks/useTelemetry";
 
+/** Backend shape of a subrow inside a telemetry entry. */
+interface TelemetrySubrow {
+  packet: string;
+  session: string;
+  obc_state: string;
+}
+
+/** Backend shape of a single telemetry entry from GET /api/v1/mcc/telemetry/. */
+interface TelemetryEntry {
+  id: string;
+  type: string;
+  value: string | null;
+  timestamp: string;
+  subrows: TelemetrySubrow[] | null;
+}
+
+/** Frontend row shape after transforming the backend response. */
 type TelemetryRow = {
   type?: string;
   timestamp?: string;
-  value?: number;
-  id?: number;
+  value?: string | null;
+  id?: string;
   session?: string;
   packet?: string;
   obc_state?: string;
   epc_state?: string;
-  subRows?: TelemetryRow[];
+  subrows?: TelemetryRow[];
 };
 
 const columnHelper = createColumnHelper<TelemetryRow>();
@@ -98,10 +115,33 @@ const columns = [
 function Telemetry() {
   const type: string = "< log >";
   const { data: response, isLoading, isError, error } = useTelemetry();
-  const data: TelemetryRow[] = response?.data ?? [];
-  const uniqueTypes = Array.from(
-    new Set(data.map((row) => row.type).filter(Boolean)),
-  ).sort() as string[];
+
+  /* Memoize the data transform so it only runs when the API response changes.
+     Without this, every state change (e.g. expanding a row) recreates every
+     object, forcing TanStack Table to re-render the entire visible DOM. */
+  const data: TelemetryRow[] = useMemo(
+    () =>
+      (response?.data ?? []).map((entry: TelemetryEntry) => ({
+        id: entry.id,
+        type: entry.type,
+        value: entry.value,
+        timestamp: entry.timestamp,
+        subrows: entry.subrows?.map((sub: TelemetrySubrow) => ({
+          id: entry.id,
+          session: sub.session,
+          packet: sub.packet,
+          obc_state: sub.obc_state,
+          epc_state: "",
+        })),
+      })),
+    [response],
+  );
+
+  const uniqueTypes = useMemo(
+    () =>
+      Array.from(new Set(data.map((row) => row.type).filter(Boolean))).sort() as string[],
+    [data],
+  );
 
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -111,6 +151,10 @@ function Telemetry() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [expanded, setExpanded] = useState<ExpandedState>({});
 
+  /* Stable row ID lets TanStack Table track rows across renders by their
+     UUID instead of array index, avoiding unnecessary DOM teardown. */
+  const getRowId = (row: TelemetryRow) => row.id ?? "";
+
   const table = useReactTable({
     data,
     columns,
@@ -119,7 +163,8 @@ function Telemetry() {
     onExpandedChange: setExpanded,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
-    getSubRows: (row) => row.subRows,
+    getSubRows: (row) => row.subrows,
+    getRowId,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
@@ -140,7 +185,7 @@ function Telemetry() {
         ].some((val) => val?.toLowerCase().includes(search));
       };
 
-      return matchesRow(row.original) || (row.original.subRows?.some(matchesRow) ?? false);
+      return matchesRow(row.original) || (row.original.subrows?.some(matchesRow) ?? false);
     },
   });
 
