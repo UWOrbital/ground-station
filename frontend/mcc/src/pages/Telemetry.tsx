@@ -133,8 +133,7 @@ function Telemetry() {
   );
 
   const uniqueTypes = useMemo(
-    () =>
-      Array.from(new Set(data.map((row) => row.type).filter(Boolean))).sort() as string[],
+    () => Array.from(new Set(data.map((row) => row.type).filter(Boolean))).sort() as string[],
     [data],
   );
 
