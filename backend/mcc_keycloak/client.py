@@ -23,12 +23,6 @@ class KeycloakClient:
             client_id=config.client_id,
             client_secret_key=config.client_secret,
         )
-        self.external_client = KeycloakOpenID(
-            server_url=config.external_url,
-            realm_name=config.realm,
-            client_id=config.client_id,
-            client_secret_key=config.client_secret,
-        )
         self.admin_client = KeycloakAdmin(
             connection=KeycloakOpenIDConnection(
                 server_url=config.host,
@@ -43,10 +37,11 @@ class KeycloakClient:
     @property
     def login_url(self) -> str:
         """Returns keycloak login URL."""
-        return self.external_client.auth_url(
+        url = self.internal_client.auth_url(
             redirect_uri=self.config.callback_url,
             scope="openid profile email",
         )
+        return url.replace(self.config.host, self.config.public_url)
 
     def logout_url(self, id_token: str) -> str:
         """Returns keycloak logout URL."""
@@ -57,7 +52,7 @@ class KeycloakClient:
                 "id_token_hint": id_token,
             }
         )
-        return f"{self.config.external_url}/realms/{self.config.realm}/protocol/openid-connect/logout?{params}"
+        return f"{self.config.public_url}/realms/{self.config.realm}/protocol/openid-connect/logout?{params}"
 
     def get_tokens(self, code: str) -> dict[str, Any]:
         """Makes API call to keycloak service to get user tokens."""
