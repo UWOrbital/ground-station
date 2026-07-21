@@ -10,7 +10,7 @@ class KeycloakConfig(BaseSettings):
     admin_password: str = "admin"
     realm: str = "mcc"
     host: str = "http://keycloak:8080"
-    public_url: str
+    public_url: str = "http://localhost:8080"
     client_id: str = "ground-station"
     client_secret: str
     callback_url: str = "http://localhost:8000/api/v1/mcc/auth/callback"
