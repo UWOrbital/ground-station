@@ -1,3 +1,5 @@
+import { API_BASE_URL } from "../utils/api/config";
+
 /**
  * API functions for satellite images.
  */
@@ -18,7 +20,9 @@ export interface ImageResponse {
  */
 export const useImagesApi = () => {
   const getLatestImage = async (): Promise<ImageResponse> => {
-    const res = await fetch("/api/v1/mcc/images/latest");
+    const res = await fetch(`${API_BASE_URL}/images/latest`, {
+      credentials: "include",
+    });
     if (!res.ok) {
       throw new Error(`API error: ${res.status} ${res.statusText}`);
     }
