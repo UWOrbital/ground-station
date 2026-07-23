@@ -7,7 +7,7 @@ def main_telemetry() -> list[MainTelemetry]:
     """
     Returns the list of main telemetry
     """
-    with open("backend/resources/telemetry.csv", newline="") as csvfile:
+    with open("backend/references/csvs/telemetry.csv", newline="") as csvfile:
         file = csv.reader(csvfile)
         return [
             MainTelemetry(

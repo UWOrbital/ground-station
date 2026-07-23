@@ -1,7 +1,8 @@
 import sys
 
 from data.database.engine import get_db_session
-from resources.utils import add_callsigns, add_main_commands, add_telemetry
+
+from references.utils import add_callsigns, add_main_commands, add_telemetry
 
 """
 To migrate pre-determined datainto your local database,

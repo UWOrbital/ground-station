@@ -8,7 +8,7 @@ def main_commands() -> list[MainCommand]:
     """
     Returns the list of main commands
     """
-    with open("backend/resources/main_commands.csv", newline="") as csvfile:
+    with open("backend/references/csvs/main_commands.csv", newline="") as csvfile:
         file = csv.reader(csvfile)
         return [
             MainCommand(

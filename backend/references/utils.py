@@ -2,9 +2,9 @@ from data.models.aro_user_models import AROUserCallsigns
 from data.models.main_models import MainCommand, MainTelemetry
 from sqlmodel import Session, select
 
-from resources.callsigns import callsigns
-from resources.main_commands import main_commands
-from resources.main_telemetry import main_telemetry
+from references.callsigns import callsigns
+from references.main_commands import main_commands
+from references.main_telemetry import main_telemetry
 
 
 def add_main_commands(session: Session) -> None:

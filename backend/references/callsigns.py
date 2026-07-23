@@ -7,7 +7,7 @@ def callsigns() -> list[AROUserCallsigns]:
     """
     Returns the list of callsigns
     """
-    with open("backend/resources/callsigns.csv", newline="") as csvfile:
+    with open("backend/references/csvs/callsigns.csv", newline="") as csvfile:
         file = csv.reader(csvfile)
         entries = []
         for row in file:
