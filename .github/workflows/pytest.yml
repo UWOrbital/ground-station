@@ -27,14 +27,6 @@ jobs:
           python -m pip install --upgrade pip uv
           uv sync --extra dev
 
-      - name: Build Interfaces
-        run: |
-          cd backend/interfaces
-          mkdir build
-          cd build
-          cmake ..
-          make -j 16
-
       - name: Run pytest
         env:
           GS_DATABASE_USER: ci_user
