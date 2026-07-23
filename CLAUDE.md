@@ -78,10 +78,6 @@ npm run test      # vitest
 docker compose up --build
 ```
 
-### Keycloak realm sync
-
-`scripts/dev/kc-sync.sh` pulls the live MCC realm/clients/roles out of a running Keycloak (admin `mcc-admin` / `uworbital`) and writes them back to `backend/mcc_keycloak/mcc-realm.json`, which is the source-controlled realm that compose imports on boot. Run it from `scripts/dev/` after changing realm settings in the Keycloak UI; commit the resulting JSON.
-
 ## Architecture notes
 
 ### FastAPI app composition
