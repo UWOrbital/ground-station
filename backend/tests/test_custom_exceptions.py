@@ -31,7 +31,7 @@ def exceptions_client():
     [
         ("/serviceerror", status.HTTP_400_BAD_REQUEST, "Test ServiceError"),
         ("/notfounderror", status.HTTP_404_NOT_FOUND, "Test NotFoundError"),
-        ("/invalidargumenterror", status.HTTP_422_UNPROCESSABLE_ENTITY, "Test InvalidArgumentError"),
+        ("/invalidargumenterror", status.HTTP_422_UNPROCESSABLE_CONTENT, "Test InvalidArgumentError"),
         ("/invalidstateerror", status.HTTP_409_CONFLICT, "Test InvalidStateError"),
         ("/databaseerror", status.HTTP_400_BAD_REQUEST, "Test DatabaseError"),
         ("/unauthorizederror", status.HTTP_401_UNAUTHORIZED, "Test UnauthorizedError"),

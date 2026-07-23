@@ -39,13 +39,13 @@ uv run python backend/migrate.py callsigns  # one of: callsigns | commands | tel
 cd backend && uv run alembic upgrade head
 cd backend && uv run alembic revision --autogenerate -m "msg"
 
-# Tests — pytest is configured with testpaths = ["python_test"] in pyproject.toml.
-# python_test/conftest.py spins up a Postgres instance via pytest-postgresql per test
+# Tests — pytest is configured with testpaths = ["tests"] in pyproject.toml.
+# tests/conftest.py spins up a Postgres instance via pytest-postgresql per test
 # and runs `alembic upgrade head` inside that DB, so the system needs Postgres + initdb
 # on PATH but the dev DB is NOT touched.
 uv run pytest                                              # full suite
-uv run pytest backend/python_test/test_ephemeris.py        # one file
-uv run pytest backend/python_test/test_ephemeris.py::test_name  # one test
+uv run pytest backend/tests/test_ephemeris.py        # one file
+uv run pytest backend/tests/test_ephemeris.py::test_name  # one test
 uv run pytest -k "expression"                              # by name
 
 # Type checking and lint (CI runs `mypy .` from the repo root in strict mode)
@@ -102,7 +102,7 @@ The `lifespan` context initializes `fastapi-cache` with an in-memory backend and
 
 - `backend/data/tables/` — SQLModel table classes split across three Postgres schemas: `main_tables.py` (reference data), `transactional_tables.py` (e.g. `CommsSession`), `aro_user_tables.py`, `mcc_user_tables.py`. Schema names are module-level constants (e.g. `MAIN_SCHEMA_NAME`) and are referenced by both `engine.py` and Alembic.
 - `backend/data/data_wrappers/` — repository-style wrappers around SQLModel. New table accessors should extend `abstract_wrapper.py`; tests monkeypatch `data.data_wrappers.abstract_wrapper.get_db_session` (see `conftest.py`).
-- `backend/migrations/` — Alembic migrations. `python_test/conftest.py` runs `alembic upgrade head` inside the per-test Postgres instance, so any new table needs both a SQLModel class and a migration or the tests will fail.
+- `backend/migrations/` — Alembic migrations. `tests/conftest.py` runs `alembic upgrade head` inside the per-test Postgres instance, so any new table needs both a SQLModel class and a migration or the tests will fail.
 
 ### Auth
 
@@ -121,10 +121,10 @@ Two distinct flows:
 ## Testing conventions
 
 - pytest is verbose by default (`-v` in `pyproject.toml`).
-- `python_test/conftest.py` autouses a fixture that swaps `get_db_session` to point at a per-test Postgres DB, so wrappers under test must call `get_db_session()` (not hold a cached engine).
+- `tests/conftest.py` autouses a fixture that swaps `get_db_session` to point at a per-test Postgres DB, so wrappers under test must call `get_db_session()` (not hold a cached engine).
 - The dummy env vars in `conftest.py` are set with `setdefault` *before* importing the engine module, so test-only env never leaks into dev. Don't reorder those imports.
-- mypy runs in `strict` mode and excludes `python_test/*`. Skyfield, ax25, tinyaes, authlib, and pyStuffing have `ignore_missing_imports`.
-- Ruff is scoped to `backend/*.py` only (frontend, `python_test`, and `migrations` are excluded) and enforces docstrings on classes/functions/methods (rules `D101 D102 D103 D105` plus `D213`).
+- mypy runs in `strict` mode and excludes `tests/*`. Skyfield, ax25, tinyaes, authlib, and pyStuffing have `ignore_missing_imports`.
+- Ruff is scoped to `backend/*.py` only (frontend, `tests`, and `migrations` are excluded) and enforces docstrings on classes/functions/methods (rules `D101 D102 D103 D105` plus `D213`).
 
 ## Pre-commit
 
@@ -144,7 +144,7 @@ Two distinct flows:
       :return: framed bytes ready for AX.25 encoding.
       """
   ```
-- **Tests required for new code.** Any new or modified Python under `backend/` ships with a matching pytest in `backend/python_test/` — covering the golden path and at least the edge cases the change introduces. CI runs the full suite; untested behavior won't pass review. If a change is genuinely untestable (e.g. wiring a third-party SDK), say so explicitly in the PR.
+- **Tests required for new code.** Any new or modified Python under `backend/` ships with a matching pytest in `backend/tests/` — covering the golden path and at least the edge cases the change introduces. CI runs the full suite; untested behavior won't pass review. If a change is genuinely untestable (e.g. wiring a third-party SDK), say so explicitly in the PR.
 
 ## Maintaining this file
 

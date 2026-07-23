@@ -16,7 +16,7 @@ from exceptions.exceptions import (
 STATUS_MAP: dict[type[BaseOrbitalError], int] = {
     ServiceError: status.HTTP_400_BAD_REQUEST,
     NotFoundError: status.HTTP_404_NOT_FOUND,
-    InvalidArgumentError: status.HTTP_422_UNPROCESSABLE_ENTITY,
+    InvalidArgumentError: status.HTTP_422_UNPROCESSABLE_CONTENT,
     InvalidStateError: status.HTTP_409_CONFLICT,
     DatabaseError: status.HTTP_400_BAD_REQUEST,
     UnauthorizedError: status.HTTP_401_UNAUTHORIZED,
