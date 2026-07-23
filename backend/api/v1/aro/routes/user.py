@@ -1,7 +1,7 @@
 from uuid import UUID
 
-from api.v1.aro.models.auth_requests import UserRequest
-from api.v1.aro.models.auth_responses import AllUsersResponse, UserResponse
+from api.v1.aro.schemas.auth_requests import UserRequest
+from api.v1.aro.schemas.auth_responses import AllUsersResponse, UserResponse
 from data.data_wrappers.wrappers import AROUsersWrapper
 from fastapi import APIRouter
 

@@ -1,7 +1,7 @@
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
-from api.v1.mcc.models.responses import TelemetryEntry, TelemetrySubrow
+from api.v1.mcc.schemas.responses import TelemetryEntry, TelemetrySubrow
 from config.data_config import SESSION_LOCKOUT_SECONDS
 from pydantic import EmailStr
 from sqlmodel import col, select

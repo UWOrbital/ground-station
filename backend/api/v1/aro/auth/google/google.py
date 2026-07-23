@@ -1,5 +1,5 @@
 from api.v1.aro.auth.services.tokens import create_auth_token, create_oauth_user
-from api.v1.aro.models.auth_requests import GoogleRequest
+from api.v1.aro.schemas.auth_requests import GoogleRequest
 from data.data_wrappers.wrappers import AROUsersWrapper
 from data.enums.aro_auth_token import AROAuthToken
 from data.tables.aro_user_tables import AROUserAuthToken, AROUsers

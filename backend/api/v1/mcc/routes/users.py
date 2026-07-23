@@ -1,5 +1,5 @@
-from api.v1.mcc.models.requests import UpdateUserRequest
-from api.v1.mcc.models.responses import UserInformationResponse
+from api.v1.mcc.schemas.requests import UpdateUserRequest
+from api.v1.mcc.schemas.responses import UserInformationResponse
 from data.data_wrappers.wrappers import MCCUsersWrapper
 from data.tables.mcc_user_tables import MCCUsers
 from fastapi import APIRouter, Depends

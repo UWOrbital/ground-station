@@ -1,4 +1,4 @@
-from api.v1.mcc.models.responses import MainTelemetriesResponse, MainTelemetryResponse
+from api.v1.mcc.schemas.responses import MainTelemetriesResponse, MainTelemetryResponse
 from data.data_wrappers.wrappers import MainTelemetryWrapper
 from fastapi import APIRouter
 from fastapi.exceptions import HTTPException

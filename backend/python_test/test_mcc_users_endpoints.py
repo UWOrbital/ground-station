@@ -1,6 +1,6 @@
 import pytest
 import json
-import backend.api.v1.mcc.endpoints.users as mcc_users
+import backend.api.v1.mcc.routes.users as mcc_users
 from uuid import UUID
 from unittest.mock import patch, PropertyMock, MagicMock
 from mcc_keycloak.client import KeycloakClient
@@ -9,7 +9,7 @@ from data.tables.mcc_user_tables import MCCUsers
 from main import app
 from config.config import settings
 
-from api.v1.mcc.models.responses import UserInformationResponse
+from api.v1.mcc.schemas.responses import UserInformationResponse
 
 MOCK_USER = MCCUsers(
     id=UUID("E621E1F8-C36C-495A-93FC-0C247A3E6E5F"),

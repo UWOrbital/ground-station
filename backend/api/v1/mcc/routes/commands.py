@@ -1,8 +1,8 @@
 from typing import Annotated
 from uuid import UUID
 
-from api.v1.mcc.models.requests import CreateCommandRequest, UpdateCommandRequest
-from api.v1.mcc.models.responses import CommandResponse, CommandsResponse, DeleteCommandResponse
+from api.v1.mcc.schemas.requests import CreateCommandRequest, UpdateCommandRequest
+from api.v1.mcc.schemas.responses import CommandResponse, CommandsResponse, DeleteCommandResponse
 from api.v1.mcc.services.scheduling import assert_not_locked_out
 from data.data_wrappers.wrappers import CommandsWrapper, CommsSessionWrapper
 from data.tables.mcc_user_tables import MCCUsers

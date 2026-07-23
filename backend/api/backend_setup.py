@@ -8,17 +8,17 @@ from loguru import logger
 from starlette.middleware.sessions import SessionMiddleware
 
 from api.v1.aro.auth.oauth import router as aro_auth_router
-from api.v1.aro.endpoints.picture_requests import picture_requests_router
-from api.v1.aro.endpoints.user import aro_user_router
-from api.v1.mcc.endpoints.aro_requests import aro_requests_router
-from api.v1.mcc.endpoints.auth import mcc_auth_router
-from api.v1.mcc.endpoints.commands import commands_router
-from api.v1.mcc.endpoints.main_commands import main_commands_router
-from api.v1.mcc.endpoints.main_telemetry import main_telemetry_router
-from api.v1.mcc.endpoints.sessions import comms_sessions_router
-from api.v1.mcc.endpoints.status import status_router
-from api.v1.mcc.endpoints.telemetry import telemetry_router
-from api.v1.mcc.endpoints.users import mcc_users_router
+from api.v1.aro.routes.picture_requests import picture_requests_router
+from api.v1.aro.routes.user import aro_user_router
+from api.v1.mcc.routes.aro_requests import aro_requests_router
+from api.v1.mcc.routes.auth import mcc_auth_router
+from api.v1.mcc.routes.commands import commands_router
+from api.v1.mcc.routes.main_commands import main_commands_router
+from api.v1.mcc.routes.main_telemetry import main_telemetry_router
+from api.v1.mcc.routes.sessions import comms_sessions_router
+from api.v1.mcc.routes.status import status_router
+from api.v1.mcc.routes.telemetry import telemetry_router
+from api.v1.mcc.routes.users import mcc_users_router
 
 
 def setup_routes(app: FastAPI) -> None:

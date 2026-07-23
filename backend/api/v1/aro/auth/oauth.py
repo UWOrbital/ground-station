@@ -19,13 +19,13 @@ from api.v1.aro.auth.manual.register import (
     register_user,
 )
 from api.v1.aro.auth.services.callsign_2fa import verify_user_callsign
-from api.v1.aro.models.auth_requests import (
+from api.v1.aro.schemas.auth_requests import (
     CallsignRequest,
     GoogleRequest,
     LoginRequest,
     RegisterRequest,
 )
-from api.v1.aro.models.auth_responses import (
+from api.v1.aro.schemas.auth_responses import (
     TokenResponse,
     UserResponse,
 )

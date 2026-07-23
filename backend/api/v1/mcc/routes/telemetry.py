@@ -1,4 +1,4 @@
-from api.v1.mcc.models.responses import TelemetryListResponse
+from api.v1.mcc.schemas.responses import TelemetryListResponse
 from data.data_wrappers.wrappers import TelemetryWrapper
 from fastapi import APIRouter
 

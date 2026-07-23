@@ -1,6 +1,6 @@
 import pytest
 import json
-import backend.api.v1.mcc.endpoints.auth as mcc_auth
+import backend.api.v1.mcc.routes.auth as mcc_auth
 from unittest.mock import patch, PropertyMock
 from mcc_keycloak.client import KeycloakClient
 from fastapi.testclient import TestClient

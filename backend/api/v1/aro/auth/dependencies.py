@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from api.v1.aro.models.auth_responses import UserResponse
+from api.v1.aro.schemas.auth_responses import UserResponse
 from data.data_wrappers.wrappers import (
     AROUserAuthTokenWrapper,
     AROUsersWrapper,

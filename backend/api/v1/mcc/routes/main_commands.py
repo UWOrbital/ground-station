@@ -1,4 +1,4 @@
-from api.v1.mcc.models.responses import MainCommandResponse, MainCommandsResponse
+from api.v1.mcc.schemas.responses import MainCommandResponse, MainCommandsResponse
 from data.data_wrappers.wrappers import MainCommandWrapper
 from fastapi import APIRouter
 from fastapi.exceptions import HTTPException
