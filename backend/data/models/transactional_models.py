@@ -22,15 +22,15 @@ from data.enums.transactional import (
     MainPacketType,
     SessionStatus,
 )
-from data.tables.aro_user_tables import AROUsers
-from data.tables.base_model import BaseSQLModel
-from data.tables.main_tables import (
+from data.models.aro_user_models import AROUsers
+from data.models.base_model import BaseSQLModel
+from data.models.main_models import (
     MainCommand,
     MainTableID,
     MainTableIDDatabase,
     MainTelemetry,
 )
-from data.tables.mcc_user_tables import MCCUsers
+from data.models.mcc_user_models import MCCUsers
 
 # Transactional schema related items
 TRANSACTIONAL_SCHEMA_NAME: Final[str] = "transactional"

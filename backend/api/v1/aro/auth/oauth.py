@@ -31,7 +31,7 @@ from api.v1.aro.schemas.auth_responses import (
 )
 from authlib.integrations.starlette_client import OAuth, OAuthError
 from config.config import settings
-from data.tables.aro_user_tables import AROUsers
+from data.models.aro_user_models import AROUsers
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import RedirectResponse
 from starlette.requests import Request

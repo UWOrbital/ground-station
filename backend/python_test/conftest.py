@@ -12,7 +12,7 @@ os.environ.setdefault("GS_DATABASE_NAME", "testdb")
 
 import pytest
 from data.database.engine import setup_database
-from data.tables.transactional_tables import CommsSession
+from data.models.transactional_models import CommsSession
 from sqlalchemy import Engine, NullPool
 from sqlmodel import Session, create_engine
 from testcontainers.postgres import PostgresContainer

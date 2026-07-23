@@ -15,7 +15,7 @@ from sqlalchemy.schema import Column, ForeignKey
 from sqlmodel import Field
 
 from data.enums.aro_auth_token import AROAuthToken
-from data.tables.base_model import BaseSQLModel
+from data.models.base_model import BaseSQLModel
 
 # Schema information
 ARO_USER_SCHEMA_NAME: Final[str] = "aro_users"

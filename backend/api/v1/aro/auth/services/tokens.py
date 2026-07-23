@@ -7,7 +7,7 @@ from data.data_wrappers.wrappers import (
     AROUsersWrapper,
 )
 from data.enums.aro_auth_token import AROAuthToken
-from data.tables.aro_user_tables import (
+from data.models.aro_user_models import (
     AROUserAuthToken,
     AROUsers,
 )

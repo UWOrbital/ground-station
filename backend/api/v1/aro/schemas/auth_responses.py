@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Self
 from uuid import UUID
 
-from data.tables.aro_user_tables import AROUsers
+from data.models.aro_user_models import AROUsers
 from pydantic import BaseModel, model_validator
 
 

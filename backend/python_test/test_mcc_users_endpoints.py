@@ -5,7 +5,7 @@ from uuid import UUID
 from unittest.mock import patch, PropertyMock, MagicMock
 from mcc_keycloak.client import KeycloakClient
 from fastapi.testclient import TestClient
-from data.tables.mcc_user_tables import MCCUsers
+from data.models.mcc_user_models import MCCUsers
 from main import app
 from config.config import settings
 

@@ -1,6 +1,6 @@
 import csv
 
-from data.tables.main_tables import MainTelemetry
+from data.models.main_models import MainTelemetry
 
 
 def main_telemetry() -> list[MainTelemetry]:

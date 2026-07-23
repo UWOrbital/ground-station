@@ -1,8 +1,8 @@
 from uuid import UUID, uuid4
 
 import pytest
-from data.tables.main_tables import MainCommand, MainTelemetry
-from data.tables.mcc_user_tables import MCCUsers
+from data.models.main_models import MainCommand, MainTelemetry
+from data.models.mcc_user_models import MCCUsers
 from fastapi.testclient import TestClient
 from main import app
 from mcc_keycloak.client import keycloak

@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from data.data_wrappers.abstract_wrapper import AbstractWrapper
-from data.tables.base_model import BaseSQLModel
+from data.models.base_model import BaseSQLModel
 from sqlmodel import Field
 
 

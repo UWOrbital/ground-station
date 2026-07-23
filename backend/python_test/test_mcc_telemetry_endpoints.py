@@ -3,8 +3,8 @@ from uuid import uuid4
 
 import pytest
 from data.enums.transactional import SessionStatus
-from data.tables.main_tables import MainTelemetry
-from data.tables.transactional_tables import CommsSession, Packet, Telemetry
+from data.models.main_models import MainTelemetry
+from data.models.transactional_models import CommsSession, Packet, Telemetry
 from fastapi.testclient import TestClient
 from main import app
 

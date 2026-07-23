@@ -4,9 +4,9 @@ from uuid import uuid4
 
 from data.enums.aro_requests import ARORequestStatus
 from data.enums.transactional import CommandStatus, MainPacketType, SessionStatus
-from data.tables.aro_user_tables import AROUsers
-from data.tables.main_tables import MainCommand, MainTelemetry
-from data.tables.transactional_tables import (
+from data.models.aro_user_models import AROUsers
+from data.models.main_models import MainCommand, MainTelemetry
+from data.models.transactional_models import (
     ARORequest,
     Command,
     CommsSession,

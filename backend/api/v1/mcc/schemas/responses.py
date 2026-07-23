@@ -3,8 +3,8 @@ from typing import Annotated
 from uuid import UUID
 
 from data.enums.transactional import CommandStatus
-from data.tables.main_tables import MainCommand, MainTelemetry
-from data.tables.transactional_tables import CommsSession
+from data.models.main_models import MainCommand, MainTelemetry
+from data.models.transactional_models import CommsSession
 from pydantic import BaseModel, Field
 
 

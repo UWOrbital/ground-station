@@ -3,9 +3,9 @@ from uuid import UUID, uuid4
 
 import pytest
 from data.enums.transactional import CommandStatus
-from data.tables.main_tables import MainCommand
-from data.tables.mcc_user_tables import MCCUsers
-from data.tables.transactional_tables import CommsSession
+from data.models.main_models import MainCommand
+from data.models.mcc_user_models import MCCUsers
+from data.models.transactional_models import CommsSession
 from fastapi.testclient import TestClient
 from main import app
 from mcc_keycloak.client import keycloak

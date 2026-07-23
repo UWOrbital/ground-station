@@ -1,5 +1,5 @@
-from data.tables.aro_user_tables import AROUserCallsigns
-from data.tables.main_tables import MainCommand, MainTelemetry
+from data.models.aro_user_models import AROUserCallsigns
+from data.models.main_models import MainCommand, MainTelemetry
 from sqlmodel import Session, select
 
 from resources.callsigns import callsigns

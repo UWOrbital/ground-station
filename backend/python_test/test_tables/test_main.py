@@ -1,5 +1,5 @@
 import pytest
-from data.tables.main_tables import MainCommand, MainTelemetry
+from data.models.main_models import MainCommand, MainTelemetry
 from exceptions.exceptions import DatabaseError
 from sqlmodel import Session, select
 

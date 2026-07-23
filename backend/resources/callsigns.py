@@ -1,6 +1,6 @@
 import csv
 
-from data.tables.aro_user_tables import AROUserCallsigns
+from data.models.aro_user_models import AROUserCallsigns
 
 
 def callsigns() -> list[AROUserCallsigns]:

@@ -1,6 +1,6 @@
 import csv
 
-from data.tables.main_tables import MainCommand
+from data.models.main_models import MainCommand
 
 
 # TODO: Pull this from a config file so that it's synced with the OBC

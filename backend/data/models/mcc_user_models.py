@@ -5,7 +5,7 @@ from config.data_config import DEFAULT_MAX_LENGTH
 from pydantic import EmailStr
 from sqlmodel import Field
 
-from data.tables.base_model import BaseSQLModel
+from data.models.base_model import BaseSQLModel
 
 MCC_USER_SCHEMA_NAME: Final[str] = "mcc_users"
 MCC_USER_TABLE_NAME: Final[str] = "users_data"

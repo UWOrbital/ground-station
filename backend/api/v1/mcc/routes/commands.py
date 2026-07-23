@@ -5,7 +5,7 @@ from api.v1.mcc.schemas.requests import CreateCommandRequest, UpdateCommandReque
 from api.v1.mcc.schemas.responses import CommandResponse, CommandsResponse, DeleteCommandResponse
 from api.v1.mcc.services.scheduling import assert_not_locked_out
 from data.data_wrappers.wrappers import CommandsWrapper, CommsSessionWrapper
-from data.tables.mcc_user_tables import MCCUsers
+from data.models.mcc_user_models import MCCUsers
 from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
 from mcc_keycloak.client import keycloak

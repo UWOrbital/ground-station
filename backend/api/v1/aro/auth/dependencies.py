@@ -5,7 +5,7 @@ from data.data_wrappers.wrappers import (
     AROUserAuthTokenWrapper,
     AROUsersWrapper,
 )
-from data.tables.aro_user_tables import AROUsers
+from data.models.aro_user_models import AROUsers
 from fastapi import APIRouter, Depends, HTTPException, status
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
