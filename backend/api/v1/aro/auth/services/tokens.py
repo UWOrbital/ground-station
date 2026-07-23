@@ -1,13 +1,13 @@
 from datetime import datetime, timedelta
 from uuid import UUID, uuid4
 
-from api.v1.aro.models.auth_requests import GoogleRequest
+from api.v1.aro.schemas.auth_requests import GoogleRequest
 from data.data_wrappers.wrappers import (
     AROUserAuthTokenWrapper,
     AROUsersWrapper,
 )
 from data.enums.aro_auth_token import AROAuthToken
-from data.tables.aro_user_tables import (
+from data.models.aro_user_models import (
     AROUserAuthToken,
     AROUsers,
 )

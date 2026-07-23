@@ -76,10 +76,10 @@ sdist.only-include = ["backend"]
 
 [tool.pytest.ini_options]
 addopts = "-v"
-testpaths = ["backend/python_test"]
+testpaths = ["backend/tests"]
 
 [tool.mypy]
-exclude = ["backend/python_test/*", "backend/migrations/*"]
+exclude = ["backend/tests/*", "backend/migrations/*"]
 strict = true
 plugins = "pydantic.mypy"
 
@@ -110,7 +110,7 @@ follow_imports = "skip"
 
 [tool.ruff]
 include = ["pyproject.toml", "backend/*.py"]
-exclude = ["frontend/*", "backend/python_test", "backend/migrations", "interfaces"]
+exclude = ["frontend/*", "backend/tests", "backend/migrations", "interfaces"]
 target-version = "py312"
 line-length = 120
 indent-width = 4

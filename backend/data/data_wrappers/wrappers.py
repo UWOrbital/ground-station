@@ -1,17 +1,17 @@
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
-from api.v1.mcc.models.responses import TelemetryEntry, TelemetrySubrow
+from api.v1.mcc.schemas.responses import TelemetryEntry, TelemetrySubrow
 from config.data_config import SESSION_LOCKOUT_SECONDS
 from pydantic import EmailStr
 from sqlmodel import col, select
 
 from data.data_wrappers.abstract_wrapper import AbstractWrapper  # SEE abstract_wrapper.py FOR LOGIC
 from data.database.engine import get_db_session
-from data.tables.aro_user_tables import AROUserAuthToken, AROUserCallsigns, AROUserLogin, AROUsers
-from data.tables.main_tables import MainCommand, MainTelemetry
-from data.tables.mcc_user_tables import MCCUsers
-from data.tables.transactional_tables import (
+from data.models.aro_user_models import AROUserAuthToken, AROUserCallsigns, AROUserLogin, AROUsers
+from data.models.main_models import MainCommand, MainTelemetry
+from data.models.mcc_user_models import MCCUsers
+from data.models.transactional_models import (
     ARORequest,
     Command,
     CommsSession,

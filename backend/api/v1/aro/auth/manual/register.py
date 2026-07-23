@@ -6,14 +6,14 @@ from api.v1.aro.auth.manual.password import (
     verify_password,
 )
 from api.v1.aro.auth.services.tokens import create_auth_token
-from api.v1.aro.models.auth_requests import LoginRequest, RegisterRequest
+from api.v1.aro.schemas.auth_requests import LoginRequest, RegisterRequest
 from data.data_wrappers.wrappers import (
     AROUserAuthTokenWrapper,
     AROUserLoginWrapper,
     AROUsersWrapper,
 )
 from data.enums.aro_auth_token import AROAuthToken
-from data.tables.aro_user_tables import (
+from data.models.aro_user_models import (
     AROUserAuthToken,
     AROUsers,
 )
