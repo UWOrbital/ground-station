@@ -11,13 +11,6 @@ After initial authentication, the user will need to additionally verify with the
 
 from typing import cast
 
-from authlib.integrations.starlette_client import OAuth, OAuthError
-from config.config import settings
-from data.tables.aro_user_tables import AROUsers
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.responses import RedirectResponse
-from starlette.requests import Request
-
 from api.v1.aro.auth.dependencies import get_current_user
 from api.v1.aro.auth.google.google import google_auth
 from api.v1.aro.auth.manual.register import (
@@ -36,6 +29,12 @@ from api.v1.aro.models.auth_responses import (
     TokenResponse,
     UserResponse,
 )
+from authlib.integrations.starlette_client import OAuth, OAuthError
+from config.config import settings
+from data.tables.aro_user_tables import AROUsers
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import RedirectResponse
+from starlette.requests import Request
 
 # -----------------------------------------------------------------------
 # CONFIG

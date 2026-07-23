@@ -1,10 +1,9 @@
 from datetime import datetime
 
+from api.v1.mcc.models.responses import SatelliteStatusResponse, TelemetryDataResponse
 from data.data_wrappers.wrappers import CommsSessionWrapper, TelemetryWrapper
 from data.enums.transactional import SessionStatus
 from fastapi import APIRouter
-
-from api.v1.mcc.models.responses import SatelliteStatusResponse, TelemetryDataResponse
 
 status_router = APIRouter(tags=["MCC", "Status"])
 

@@ -1,12 +1,12 @@
 import logging
 
 from config.config import settings
+from config.cors_config import add_cors_middleware
+from config.logger_config import LoggerMiddleware
 from fastapi import FastAPI
 from loguru import logger
 from starlette.middleware.sessions import SessionMiddleware
 
-from api.middleware.cors_middleware import add_cors_middleware
-from api.middleware.logger_middleware import LoggerMiddleware
 from api.v1.aro.auth.oauth import router as aro_auth_router
 from api.v1.aro.endpoints.picture_requests import picture_requests_router
 from api.v1.aro.endpoints.user import aro_user_router

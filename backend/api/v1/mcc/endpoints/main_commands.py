@@ -1,9 +1,8 @@
+from api.v1.mcc.models.responses import MainCommandResponse, MainCommandsResponse
 from data.data_wrappers.wrappers import MainCommandWrapper
 from fastapi import APIRouter
 from fastapi.exceptions import HTTPException
 from mcc_keycloak.client import keycloak
-
-from api.v1.mcc.models.responses import MainCommandResponse, MainCommandsResponse
 
 main_commands_router = APIRouter(tags=["MCC", "Main Commands"])
 
