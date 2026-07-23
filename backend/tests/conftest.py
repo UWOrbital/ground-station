@@ -53,7 +53,7 @@ def migrate_db(db_engine: Engine):
     setup_database(setup_session)
 
     # Run Alembic migrations to create tables
-    repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     env = os.environ.copy()
     # Engine.url by default censors the password into "***" which breaks things
     env["SQLALCHEMY_DATABASE_URL"] = db_engine.url.render_as_string(hide_password=False)

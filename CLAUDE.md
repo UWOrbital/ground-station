@@ -35,9 +35,9 @@ uv run fastapi dev backend/main.py
 uv run python backend/migrate.py            # all three
 uv run python backend/migrate.py callsigns  # one of: callsigns | commands | telemetries
 
-# DB schema migrations (run from backend/, since alembic.ini lives there)
-cd backend && uv run alembic upgrade head
-cd backend && uv run alembic revision --autogenerate -m "msg"
+# DB schema migrations (run from repo root, where alembic.ini lives)
+uv run alembic upgrade head
+uv run alembic revision --autogenerate -m "msg"
 
 # Tests — pytest is configured with testpaths = ["tests"] in pyproject.toml.
 # tests/conftest.py spins up a Postgres instance via pytest-postgresql per test
