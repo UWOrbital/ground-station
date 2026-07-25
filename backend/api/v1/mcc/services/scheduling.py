@@ -1,5 +1,5 @@
 from data.data_wrappers.wrappers import CommsSessionWrapper
-from data.tables.transactional_tables import CommsSession
+from data.models.transactional_models import CommsSession
 
 
 def assert_not_locked_out(session: CommsSession) -> None:
