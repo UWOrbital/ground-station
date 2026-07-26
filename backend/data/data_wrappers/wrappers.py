@@ -186,14 +186,13 @@ class CommsSessionWrapper(AbstractWrapper[CommsSession, UUID]):
                 query = query.where(CommsSession.start_time < start_before)
             return list(session.exec(query.order_by(col(CommsSession.start_time).asc()).limit(limit)).all())
 
-    def is_locked_out(self, session_id: UUID) -> bool:
+    def is_locked_out(self, session: CommsSession) -> bool:
         """
         Checks whether the given session is within its lockout window.
 
-        :param session_id: UUID of the target session.
+        :param session: Target session.
         :return: True if the session is locked out, False otherwise.
         :raises ValueError: if no session with the given ID exists."""
-        session = self.get_by_id(session_id)
         lockout_start = session.start_time - timedelta(seconds=SESSION_LOCKOUT_SECONDS)
         return datetime.now(UTC) >= lockout_start
 

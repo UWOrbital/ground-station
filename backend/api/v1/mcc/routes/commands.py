@@ -47,12 +47,12 @@ async def create_command(
     :return: The newly created command.
     """
     try:
-        CommsSessionWrapper().get_by_id(request.session_id)
+        session = CommsSessionWrapper().get_by_id(request.session_id)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
 
     try:
-        assert_not_locked_out(request.session_id)
+        assert_not_locked_out(session)
     except ValueError as e:
         raise HTTPException(status_code=409, detail=str(e)) from e
 
@@ -100,7 +100,8 @@ async def update_command(command_id: UUID, request: UpdateCommandRequest) -> Com
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
     try:
-        assert_not_locked_out(existing_command.session_id)
+        session = CommsSessionWrapper().get_by_id(existing_command.session_id)
+        assert_not_locked_out(session)
     except ValueError as e:
         raise HTTPException(status_code=409, detail=str(e)) from e
     updated_command = CommandsWrapper().update(command_id, updates)
@@ -120,7 +121,8 @@ async def delete_command(command_id: UUID) -> DeleteCommandResponse:
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
     try:
-        assert_not_locked_out(existing_command.session_id)
+        session = CommsSessionWrapper().get_by_id(existing_command.session_id)
+        assert_not_locked_out(session)
     except ValueError as e:
         raise HTTPException(status_code=409, detail=str(e)) from e
     CommandsWrapper().delete_by_id(command_id)
