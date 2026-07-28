@@ -1,6 +1,8 @@
 from os import urandom
 from uuid import uuid4
 
+from fastapi import HTTPException, status
+
 from api.v1.aro.auth.manual.password import (
     hash_password,
     verify_password,
@@ -17,7 +19,6 @@ from data.models.aro_user_models import (
     AROUserAuthToken,
     AROUsers,
 )
-from fastapi import HTTPException, status
 
 
 def register_user(request: RegisterRequest) -> tuple[AROUserAuthToken, AROUsers]:

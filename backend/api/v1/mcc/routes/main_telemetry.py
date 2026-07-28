@@ -1,7 +1,8 @@
-from api.v1.mcc.schemas.responses import MainTelemetriesResponse, MainTelemetryResponse
-from data.data_wrappers.wrappers import MainTelemetryWrapper
 from fastapi import APIRouter
 from fastapi.exceptions import HTTPException
+
+from api.v1.mcc.schemas.responses import MainTelemetriesResponse, MainTelemetryResponse
+from data.data_wrappers.wrappers import MainTelemetryWrapper
 from mcc_keycloak.client import keycloak
 
 main_telemetry_router = APIRouter(tags=["MCC", "Main Telemetry"])

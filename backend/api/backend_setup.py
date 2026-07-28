@@ -1,8 +1,5 @@
 import logging
 
-from config.config import settings
-from config.cors_config import add_cors_middleware
-from config.logger_config import LoggerMiddleware
 from fastapi import FastAPI
 from loguru import logger
 from starlette.middleware.sessions import SessionMiddleware
@@ -19,6 +16,9 @@ from api.v1.mcc.routes.sessions import comms_sessions_router
 from api.v1.mcc.routes.status import status_router
 from api.v1.mcc.routes.telemetry import telemetry_router
 from api.v1.mcc.routes.users import mcc_users_router
+from config.config import settings
+from config.cors_config import add_cors_middleware
+from config.logger_config import LoggerMiddleware
 
 
 def setup_routes(app: FastAPI) -> None:

@@ -1,9 +1,10 @@
+from fastapi import APIRouter, Depends
+from fastapi.exceptions import HTTPException
+
 from api.v1.mcc.schemas.requests import UpdateUserRequest
 from api.v1.mcc.schemas.responses import UserInformationResponse
 from data.data_wrappers.wrappers import MCCUsersWrapper
 from data.models.mcc_user_models import MCCUsers
-from fastapi import APIRouter, Depends
-from fastapi.exceptions import HTTPException
 from mcc_keycloak.client import keycloak
 
 mcc_users_router = APIRouter(tags=["MCC", "Users"], dependencies=[keycloak.require_auth])

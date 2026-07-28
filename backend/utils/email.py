@@ -3,11 +3,12 @@ from datetime import datetime
 from enum import StrEnum
 from typing import Any
 
-from config.config import settings
 from fastapi import UploadFile
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType, MultipartSubtypeEnum
 from loguru import logger
 from pydantic import NameEmail
+
+from config.config import settings
 
 _conf = ConnectionConfig(
     MAIL_USERNAME=settings.email.mail_username,

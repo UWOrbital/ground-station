@@ -1,10 +1,11 @@
-from data.data_wrappers.wrappers import MCCUsersWrapper
 from fastapi import APIRouter, Request
 from fastapi.exceptions import HTTPException
 from fastapi.responses import RedirectResponse, Response
 from keycloak.exceptions import KeycloakError
-from mcc_keycloak.client import keycloak
 from sqlalchemy.exc import IntegrityError
+
+from data.data_wrappers.wrappers import MCCUsersWrapper
+from mcc_keycloak.client import keycloak
 
 mcc_auth_router = APIRouter(tags=["MCC", "Authentication"])
 

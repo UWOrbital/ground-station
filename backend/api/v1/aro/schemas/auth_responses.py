@@ -2,8 +2,9 @@ from datetime import datetime
 from typing import Self
 from uuid import UUID
 
-from data.models.aro_user_models import AROUsers
 from pydantic import BaseModel, model_validator
+
+from data.models.aro_user_models import AROUsers
 
 
 class TokenResponse(BaseModel):

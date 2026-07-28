@@ -2,14 +2,15 @@ from typing import Any
 from urllib.parse import urlencode
 from uuid import UUID
 
-from config.config import settings
-from config.keycloak_config import KeycloakConfig
-from data.data_wrappers.wrappers import MCCUsersWrapper
-from data.models.mcc_user_models import MCCUsers
 from fastapi import Depends, Request, status
 from fastapi.exceptions import HTTPException
 from jwcrypto.jwt import JWTExpired
 from keycloak import KeycloakAdmin, KeycloakError, KeycloakOpenID, KeycloakOpenIDConnection
+
+from config.config import settings
+from config.keycloak_config import KeycloakConfig
+from data.data_wrappers.wrappers import MCCUsersWrapper
+from data.models.mcc_user_models import MCCUsers
 
 
 class KeycloakClient:

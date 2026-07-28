@@ -1,9 +1,10 @@
 from datetime import datetime
 from typing import Annotated
 
+from fastapi import APIRouter, Query
+
 from api.v1.mcc.schemas.responses import CommsSessionsResponse
 from data.data_wrappers.wrappers import CommsSessionWrapper
-from fastapi import APIRouter, Query
 from mcc_keycloak.client import keycloak
 
 comms_sessions_router = APIRouter(tags=["MCC", "Sessions"])

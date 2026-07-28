@@ -1,6 +1,7 @@
+from fastapi import APIRouter
+
 from api.v1.mcc.schemas.responses import TelemetryListResponse
 from data.data_wrappers.wrappers import TelemetryWrapper
-from fastapi import APIRouter
 
 telemetry_router = APIRouter(tags=["MCC", "Telemetry"])
 

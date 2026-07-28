@@ -1,8 +1,9 @@
 from typing import Annotated
 from uuid import UUID
 
-from data.enums.transactional import CommandStatus
 from pydantic import BaseModel, Field
+
+from data.enums.transactional import CommandStatus
 
 
 class CreateCommandRequest(BaseModel):

@@ -1,7 +1,8 @@
+from fastapi import HTTPException, status
+
 from api.v1.aro.schemas.auth_requests import CallsignRequest
 from data.data_wrappers.wrappers import AROUserCallsignWrapper, AROUsersWrapper
 from data.models.aro_user_models import AROUsers
-from fastapi import HTTPException, status
 
 
 def callsign_verified(qual_levels: tuple[bool, ...], user_call_sign: str) -> bool:

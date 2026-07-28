@@ -1,9 +1,9 @@
 from functools import lru_cache
 
-from config.config import settings
 from sqlalchemy import Engine
 from sqlmodel import Session, create_engine, text
 
+from config.config import settings
 from data.models.aro_user_models import ARO_USER_SCHEMA_NAME
 from data.models.main_models import MAIN_SCHEMA_NAME
 from data.models.transactional_models import TRANSACTIONAL_SCHEMA_NAME
