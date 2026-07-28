@@ -1,0 +1,46 @@
+src = ["backend"]
+extend-exclude = ["tests", "migrations", "interfaces"]
+target-version = "py312"
+line-length = 120
+indent-width = 4
+
+[lint]
+select = [
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # pyupgrade
+    "UP",
+    # flake8-bugbear
+    "B",
+    # flake8-simplify
+    "SIM",
+    # isort
+    "I",
+    # pep8-naming
+    "N",
+    # flake8-annotations
+    "ANN",
+    # flake8 builtin shadowing
+    "A",
+    # Documentation
+    "D213", "D101", "D102", "D103", "D105"
+]
+fixable = ["ALL"]
+unfixable = []
+
+[lint.isort]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+detect-same-package = false
+
+[lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query"]
+
+[format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-format = false
+docstring-code-line-length = "dynamic"
