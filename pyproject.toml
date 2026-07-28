@@ -95,8 +95,3 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = "pyStuffing.*"
 ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = ["interfaces", "interfaces.*"]
-ignore_missing_imports = true
-follow_imports = "skip"
