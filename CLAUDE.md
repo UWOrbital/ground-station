@@ -8,8 +8,8 @@ UW Orbital is a student CubeSat team. The software sub-team splits into **firmwa
 
 Ground station has three product surfaces:
 - **Backend** (`backend/`) — FastAPI service that ingests downlink data, persists it, and serves both frontends. This is the primary surface in this repo.
-- **MCC** — Mission Control Center. An invite-only tool behind Keycloak; experts use it to monitor and command the satellite. Backend lives at `/api/v1/mcc/*`; the MCC frontend is the operator-facing client.
-- **ARO** — Amateur Radio Operator. Public-facing surface for amateur radio operators who want to request actions of the satellite. Backend lives at `/api/v1/aro/*`.
+- **MCC** — Mission Control Center. An invite-only tool behind Keycloak; experts use it to monitor and command the satellite. Backend lives at `backend/app/api/v1/mcc/*`; the MCC frontend is the operator-facing client.
+- **ARO** — Amateur Radio Operator. Public-facing surface for amateur radio operators who want to request actions of the satellite. Backend lives at `backend/app/api/v1/aro/*`.
 
 When summarizing work to the user, frame what changed in terms of the team mission: which surface it affects (MCC operators, ARO amateurs, firmware-integration plumbing) and where it sits in the satellite-to-human pipeline. Don't just list code edits — connect them to who on the team benefits.
 
@@ -17,7 +17,7 @@ When summarizing work to the user, frame what changed in terms of the team missi
 
 Three-part monorepo for UW Orbital's CubeSat ground station:
 
-- `backend/` — FastAPI service (Python 3.12, packaged as `backend` via setuptools). Imports inside the backend are written as if `backend/` is on `sys.path` (e.g. `from api.lifespan import lifespan`, `from config.config import settings`). The backend package is installed editable via `uv sync --extra dev`, so the `pyproject.toml` at the repo root configure tooling for the backend only.
+- `backend/` — FastAPI service (Python 3.12, packaged as `backend` via setuptools). Imports inside the backend are written as if `backend/` is on `sys.path` (e.g. `from app.api.lifespan import lifespan`, `from app.config.config import settings`). The backend package is installed editable via `uv sync --extra dev`, so the `pyproject.toml` at the repo root configure tooling for the backend only.
 - `frontend/aro/` and `frontend/mcc/` — two independent Vite + React 19 + TS apps. ARO (Amateur Radio Operator) is the public-facing app; MCC (Mission Control Center) is the operator app behind Keycloak.
 
 ## Common commands
@@ -77,7 +77,7 @@ docker compose up --build
 
 ### FastAPI app composition
 
-`backend/main.py` is intentionally tiny — it instantiates `FastAPI(lifespan=lifespan)` and delegates to `api/backend_setup.py`, which wires routers and middleware. To add an endpoint, create a router under `backend/api/v1/{aro,mcc}/endpoints/` and register it in `setup_routes` with the correct prefix; the two product surfaces are mounted at `/api/v1/aro/*` and `/api/v1/mcc/*`.
+`backend/main.py` is intentionally tiny — it instantiates `FastAPI(lifespan=lifespan)` and delegates to `backend/app/api/backend_setup.py`, which wires routers and middleware. To add an endpoint, create a router under `backend/app/api/v1/{aro,mcc}/endpoints/` and register it in `setup_routes` with the correct prefix; the two product surfaces are mounted at `backend/app/api/v1/aro/*` and `backend/app/api/v1/mcc/*`.
 
 Middleware order matters and is enforced in `setup_middlewares`: CORS first, then `SessionMiddleware` (needed for OAuth state), then `AuthMiddleware`, then `LoggerMiddleware`. Don't reorder casually.
 
@@ -85,39 +85,39 @@ The `lifespan` context initializes `fastapi-cache` with an in-memory backend and
 
 ### Configuration
 
-`backend/config/config.py` builds a single `settings` object by composing `CORSConfig`, `LoggerConfig`, `DatabaseConfig`, `KeycloakConfig`, `AROAuthConfig`, and `EmailConfig`. Each pulls from env vars via pydantic-settings. `python-dotenv`'s `load_dotenv()` runs at import time — when running from the repo root it finds `backend/.env` via the working dir; the docker compose backend service injects env from the repo-root `.env` plus an override (`GS_DATABASE_LOCATION=host.docker.internal`).
+`backend/app/config/config.py` builds a single `settings` object by composing `CORSConfig`, `LoggerConfig`, `DatabaseConfig`, `KeycloakConfig`, `AROAuthConfig`, and `EmailConfig`. Each pulls from env vars via pydantic-settings. `python-dotenv`'s `load_dotenv()` runs at import time — when running from the repo root it finds `backend/.env` via the working dir; the docker compose backend service injects env from the repo-root `.env` plus an override (`GS_DATABASE_LOCATION=host.docker.internal`).
 
-`template.env` documents every variable the backend needs. `KEYCLOAK_CLIENT_SECRET`, ARO Google OAuth, and SMTP secrets are not in the template and must be filled in locally; the Keycloak client secret lives inside `backend/keycloak/mcc-realm.json`.
+`template.env` documents every variable the backend needs. `KEYCLOAK_CLIENT_SECRET`, ARO Google OAuth, and SMTP secrets are not in the template and must be filled in locally; the Keycloak client secret lives inside `backend/mcc_keycloak/mcc-realm.json`.
 
 ### Data layer
 
-- `backend/data/tables/` — SQLModel table classes split across three Postgres schemas: `main_tables.py` (reference data), `transactional_tables.py` (e.g. `CommsSession`), `aro_user_tables.py`, `mcc_user_tables.py`. Schema names are module-level constants (e.g. `MAIN_SCHEMA_NAME`) and are referenced by both `engine.py` and Alembic.
-- `backend/data/data_wrappers/` — repository-style wrappers around SQLModel. New table accessors should extend `abstract_wrapper.py`; tests monkeypatch `data.data_wrappers.abstract_wrapper.get_db_session` (see `conftest.py`).
+- `backend/app/data/tables/` — SQLModel table classes split across three Postgres schemas: `main_tables.py` (reference data), `transactional_tables.py` (e.g. `CommsSession`), `aro_user_tables.py`, `mcc_user_tables.py`. Schema names are module-level constants (e.g. `MAIN_SCHEMA_NAME`) and are referenced by both `engine.py` and Alembic.
+- `backend/app/data/data_wrappers/` — repository-style wrappers around SQLModel. New table accessors should extend `abstract_wrapper.py`; tests monkeypatch `data.data_wrappers.abstract_wrapper.get_db_session` (see `conftest.py`).
 - `backend/migrations/` — Alembic migrations. `tests/conftest.py` runs `alembic upgrade head` inside the per-test Postgres instance, so any new table needs both a SQLModel class and a migration or the tests will fail.
 
 ### Auth
 
 Two distinct flows:
-- **MCC**: Keycloak (OIDC). Realm definition is checked in at `backend/keycloak/mcc-realm.json` and auto-imported by the keycloak compose service.
-- **ARO**: Google OAuth via Authlib, JWT-signed sessions. Config in `config/aro_auth_config.py`.
+- **MCC**: Keycloak (OIDC). Realm definition is checked in at `backend/app/mcc_keycloak/mcc-realm.json` and auto-imported by the keycloak compose service.
+- **ARO**: Google OAuth via Authlib, JWT-signed sessions. Config in `backend/app/config/aro_auth_config.py`.
 
-`api/middleware/auth_middleware.py` enforces both. Session cookies are protected by `SessionMiddleware` keyed on `settings.auth.jwt_secret_key`.
+`backend/app/api/middleware/auth_middleware.py` enforces both. Session cookies are protected by `SessionMiddleware` keyed on `settings.auth.jwt_secret_key`.
 
 ### Native interfaces and Python wrappers
 
-`backend/sun/ephemeris*.py` use Skyfield (SGP4) for orbit propagation; sample data ships in `backend/data/resources/`.
+`backend/sun/ephemeris*.py` use Skyfield (SGP4) for orbit propagation; sample data ships in `backend/references/`.
 
 ## Testing conventions
 
 - pytest is verbose by default (`-v` in `pyproject.toml`).
-- `tests/conftest.py` autouses a fixture that swaps `get_db_session` to point at a per-test Postgres DB, so wrappers under test must call `get_db_session()` (not hold a cached engine).
+- `backend/tests/conftest.py` autouses a fixture that swaps `get_db_session` to point at a per-test Postgres DB, so wrappers under test must call `get_db_session()` (not hold a cached engine).
 - The dummy env vars in `conftest.py` are set with `setdefault` *before* importing the engine module, so test-only env never leaks into dev. Don't reorder those imports.
 - mypy runs in `strict` mode and excludes `tests/*`. Skyfield, ax25, tinyaes, authlib, and pyStuffing have `ignore_missing_imports`.
 - Ruff is scoped to `backend/` only (frontend, `tests`, and `migrations` are excluded) and enforces docstrings on classes/functions/methods (rules `D101 D102 D103 D105` plus `D213`).
 
 ## Pre-commit
 
-`.pre-commit-config.yaml` runs whitespace fixers + `ruff-check --fix` + `ruff-format`. The hooks deliberately skip `libs/`, `hal/`, and `backend/data/resources/callsigns.csv` from the large-file check. After cloning, run `uv run pre-commit install`.
+`.pre-commit-config.yaml` runs whitespace fixers + `ruff-check --fix` + `ruff-format`. The hooks deliberately skip `libs/`, `hal/`, and `backend/references/csvs/callsigns.csv` from the large-file check. After cloning, run `uv run pre-commit install`.
 
 ## Code style rules (enforced)
 
