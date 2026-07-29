@@ -2,9 +2,9 @@ from datetime import UTC, datetime
 from uuid import uuid4
 
 import pytest
-from data.enums.transactional import SessionStatus
-from data.models.main_models import MainTelemetry
-from data.models.transactional_models import CommsSession, Packet, Telemetry
+from app.data.enums.transactional import SessionStatus
+from app.data.models.main_models import MainTelemetry
+from app.data.models.transactional_models import CommsSession, Packet, Telemetry
 from fastapi.testclient import TestClient
 from main import app
 

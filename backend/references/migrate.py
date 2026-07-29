@@ -1,6 +1,6 @@
 import sys
 
-from data.database.engine import get_db_session
+from app.data.database.engine import get_db_session
 from references.utils import add_callsigns, add_main_commands, add_telemetry
 
 """

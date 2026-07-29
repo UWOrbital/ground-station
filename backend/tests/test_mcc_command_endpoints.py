@@ -2,13 +2,13 @@ from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
 import pytest
-from data.enums.transactional import CommandStatus
-from data.models.main_models import MainCommand
-from data.models.mcc_user_models import MCCUsers
-from data.models.transactional_models import CommsSession
+from app.data.enums.transactional import CommandStatus
+from app.data.models.main_models import MainCommand
+from app.data.models.mcc_user_models import MCCUsers
+from app.data.models.transactional_models import CommsSession
 from fastapi.testclient import TestClient
 from main import app
-from mcc_keycloak.client import keycloak
+from app.mcc_keycloak.client import keycloak
 
 
 @pytest.fixture

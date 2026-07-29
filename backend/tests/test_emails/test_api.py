@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 from pydantic import NameEmail
-from utils.email import Email, EmailType, send, send_many
+from app.utils.email import Email, EmailType, send, send_many
 
 
 def get_name_email() -> NameEmail:
@@ -17,7 +17,7 @@ async def test_send_calls_send_many():
         text="world!",
     )
 
-    with patch("utils.email.send_many", new_callable=AsyncMock) as mock_send_many:
+    with patch("app.utils.email.send_many", new_callable=AsyncMock) as mock_send_many:
         await send(email)
 
     mock_send_many.assert_awaited_once_with([email])
@@ -31,7 +31,7 @@ async def test_send_many_sends_emails():
         text="buzz!",
     )
 
-    with patch("utils.email.FastMail", autospec=True) as MockFastMail:
+    with patch("app.utils.email.FastMail", autospec=True) as MockFastMail:
         MockFastMail.return_value.send_message = AsyncMock()
 
         await send_many([email])

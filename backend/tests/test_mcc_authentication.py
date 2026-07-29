@@ -1,11 +1,11 @@
 import pytest
 import json
-import backend.api.v1.mcc.routes.auth as mcc_auth
+import app.api.v1.mcc.routes.auth as mcc_auth
 from unittest.mock import patch, PropertyMock
-from mcc_keycloak.client import KeycloakClient
+from app.mcc_keycloak.client import KeycloakClient
 from fastapi.testclient import TestClient
 from main import app
-from config.config import settings
+from app.config.config import settings
 
 MOCK_TOKENS = {
     "access_token": "mock_access_token",

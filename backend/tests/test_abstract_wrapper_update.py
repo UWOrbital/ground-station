@@ -2,8 +2,8 @@ from typing import Optional
 from unittest.mock import MagicMock, patch
 
 import pytest
-from data.data_wrappers.abstract_wrapper import AbstractWrapper
-from data.models.base_model import BaseSQLModel
+from app.data.data_wrappers.abstract_wrapper import AbstractWrapper
+from app.data.models.base_model import BaseSQLModel
 from sqlmodel import Field
 
 
@@ -20,7 +20,7 @@ class TestWrapper(AbstractWrapper[TestModel, int]):
 
 @pytest.fixture
 def mock_session():
-    with patch("data.data_wrappers.abstract_wrapper.get_db_session") as mock_get_sess:
+    with patch("app.data.data_wrappers.abstract_wrapper.get_db_session") as mock_get_sess:
         mock_sess_instance = MagicMock()
         mock_get_sess.return_value.__enter__.return_value = mock_sess_instance
         yield mock_sess_instance

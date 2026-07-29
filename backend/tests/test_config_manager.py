@@ -1,10 +1,10 @@
 import importlib
 
 import pytest
-from config.config import BackendConfiguration, settings
-from config.cors_config import CORSConfig
-from config.database_config import DatabaseConfig
-from config.logger_config import LoggerConfig
+from app.config.config import BackendConfiguration, settings
+from app.config.cors_config import CORSConfig
+from app.config.database_config import DatabaseConfig
+from app.config.logger_config import LoggerConfig
 from pydantic import ValidationError
 from pydantic_settings import SettingsConfigDict
 

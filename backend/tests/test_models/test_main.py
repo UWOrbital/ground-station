@@ -1,6 +1,6 @@
 import pytest
-from data.models.main_models import MainCommand, MainTelemetry
-from exceptions.exceptions import DatabaseError
+from app.data.models.main_models import MainCommand, MainTelemetry
+from app.exceptions.exceptions import DatabaseError
 from sqlmodel import Session, select
 
 
