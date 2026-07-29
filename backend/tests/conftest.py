@@ -11,8 +11,8 @@ os.environ.setdefault("GS_DATABASE_PASSWORD", "testpassword")
 os.environ.setdefault("GS_DATABASE_NAME", "testdb")
 
 import pytest
-from data.database.engine import setup_database
-from data.models.transactional_models import CommsSession
+from app.data.database.engine import setup_database
+from app.data.models.transactional_models import CommsSession
 from sqlalchemy import Engine, NullPool
 from sqlmodel import Session, create_engine
 from testcontainers.postgres import PostgresContainer
@@ -109,12 +109,12 @@ def test_get_db_session(monkeypatch, db_session: Session):
         yield db_session
 
     monkeypatch.setattr(
-        "data.data_wrappers.abstract_wrapper.get_db_session",
+        "app.data.data_wrappers.abstract_wrapper.get_db_session",
         _get_db_session,
         raising=True,
     )
     monkeypatch.setattr(
-        "data.data_wrappers.wrappers.get_db_session",
+        "app.data.data_wrappers.wrappers.get_db_session",
         _get_db_session,
         raising=True,
     )

@@ -1,5 +1,5 @@
 import pytest
-from data.data_wrappers import wrappers
+from app.data.data_wrappers import wrappers
 from uuid import uuid4
 @pytest.fixture
 def wrapper():

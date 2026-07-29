@@ -4,7 +4,7 @@ import pytest
 from fastapi import UploadFile
 from fastapi_mail import MessageSchema, MessageType, MultipartSubtypeEnum
 from pydantic import NameEmail
-from utils.email import Email, EmailType, _create_message_schema_fields, _default_sender
+from app.utils.email import Email, EmailType, _create_message_schema_fields, _default_sender
 
 
 def get_name_email(name: str = "John Doe") -> NameEmail:

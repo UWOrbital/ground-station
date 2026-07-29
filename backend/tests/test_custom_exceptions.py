@@ -1,8 +1,8 @@
 import pytest
 from fastapi import FastAPI, status
 from fastapi.testclient import TestClient
-from exceptions.exception_handlers import STATUS_MAP, setup_exception_handlers
-from exceptions.exceptions import BaseOrbitalError
+from app.exceptions.exception_handlers import STATUS_MAP, setup_exception_handlers
+from app.exceptions.exceptions import BaseOrbitalError
 
 def _create_exception_route_handler(exception_type: type[BaseOrbitalError]):
     """Creates a route handler that raises the given BaseOrbitalError subclass type"""

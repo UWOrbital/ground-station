@@ -1,11 +1,11 @@
 from uuid import UUID, uuid4
 
 import pytest
-from data.models.main_models import MainCommand, MainTelemetry
-from data.models.mcc_user_models import MCCUsers
+from app.data.models.main_models import MainCommand, MainTelemetry
+from app.data.models.mcc_user_models import MCCUsers
 from fastapi.testclient import TestClient
 from main import app
-from mcc_keycloak.client import keycloak
+from app.mcc_keycloak.client import keycloak
 
 COMMANDS_PREFIX = "/api/v1/mcc/main-commands"
 TELEMETRIES_PREFIX = "/api/v1/mcc/main-telemetry"

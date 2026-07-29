@@ -1,7 +1,7 @@
 import pytest
-from config.config import settings
+from app.config.config import settings
 from pydantic import NameEmail
-from utils.email import Email, EmailType, _default_sender
+from app.utils.email import Email, EmailType, _default_sender
 
 
 def get_name_email() -> NameEmail:

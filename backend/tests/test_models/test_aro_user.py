@@ -1,5 +1,5 @@
 import pytest
-from data.models.aro_user_models import AROUsers
+from app.data.models.aro_user_models import AROUsers
 from pydantic import ValidationError
 from sqlmodel import Session, select
 
