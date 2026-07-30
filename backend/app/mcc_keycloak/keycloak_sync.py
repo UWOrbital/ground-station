@@ -7,8 +7,7 @@ from dotenv import set_key
 from keycloak import KeycloakError
 
 from app.config.config import settings
-
-from .client import keycloak
+from app.mcc_keycloak.client import keycloak
 
 SENSITIVE_KEYS = {"secret", "registrationAccessToken"}
 ROOT_DIR = subprocess.run(
