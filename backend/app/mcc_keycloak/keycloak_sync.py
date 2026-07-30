@@ -3,11 +3,12 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-from client import keycloak
 from dotenv import set_key
 from keycloak import KeycloakError
 
 from app.config.config import settings
+
+from .client import keycloak
 
 SENSITIVE_KEYS = {"secret", "registrationAccessToken"}
 ROOT_DIR = subprocess.run(
