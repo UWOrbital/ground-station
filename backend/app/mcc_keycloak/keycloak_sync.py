@@ -59,9 +59,11 @@ def wait_for_keycloak(retries: int = 30) -> None:
     """Poll Keycloak until it is responsive."""
     for _ in range(retries):
         try:
-            httpx.get(f"{HOST}/realms/mcc", timeout=2)
-            print("keycloak responsive!")
-            return
+            res = httpx.get(f"{HOST}/realms/mcc", timeout=2)
+            if res.status_code == 200:
+                print("keycloak responsive!")
+                return
+            time.sleep(2)
         except Exception:
             time.sleep(2)
     raise RuntimeError("Keycloak failed to start in time.")
@@ -70,15 +72,14 @@ def wait_for_keycloak(retries: int = 30) -> None:
 def sync() -> None:
     """Sync Keycloak realm config to backend/app/mcc_keycloak/mcc-realm.json."""
 
-    admin_client = KeycloakAdmin(
-        server_url=HOST,
-        username=ADMIN_USERNAME,
-        password=ADMIN_PASSWORD,
-        realm_name=REALM,
-        user_realm_name="master",
-    )
-
     try:
+        admin_client = KeycloakAdmin(
+            server_url=HOST,
+            username=ADMIN_USERNAME,
+            password=ADMIN_PASSWORD,
+            realm_name=REALM,
+            user_realm_name="master",
+        )
         exported: dict[str, Any] = admin_client.export_realm(export_clients=True, export_groups_and_role=True)
 
         client_list: list[dict[str, Any]] = exported.get("clients", [])
