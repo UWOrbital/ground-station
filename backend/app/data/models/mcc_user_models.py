@@ -4,7 +4,7 @@ from uuid import UUID
 from pydantic import EmailStr
 from sqlmodel import Field
 
-from app.config.data_config import DEFAULT_MAX_LENGTH
+from app.config.data_values import DEFAULT_MAX_LENGTH
 from app.data.models.base_model import BaseSQLModel
 
 MCC_USER_SCHEMA_NAME: Final[str] = "mcc_users"

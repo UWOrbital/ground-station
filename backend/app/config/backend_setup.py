@@ -16,9 +16,9 @@ from app.api.v1.mcc.routes.sessions import comms_sessions_router
 from app.api.v1.mcc.routes.status import status_router
 from app.api.v1.mcc.routes.telemetry import telemetry_router
 from app.api.v1.mcc.routes.users import mcc_users_router
-from app.config.config import settings
-from app.config.cors_config import add_cors_middleware
-from app.config.logger_config import LoggerMiddleware
+from app.config.env_settings.backend_config import settings
+from app.config.env_settings.cors_config import add_cors_middleware
+from app.config.logger_middleware import LoggerMiddleware
 
 
 def setup_routes(app: FastAPI) -> None:

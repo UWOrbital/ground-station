@@ -7,7 +7,7 @@ from app.mcc_keycloak.client import KeycloakClient
 from fastapi.testclient import TestClient
 from app.data.models.mcc_user_models import MCCUsers
 from main import app
-from app.config.config import settings
+from app.config.env_settings.backend_config import settings
 
 from app.api.v1.mcc.schemas.responses import UserInformationResponse
 

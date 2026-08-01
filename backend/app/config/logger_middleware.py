@@ -6,20 +6,9 @@ from uuid import uuid4
 
 from fastapi import Request, Response
 from loguru import logger
-from pydantic_settings import BaseSettings, SettingsConfigDict
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR
 from starlette.types import ASGIApp
-
-
-class LoggerConfig(BaseSettings):
-    """
-    Pydantic class for storing logger middleware configuration settings
-    """
-
-    model_config = SettingsConfigDict(env_prefix="LOGGER_")
-
-    excluded_endpoints: Sequence[str] = []
 
 
 class LoggerMiddleware(BaseHTTPMiddleware):

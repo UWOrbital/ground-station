@@ -8,7 +8,7 @@ from sqlalchemy.dialects.postgresql import UUID as DB_UUID
 from sqlalchemy.schema import Column, ForeignKey
 from sqlmodel import Field
 
-from app.config.data_config import (
+from app.config.data_values import (
     CALL_SIGN_MAX_LENGTH,
     CALL_SIGN_MIN_LENGTH,
     DEFAULT_MAX_LENGTH,

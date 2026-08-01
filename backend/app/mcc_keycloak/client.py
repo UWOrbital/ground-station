@@ -7,8 +7,8 @@ from fastapi.exceptions import HTTPException
 from jwcrypto.jwt import JWTExpired
 from keycloak import KeycloakAdmin, KeycloakError, KeycloakOpenID, KeycloakOpenIDConnection
 
-from app.config.config import settings
-from app.config.keycloak_config import KeycloakConfig
+from app.config.env_settings.backend_config import settings
+from app.config.env_settings.keycloak_config import KeycloakConfig
 from app.data.data_wrappers.wrappers import MCCUsersWrapper
 from app.data.models.mcc_user_models import MCCUsers
 

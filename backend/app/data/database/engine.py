@@ -3,7 +3,7 @@ from functools import lru_cache
 from sqlalchemy import Engine
 from sqlmodel import Session, create_engine, text
 
-from app.config.config import settings
+from app.config.env_settings.backend_config import settings
 from app.data.models.aro_user_models import ARO_USER_SCHEMA_NAME
 from app.data.models.main_models import MAIN_SCHEMA_NAME
 from app.data.models.transactional_models import TRANSACTIONAL_SCHEMA_NAME
