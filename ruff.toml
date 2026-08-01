@@ -25,7 +25,9 @@ select = [
     # flake8 builtin shadowing
     "A",
     # Documentation
-    "D213", "D101", "D102", "D103", "D105"
+    "D213", "D101", "D102", "D103", "D105",
+    # flake8-tidy-imports
+    "TID252"
 ]
 fixable = ["ALL"]
 unfixable = []
@@ -36,6 +38,9 @@ detect-same-package = false
 
 [lint.flake8-bugbear]
 extend-immutable-calls = ["fastapi.Depends", "fastapi.Query"]
+
+[lint.flake8-tidy-imports]
+ban-relative-imports = "all"
 
 [format]
 quote-style = "double"
