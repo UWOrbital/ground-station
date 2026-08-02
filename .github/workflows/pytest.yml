@@ -46,4 +46,4 @@ jobs:
           EMAIL_MAIL_FROM: "john.doe@example.com"
           EMAIL_MAIL_FROM_NAME: "John Doe"
         run: |
-          uv run pytest
+          uv run pytest -m "not integration"

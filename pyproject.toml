@@ -70,6 +70,9 @@ sdist.only-include = ["backend"]
 [tool.pytest.ini_options]
 addopts = "-v"
 testpaths = ["backend/tests"]
+markers = [
+    "integration: marks tests that depend on external services or large workloads",
+]
 
 [tool.mypy]
 exclude = ["backend/tests/*", "backend/migrations/*"]
