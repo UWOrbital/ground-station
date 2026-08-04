@@ -8,7 +8,7 @@ from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType,
 from loguru import logger
 from pydantic import NameEmail
 
-from app.config.config import settings
+from app.config.env_settings.backend_config import settings
 
 _conf = ConnectionConfig(
     MAIL_USERNAME=settings.email.mail_username,

@@ -5,7 +5,7 @@ from unittest.mock import patch, PropertyMock
 from app.mcc_keycloak.client import KeycloakClient
 from fastapi.testclient import TestClient
 from main import app
-from app.config.config import settings
+from app.config.env_settings.backend_config import settings
 
 MOCK_TOKENS = {
     "access_token": "mock_access_token",

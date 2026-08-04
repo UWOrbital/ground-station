@@ -34,7 +34,7 @@ from app.api.v1.aro.schemas.auth_responses import (
     TokenResponse,
     UserResponse,
 )
-from app.config.config import settings
+from app.config.env_settings.backend_config import settings
 from app.data.models.aro_user_models import AROUsers
 
 # -----------------------------------------------------------------------

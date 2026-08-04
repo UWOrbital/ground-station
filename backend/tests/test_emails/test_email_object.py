@@ -1,5 +1,5 @@
 import pytest
-from app.config.config import settings
+from app.config.env_settings.backend_config import settings
 from pydantic import NameEmail
 from app.utils.email import Email, EmailType, _default_sender
 

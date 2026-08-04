@@ -8,7 +8,7 @@ from sqlalchemy.dialects.postgresql import UUID as DB_UUID
 from sqlalchemy.schema import ForeignKey, ForeignKeyConstraint
 from sqlmodel import Field
 
-from app.config.data_config import (
+from app.config.data_values import (
     COORDINATE_DECIMAL_NUMBER,
     LATITUDE_MAX_DIGIT_NUMBER,
     LONGITUDE_MAX_DIGIT_NUMBER,

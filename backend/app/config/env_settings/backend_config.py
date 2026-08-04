@@ -2,12 +2,12 @@
 
 from dotenv import load_dotenv
 
-from app.config.aro_auth_config import AROAuthConfig
-from app.config.cors_config import CORSConfig
-from app.config.database_config import DatabaseConfig
-from app.config.email_config import EmailConfig
-from app.config.keycloak_config import KeycloakConfig
-from app.config.logger_config import LoggerConfig
+from app.config.env_settings.aro_auth_config import AROAuthConfig
+from app.config.env_settings.cors_config import CORSConfig
+from app.config.env_settings.database_config import DatabaseConfig
+from app.config.env_settings.email_config import EmailConfig
+from app.config.env_settings.keycloak_config import KeycloakConfig
+from app.config.env_settings.logger_config import LoggerConfig
 
 load_dotenv()
 
