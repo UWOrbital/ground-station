@@ -471,7 +471,7 @@ def get_lines_from_api(start_time: float, stop_time: float, step_size: int, targ
         f"JD{str(stop_time)}&CSV_FORMAT=YES&CAL_FORMAT=JD&VEC_TABLE=1"
     )
 
-    response = get(url)
+    response = get(url, timeout=30)
     exit_program_on_error(validate_response(response))
 
     try:

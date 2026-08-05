@@ -4,7 +4,7 @@ services:
       - "host.docker.internal:host-gateway"
     build:
       context: .
-      dockerfile: scripts/dev/Dockerfile.backend
+      dockerfile: backend/Dockerfile.backend
     ports:
       - "8000:8000"
     volumes:
@@ -37,11 +37,11 @@ services:
       - "8080:8080"
     volumes:
       - keycloak_data:/opt/keycloak/data
-      - ./backend/mcc_keycloak/mcc-realm.json:/opt/keycloak/data/import/mcc-realm.json
+      - ./backend/app/mcc_keycloak/mcc-realm.json:/opt/keycloak/data/import/mcc-realm.json
   aro-frontend:
     build:
       context: frontend/aro
-      dockerfile: ../../scripts/dev/Dockerfile.aro
+      dockerfile: Dockerfile.aro
     ports:
       - "5173:5173"
     working_dir: /app
@@ -51,7 +51,7 @@ services:
   mcc-frontend:
     build:
       context: frontend/mcc
-      dockerfile: ../../scripts/dev/Dockerfile.mcc
+      dockerfile: Dockerfile.mcc
     ports:
       - "5174:5174"
     working_dir: /app

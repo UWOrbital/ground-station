@@ -2,7 +2,8 @@ import os
 from logging.config import fileConfig
 
 from alembic import context
-from data.tables import aro_user_tables, main_tables, mcc_user_tables, transactional_tables  # noqa: F401
+from app.data.models import aro_user_models, main_models, mcc_user_models
+from app.data.models import transactional_models  # noqa: F401
 from dotenv import load_dotenv
 from sqlalchemy import engine_from_config, pool
 from sqlmodel import SQLModel

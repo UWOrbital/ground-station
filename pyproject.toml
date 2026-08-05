@@ -12,29 +12,23 @@ dependencies = [
     # web framework and API
     "fastapi[standard]==0.136.3",
     "fastapi-cache2==0.2.2",
-
     # database
     "sqlmodel==0.0.38",
     "alembic==1.18.4",
     "psycopg2-binary==2.9.12",
-
     # settings
     "pydantic-settings==2.14.1",
-
     # security
     "authlib==1.7.2",
     "itsdangerous==2.2.0",
     "python-keycloak==7.1.1",
-
     # hardware/protocol
     "pyserial==3.5",
     "pyham_ax25==1.0.3",
     "pyStuffing==0.0.4",
     "tinyaes==1.1.2",
-
     # terminal UI
     "textual>=8.2.7,<9.0.0",
-
     # utilities
     "requests>=2.32.0",
     "python-dotenv>=1.1.0",
@@ -44,28 +38,27 @@ dependencies = [
     "pyyaml>=6.0.3",
     "pydantic-extra-types>=2.11.0",
     "phonenumbers>=9.0.0",
+    "fastapi-mail>=1.6.5",
 ]
 
 [project.optional-dependencies]
 dev = [
     # testing
     "pytest==9.0.3",
+    "pytest-asyncio>=1.4.0",
     "pytest-cov==7.1.0",
     "testcontainers>=4.14.2",
     "psycopg[binary]>=3.1.0",
     "httpx2>=0.28.0",
     "hypothesis>=6.100.0,<7.0.0",
-
     # static checking
     "mypy==2.1.0",
     "ruff==0.15.15",
-
     # type stubs
     "types-requests>=2.31.0",
     "types-pyserial>=3.5.0",
     "types-python-jose>=3.5.0",
     "types-tqdm>=4.67.0",
-
     # tooling
     "pre-commit==4.6.0",
 ]
@@ -76,10 +69,13 @@ sdist.only-include = ["backend"]
 
 [tool.pytest.ini_options]
 addopts = "-v"
-testpaths = ["backend/python_test"]
+testpaths = ["backend/tests"]
+markers = [
+    "integration: marks tests that depend on external services or large workloads",
+]
 
 [tool.mypy]
-exclude = ["backend/python_test/*", "backend/migrations/*"]
+exclude = ["backend/tests/*", "backend/migrations/*"]
 strict = true
 plugins = "pydantic.mypy"
 
@@ -102,52 +98,3 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = "pyStuffing.*"
 ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = ["interfaces", "interfaces.*"]
-ignore_missing_imports = true
-follow_imports = "skip"
-
-[tool.ruff]
-include = ["pyproject.toml", "backend/*.py"]
-exclude = ["frontend/*", "backend/python_test", "backend/migrations", "interfaces"]
-target-version = "py312"
-line-length = 120
-indent-width = 4
-
-[tool.ruff.lint]
-select = [
-    # pycodestyle
-    "E",
-    # Pyflakes
-    "F",
-    # pyupgrade
-    "UP",
-    # flake8-bugbear
-    "B",
-    # flake8-simplify
-    "SIM",
-    # isort
-    "I",
-    # pep8-naming
-    "N",
-    # flake8-annotations
-    "ANN",
-    # flake8 builtin shadowing
-    "A",
-    # Documentation
-    "D213", "D101", "D102", "D103", "D105"
-]
-fixable = ["ALL"]
-unfixable = []
-
-[tool.ruff.format]
-quote-style = "double"
-indent-style = "space"
-skip-magic-trailing-comma = false
-line-ending = "auto"
-docstring-code-format = false
-docstring-code-line-length = "dynamic"
-
-[tool.ruff.lint.flake8-bugbear]
-extend-immutable-calls = ["fastapi.Depends", "fastapi.Query"]

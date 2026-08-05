@@ -23,7 +23,7 @@ function Images() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen px-4 pt-32">
+    <div className="flex flex-col items-center justify-center min-h-screen px-4">
       <h1 className="text-2xl font-bold mb-6">Latest Satellite Image</h1>
       <img
         src={`data:image/jpeg;base64,${image!.data}`}
