@@ -10,6 +10,7 @@ from app.api.v1.aro.routes.user import aro_user_router
 from app.api.v1.mcc.routes.aro_requests import aro_requests_router
 from app.api.v1.mcc.routes.auth import mcc_auth_router
 from app.api.v1.mcc.routes.commands import commands_router
+from app.api.v1.mcc.routes.images import images_router
 from app.api.v1.mcc.routes.main_commands import main_commands_router
 from app.api.v1.mcc.routes.main_telemetry import main_telemetry_router
 from app.api.v1.mcc.routes.sessions import comms_sessions_router
@@ -42,6 +43,7 @@ def setup_routes(app: FastAPI) -> None:
     app.include_router(mcc_auth_router, prefix=f"{mcc_prefix}/auth")
     app.include_router(mcc_users_router, prefix=f"{mcc_prefix}/users")
     app.include_router(status_router, prefix=f"{mcc_prefix}/status")
+    app.include_router(images_router, prefix=f"{mcc_prefix}/images")
 
 
 def setup_middlewares(app: FastAPI) -> None:

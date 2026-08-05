@@ -15,7 +15,7 @@
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.4",
     "@tailwindcss/vite": "^4.1.13",
-    "@tanstack/react-query": "^5.90.2",
+    "@tanstack/react-query": "^5.101.2",
     "@tanstack/react-table": "^8.21.3",
     "@types/react-router-dom": "^5.3.3",
     "class-variance-authority": "^0.7.1",

@@ -15,14 +15,16 @@ function Nav() {
   const { theme, toggleTheme } = useTheme();
 
   return (
-    <nav className="fixed top-0 left-0 right-0 h-16 px-8 flex items-center justify-between bg-background/80 backdrop-blur-sm border-b border-border z-50">
+    <nav className="fixed top-0 left-0 right-0 h-16 px-8 flex items-center bg-background/80 backdrop-blur-sm border-b border-border z-50">
       {/* Logo */}
-      <Link to="/" className="hover:opacity-80 transition-opacity">
-        <img src={orbital_logo} alt="orbital logo" className="h-10 w-auto" />
-      </Link>
+      <div className="flex-1">
+        <Link to="/" className="hover:opacity-80 transition-opacity">
+          <img src={orbital_logo} alt="orbital logo" className="h-10 w-auto" />
+        </Link>
+      </div>
 
       {/* Navigation Links */}
-      <div className="flex space-x-7">
+      <div className="flex space-x-7 justify-center">
         {NAVIGATION_LINKS.map((link) => (
           <Link key={link.url} to={link.url} className="hover:underline transition-colors">
             {link.text}
@@ -30,7 +32,7 @@ function Nav() {
         ))}
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex-1 flex items-center gap-4 justify-end">
         {/* Satellite Status Indicator - Only shown when logged in */}
         {isAuthenticated && (
           <SatelliteStatusIndicator
