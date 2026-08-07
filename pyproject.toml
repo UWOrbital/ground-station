@@ -34,7 +34,6 @@ dependencies = [
     "python-dotenv>=1.1.0",
     "loguru>=0.7.3",
     "tqdm>=4.67.0",
-    "skyfield>=1.54",
     "pyyaml>=6.0.3",
     "pydantic-extra-types>=2.11.0",
     "phonenumbers>=9.0.0",
@@ -80,7 +79,7 @@ strict = true
 plugins = "pydantic.mypy"
 
 [[tool.mypy.overrides]]
-module = ["skyfield.*", "jwcrypto.*"]
+module = ["jwcrypto.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
