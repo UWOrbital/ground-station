@@ -130,22 +130,26 @@ class AROUserLogin(BaseSQLModel, table=True):
 
 class AROUserAuthToken(BaseSQLModel, table=True):
     """
-    Stores all information for User Auth Tokens
+    Stores all information for User Auth Refresh Tokens
 
     :param id: a unique identifier for the user auth token
     :param user_id: id created by AROUser
-    :param token: UUID token
+    :param token_hash: hashed UUID token
+    :param family_id: shared id for all tokens descending from one login
     :param created_on: datetime object which tracks the date and time at which user auth token was created
     :param expiry: datetime object which represents the time at which the token expires
-    :param type_: the type of the token
+    :param rotated_at: when the refresh token was rotated
+    :param revoked_at: when a compromised refresh token was revoked
     """
 
     id: UUID = Field(default_factory=uuid4, primary_key=True, index=True)
-    user_id: UUID = Column(DB_UUID, ForeignKey(AROUsers.id))  # type: ignore
-    token: UUID = Field(default_factory=uuid4)
+    user_id: UUID = Column(DB_UUID, ForeignKey(AROUsers.id))
+    family_id: UUID = Field(index=True, nullable=False)
+    token_hash: str = Field(index=True, unique=True)
     created_on: datetime = Field(default_factory=datetime.now)
     expiry: datetime = Field()
-    type_: AROAuthToken = Field(sa_column=Column("type", Enum(AROAuthToken, name="auth_type"), nullable=False))
+    rotated_at: datetime | None = Field(default=None)
+    revoked_at: datetime | None = Field(default=None)
 
     __tablename__ = ARO_AUTH_TOKEN
     __table_args__ = {"schema": ARO_USER_SCHEMA_NAME}

@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from loguru import logger
 from starlette.middleware.sessions import SessionMiddleware
 
-from app.api.v1.aro.auth.oauth import router as aro_auth_router
+from app.api.v1.aro.auth.router import router as aro_auth_router
 from app.api.v1.aro.routes.picture_requests import picture_requests_router
 from app.api.v1.aro.routes.user import aro_user_router
 from app.api.v1.mcc.routes.aro_requests import aro_requests_router

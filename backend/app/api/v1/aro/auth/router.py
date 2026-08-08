@@ -34,7 +34,7 @@ router = APIRouter(prefix="/auth", tags=["authentication"])
 
 # ------------------------------------------------------------
 # Email / Password Endpoints
-# --------------------------------------------------------------
+# ------------------------------------------------------------
 
 
 @router.post("/register", response_model=TokenResponse)
