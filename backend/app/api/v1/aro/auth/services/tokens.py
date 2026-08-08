@@ -1,16 +1,9 @@
 from datetime import datetime, timedelta
 from uuid import UUID, uuid4
 
-from app.api.v1.aro.schemas.auth_requests import GoogleRequest
-from app.data.data_wrappers.wrappers import (
-    AROUserAuthTokenWrapper,
-    AROUsersWrapper,
-)
+from app.data.data_wrappers.wrappers import AROUserAuthTokenWrapper
 from app.data.enums.aro_auth_token import AROAuthToken
-from app.data.models.aro_user_models import (
-    AROUserAuthToken,
-    AROUsers,
-)
+from app.data.models.aro_user_models import AROUserAuthToken
 
 
 def create_auth_token(user_id: UUID, auth_type: AROAuthToken) -> AROUserAuthToken:
@@ -37,20 +30,3 @@ def create_auth_token(user_id: UUID, auth_type: AROAuthToken) -> AROUserAuthToke
     )
 
     return auth_token
-
-
-def create_oauth_user(user_request: GoogleRequest) -> AROUsers:
-    """Create a new user from Google OAuth data."""
-    users = AROUsersWrapper()
-    user = users.create(
-        {
-            "google_id": user_request.google_id,
-            "email": user_request.email,
-            "first_name": user_request.first_name,
-            "last_name": user_request.last_name,
-            "call_sign": None,
-            "is_callsign_verified": False,
-        }
-    )
-
-    return user

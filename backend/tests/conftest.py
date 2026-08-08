@@ -2,8 +2,6 @@ import os
 import subprocess
 from datetime import UTC, datetime, timedelta
 
-os.environ.setdefault("ARO_AUTH_GOOGLE_CLIENT_ID", "dummy")
-os.environ.setdefault("ARO_AUTH_GOOGLE_CLIENT_SECRET", "dummy")
 os.environ.setdefault("ARO_AUTH_JWT_SECRET_KEY", "dummy")
 
 os.environ.setdefault("GS_DATABASE_USER", "testuser")

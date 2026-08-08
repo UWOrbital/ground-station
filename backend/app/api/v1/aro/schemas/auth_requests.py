@@ -115,49 +115,6 @@ class UserRequest(BaseModel):
         return data
 
 
-class GoogleRequest(BaseModel):
-    """
-    GoogleRequest
-
-    Data extracted from Google's OAuth userinfo token.
-
-    :param google_id str  — Google's 'sub' claim, unique per Google account
-    :param email EmailStr
-    :param first_name str
-    :param last_name str | None
-    :param phone_number str | None
-    """
-
-    google_id: str
-    email: EmailStr
-    first_name: str
-    last_name: str | None = None
-    phone_number: str | None = None
-
-    @model_validator(mode="before")
-    @classmethod
-    def sanitize_inputs(cls, data: dict[str, Any]) -> dict[str, Any]:
-        """Strip whitespace from all string fields and normalize email to lowercase."""
-        if isinstance(data.get("google_id"), str):
-            data["google_id"] = data["google_id"].strip()
-        if isinstance(data.get("email"), str):
-            data["email"] = data["email"].strip().lower()
-        if isinstance(data.get("first_name"), str):
-            data["first_name"] = data["first_name"].strip()
-        if isinstance(data.get("last_name"), str):
-            data["last_name"] = data["last_name"].strip()
-        if isinstance(data.get("phone_number"), str):
-            data["phone_number"] = data["phone_number"].strip()
-        return data
-
-    @model_validator(mode="after")
-    def validate_google_id(self) -> Self:
-        """Ensure google_id is not empty after sanitization."""
-        if not self.google_id:
-            raise ValueError("google_id cannot be empty.")
-        return self
-
-
 class CallsignRequest(BaseModel):
     """
     CallsignRequest

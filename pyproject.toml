@@ -74,7 +74,7 @@ markers = [
 ]
 
 [tool.mypy]
-exclude = ["backend/tests/*", "backend/migrations/*"]
+exclude = ["backend/tests/*", "backend/migrations/*", "archive/*"]
 strict = true
 plugins = "pydantic.mypy"
 

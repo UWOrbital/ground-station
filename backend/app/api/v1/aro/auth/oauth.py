@@ -1,23 +1,14 @@
 """
 api.v1.aro.auth.oauth
 
-Supports two authentication methods.
-
-1. Google OAuth
-2. Email & Password
+Email & password authentication.
 
 After initial authentication, the user will need to additionally verify with their callsign.
 """
 
-from typing import cast
-
-from authlib.integrations.starlette_client import OAuth, OAuthError
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.responses import RedirectResponse
-from starlette.requests import Request
+from fastapi import APIRouter, Depends
 
 from app.api.v1.aro.auth.dependencies import get_current_user
-from app.api.v1.aro.auth.google.google import google_auth
 from app.api.v1.aro.auth.manual.register import (
     login_user,
     logout_user,
@@ -26,7 +17,6 @@ from app.api.v1.aro.auth.manual.register import (
 from app.api.v1.aro.auth.services.callsign_2fa import verify_user_callsign
 from app.api.v1.aro.schemas.auth_requests import (
     CallsignRequest,
-    GoogleRequest,
     LoginRequest,
     RegisterRequest,
 )
@@ -34,98 +24,17 @@ from app.api.v1.aro.schemas.auth_responses import (
     TokenResponse,
     UserResponse,
 )
-from app.config.env_settings.backend_config import settings
 from app.data.models.aro_user_models import AROUsers
 
-# -----------------------------------------------------------------------
+# ------------------------------------------------------------
 # CONFIG
-# -----------------------------------------------------------------------
+# ------------------------------------------------------------
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
-# Auth Setup
-oauth = OAuth()
-oauth.register(
-    name="google",
-    client_id=settings.auth.google_client_id,
-    client_secret=settings.auth.google_client_secret,
-    server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
-    client_kwargs={"scope": "openid email profile"},
-)
-
-# -----------------------------------------------------------------------
-# Google OAuth Endpoints
-# -----------------------------------------------------------------------
-
-
-@router.get("/google/login")
-async def google_login(request: Request) -> RedirectResponse:
-    """
-    google_login
-
-    Initiate Google OAuth flow.
-    Redirect the user back to Google's consent screen.
-
-    :param request
-    :type request: Request
-    :return: login redirect
-    :rtype: RedirectResponse
-    """
-    # The callback URL must match what's configured on Google Cloud Console
-    redirect_uri = request.url_for("google_callback")
-    return cast(RedirectResponse, await oauth.google.authorize_redirect(request, redirect_uri))
-
-
-@router.get("/google/callback")
-async def google_callback(request: Request) -> TokenResponse:
-    """
-    google_callback
-
-    Handle Google OAuth callback.
-
-    Creates a new user if first login, otherwise finds existing user.
-    Returns an auth token for the session.
-
-    :param request
-    :type request: Request
-    :return: auth token
-    :rtype TokenResponse
-    """
-    try:
-        token = await oauth.google.authorize_access_token(request)
-    except OAuthError as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"OAuth authentication failed: {e.error}",
-        ) from e
-
-    user_info = token.get("userinfo")
-    if not user_info:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Could not retrieve user data from Google.",
-        )
-
-    google_request = GoogleRequest(
-        google_id=user_info.get("sub"),
-        email=user_info.get("email"),
-        first_name=user_info.get("given_name", ""),
-        last_name=user_info.get("family_name"),
-        phone_number=user_info.get("phone_number"),
-    )
-
-    auth_token, user = google_auth(google_request)
-
-    return TokenResponse(
-        token=str(auth_token.token),
-        user_id=user.id,
-        expires_at=auth_token.expiry,
-    )
-
-
-# -----------------------------------------------------------------------
+# ------------------------------------------------------------
 # Email / Password Endpoints
-# -----------------------------------------------------------------------
+# --------------------------------------------------------------
 
 
 @router.post("/register", response_model=TokenResponse)
