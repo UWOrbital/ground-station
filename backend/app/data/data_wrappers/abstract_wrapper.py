@@ -28,6 +28,16 @@ class AbstractWrapper[T, PK](ABC):
         with get_db_session() as session:
             return list(session.exec(select(self.model)).all())
 
+    def get_first_by(self, **kwargs: object) -> T | None:
+        """
+        Retrieve the first row matching the given field(s).
+
+        :param kwargs: fields to search by
+        :return: the first matching instance, or None
+        """
+        with get_db_session() as session:
+            return session.exec(select(self.model).filter_by(**kwargs)).first()
+
     def get_all_by(self, **kwargs: object) -> list[T]:
         """
         Get all data wrapper for the unspecified model by fields

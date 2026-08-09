@@ -3,7 +3,6 @@ from typing import Final
 from uuid import UUID, uuid4
 
 from pydantic import EmailStr
-from sqlalchemy import Enum
 from sqlalchemy.dialects.postgresql import UUID as DB_UUID
 from sqlalchemy.schema import Column, ForeignKey
 from sqlmodel import Field
@@ -14,7 +13,6 @@ from app.config.data_values import (
     DEFAULT_MAX_LENGTH,
     EMAIL_MIN_LENGTH,
 )
-from app.data.enums.aro_auth_token import AROAuthToken
 from app.data.models.base_model import BaseSQLModel
 
 # Schema information
@@ -143,7 +141,7 @@ class AROUserAuthToken(BaseSQLModel, table=True):
     """
 
     id: UUID = Field(default_factory=uuid4, primary_key=True, index=True)
-    user_id: UUID = Column(DB_UUID, ForeignKey(AROUsers.id))
+    user_id: UUID = Column(DB_UUID, ForeignKey(AROUsers.id))  # type: ignore
     family_id: UUID = Field(index=True, nullable=False)
     token_hash: str = Field(index=True, unique=True)
     created_on: datetime = Field(default_factory=datetime.now)

@@ -49,7 +49,7 @@ def setup_routes(app: FastAPI) -> None:
 def setup_middlewares(app: FastAPI) -> None:
     """Adds the middlewares to the app"""
     add_cors_middleware(app)  # Cors middleware should be added first
-    app.add_middleware(SessionMiddleware, secret_key=settings.auth.jwt_secret_key)
+    app.add_middleware(SessionMiddleware, secret_key=settings.auth.session_secret)
     app.add_middleware(
         LoggerMiddleware,
         excluded_endpoints=settings.logger.excluded_endpoints,

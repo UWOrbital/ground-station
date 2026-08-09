@@ -2,7 +2,8 @@ import os
 import subprocess
 from datetime import UTC, datetime, timedelta
 
-os.environ.setdefault("ARO_AUTH_JWT_SECRET_KEY", "dummy")
+os.environ.setdefault("ARO_AUTH_JWT_SECRET", "dummy")
+os.environ.setdefault("ARO_AUTH_SESSION_SECRET", "dummy")
 
 os.environ.setdefault("GS_DATABASE_USER", "testuser")
 os.environ.setdefault("GS_DATABASE_PASSWORD", "testpassword")

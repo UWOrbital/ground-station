@@ -2,6 +2,7 @@ from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from pydantic import EmailStr
+from sqlalchemy import update
 from sqlmodel import col, select
 
 from app.api.v1.mcc.schemas.responses import TelemetryEntry, TelemetrySubrow
@@ -55,19 +56,48 @@ class AROUserAuthTokenWrapper(AbstractWrapper[AROUserAuthToken, UUID]):
 
     model = AROUserAuthToken
 
-    def get_token_by_token(self, token: str | UUID) -> AROUserAuthToken | None:
+    def claim_rotation(self, pk: UUID) -> bool:
         """
-        :token str | UUID
-        returns AROUserAuthToken | None
-        """
-        try:
-            token_uuid = token if isinstance(token, UUID) else UUID(str(token))
-        except ValueError:
-            return None
-        with get_db_session() as session:
-            return session.exec(select(AROUserAuthToken).where(AROUserAuthToken.token == token_uuid)).first()
+        Atomically mark a refresh-token row as rotated, iff it hasn't been already.
 
-    def get_token_by_user_id(self, user_id: UUID) -> AROUserAuthToken | None:
+        Single conditional UPDATE rather than a read-then-write, so two
+        concurrent callers can't both believe they won the rotation.
+
+        :param pk: id of the AROUserAuthToken row being rotated.
+        :return: True if this call was the one that claimed the rotation,
+            False if the row was already rotated (or doesn't exist).
+        """
+        now = datetime.now(UTC)
+        token_table = AROUserAuthToken
+
+        with get_db_session() as session:
+            r = session.exec(
+                update(AROUserAuthToken)
+                .where(col(token_table.id) == pk)
+                .where(col(token_table.rotated_at).is_(None))
+                .values(rotated_at=now)
+            )
+            session.commit()
+            return r.rowcount == 1
+
+    def revoke_by_family_id(self, family_id: UUID) -> int:
+        """
+        Atomically revoke every refresh-token row in a family, in one statement.
+
+        :param family_id: the family to revoke.
+        :return: number of rows revoked.
+        """
+        now = datetime.now(UTC)
+        token_table = AROUserAuthToken
+
+        with get_db_session() as session:
+            r = session.exec(
+                update(AROUserAuthToken).where(col(token_table.family_id) == family_id).values(revoked_at=now)
+            )
+            session.commit()
+            return r.rowcount
+
+    def get_row_by_user_id(self, user_id: UUID) -> AROUserAuthToken | None:
         """
         :user_id UUID
         returns AROUserAuthToken | None
@@ -87,7 +117,7 @@ class AROUserCallsignWrapper(AbstractWrapper[AROUserCallsigns, UUID]):
 
     model = AROUserCallsigns
 
-    def get_callsign(self, user_cs: str) -> AROUserCallsigns | None:
+    def get_row_by_callsign(self, user_cs: str) -> AROUserCallsigns | None:
         """
         :user_cs str
         return AROUserCallsigns | None
@@ -103,7 +133,7 @@ class AROUserLoginWrapper(AbstractWrapper[AROUserLogin, UUID]):
 
     model = AROUserLogin
 
-    def get_login_by_email(self, email: EmailStr) -> AROUserLogin | None:
+    def get_row_by_email(self, email: EmailStr) -> AROUserLogin | None:
         """
         Find and return a user by their email address.
 
