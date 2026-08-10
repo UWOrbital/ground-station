@@ -188,3 +188,12 @@ async def get_current_user(
         ) from None
 
     return user
+
+
+async def require_superuser(user: AROUsers = Depends(get_current_user)) -> AROUsers:
+    if not user.is_superuser:
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN,
+            detail={"message": "Superuser permissions are required.", "code": "require_superuser"}
+        )
+    return user

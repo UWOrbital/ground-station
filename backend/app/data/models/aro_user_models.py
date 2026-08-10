@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Final
 from uuid import UUID, uuid4
 
@@ -33,6 +33,7 @@ class AROUsers(BaseSQLModel, table=True):
     :type id: UUID
     :param call_sign: ARO User's call sign that we will use to communicate with them
     :type call_sign: str
+    :param is_active: bool
     :param is_callsign_verified: ARO User's callsign verification status
     :type is_callsign_verified: bool
     :param email: Valid email
@@ -52,18 +53,14 @@ class AROUsers(BaseSQLModel, table=True):
         default=None,
         nullable=True,
     )
-
-    # Critical 2FA variable
-    google_id: str | None = Field(default=None, unique=True, index=True)
+    is_active: bool = Field(default=True)
+    is_superuser: bool = Field(default=False)
     is_callsign_verified: bool = Field(default=False)
-
-    # We are currently verifying with email + pwd
     email: EmailStr = Field(min_length=EMAIL_MIN_LENGTH, max_length=DEFAULT_MAX_LENGTH, unique=True)
     first_name: str = Field(max_length=DEFAULT_MAX_LENGTH)
     last_name: str | None = Field(max_length=DEFAULT_MAX_LENGTH, nullable=True, default=None)
     phone_number: str | None = Field(default=None)
 
-    # table information
     __tablename__ = ARO_USER_TABLE_NAME
     __table_args__ = {"schema": ARO_USER_SCHEMA_NAME}
 
@@ -116,11 +113,11 @@ class AROUserLogin(BaseSQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True, index=True)  # unique id for logins
     email: EmailStr = Field(min_length=EMAIL_MIN_LENGTH, max_length=DEFAULT_MAX_LENGTH, unique=True)
     password: str = Field(max_length=128)
-    password_salt: str = Field(max_length=32)
-    created_on: datetime = Field(default_factory=datetime.now)
-    hashing_algorithm_name: str = Field(min_length=1, max_length=20)
-    user_id: UUID = Column(DB_UUID, ForeignKey(AROUsers.id))  # type: ignore
-    email_verification_token: str = Field(min_length=1, max_length=200)
+    password_salt: str = Field(max_length=32, nullable=True)  # TODO: remove when feasible
+    created_on: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    hashing_algorithm_name: str = Field(min_length=1, max_length=20, nullable=True)  # TODO: remove when feasible
+    user_id: UUID = Column(DB_UUID, ForeignKey(AROUsers.id), unique=True)  # type: ignore
+    email_verification_token: str = Field(min_length=1, max_length=200, nullable=True)  # TODO: remove when feasible
 
     __tablename__ = ARO_USER_LOGIN
     __table_args__ = {"schema": ARO_USER_SCHEMA_NAME}
@@ -144,7 +141,7 @@ class AROUserAuthToken(BaseSQLModel, table=True):
     user_id: UUID = Column(DB_UUID, ForeignKey(AROUsers.id))  # type: ignore
     family_id: UUID = Field(index=True, nullable=False)
     token_hash: str = Field(index=True, unique=True)
-    created_on: datetime = Field(default_factory=datetime.now)
+    created_on: datetime = Field(default_factory=lambda: datetime.now(UTC))
     expiry: datetime = Field()
     rotated_at: datetime | None = Field(default=None)
     revoked_at: datetime | None = Field(default=None)
