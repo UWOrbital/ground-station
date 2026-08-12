@@ -1,9 +1,9 @@
 from datetime import datetime
 from typing import Annotated
 
+from app.api.v1.mcc.schemas.responses import CommsSessionsResponse
 from fastapi import APIRouter, Query
 
-from app.api.v1.mcc.schemas.responses import CommsSessionsResponse
 from app.data.data_wrappers.wrappers import CommsSessionWrapper
 from app.mcc_keycloak.client import keycloak
 

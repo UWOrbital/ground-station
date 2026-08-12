@@ -1,8 +1,8 @@
 from datetime import datetime
 
+from app.api.v1.mcc.schemas.responses import SatelliteStatusResponse, TelemetryDataResponse
 from fastapi import APIRouter
 
-from app.api.v1.mcc.schemas.responses import SatelliteStatusResponse, TelemetryDataResponse
 from app.data.data_wrappers.wrappers import CommsSessionWrapper, TelemetryWrapper
 from app.data.enums.transactional import SessionStatus
 

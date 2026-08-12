@@ -1,14 +1,14 @@
 from os import urandom
 from uuid import uuid4
 
-from fastapi import HTTPException, status
-
 from app.api.v1.aro.auth.manual.password import (
     hash_password,
     verify_password,
 )
 from app.api.v1.aro.auth.services.tokens import create_auth_token
 from app.api.v1.aro.schemas.auth_requests import LoginRequest, RegisterRequest
+from fastapi import HTTPException, status
+
 from app.data.data_wrappers.wrappers import (
     AROUserAuthTokenWrapper,
     AROUserLoginWrapper,

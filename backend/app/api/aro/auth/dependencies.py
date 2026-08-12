@@ -1,8 +1,8 @@
 from datetime import datetime
 
+from app.api.v1.aro.schemas.auth_responses import UserResponse
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.api.v1.aro.schemas.auth_responses import UserResponse
 from app.data.data_wrappers.wrappers import (
     AROUserAuthTokenWrapper,
     AROUsersWrapper,

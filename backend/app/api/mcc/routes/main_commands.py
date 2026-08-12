@@ -1,7 +1,7 @@
+from app.api.v1.mcc.schemas.responses import MainCommandResponse, MainCommandsResponse
 from fastapi import APIRouter
 from fastapi.exceptions import HTTPException
 
-from app.api.v1.mcc.schemas.responses import MainCommandResponse, MainCommandsResponse
 from app.data.data_wrappers.wrappers import MainCommandWrapper
 from app.mcc_keycloak.client import keycloak
 

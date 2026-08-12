@@ -1,6 +1,6 @@
+from app.api.v1.aro.schemas.auth_requests import CallsignRequest
 from fastapi import HTTPException, status
 
-from app.api.v1.aro.schemas.auth_requests import CallsignRequest
 from app.data.data_wrappers.wrappers import AROUserCallsignWrapper, AROUsersWrapper
 from app.data.models.aro_user_models import AROUsers
 

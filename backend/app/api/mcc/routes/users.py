@@ -1,8 +1,8 @@
+from app.api.v1.mcc.schemas.requests import UpdateUserRequest
+from app.api.v1.mcc.schemas.responses import UserInformationResponse
 from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
 
-from app.api.v1.mcc.schemas.requests import UpdateUserRequest
-from app.api.v1.mcc.schemas.responses import UserInformationResponse
 from app.data.data_wrappers.wrappers import MCCUsersWrapper
 from app.data.models.mcc_user_models import MCCUsers
 from app.mcc_keycloak.client import keycloak

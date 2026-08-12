@@ -1,6 +1,6 @@
+from app.api.v1.mcc.schemas.responses import ImageResponse
 from fastapi import APIRouter
 
-from app.api.v1.mcc.schemas.responses import ImageResponse
 from app.data.data_wrappers.wrappers import ImageWrapper
 
 images_router = APIRouter(tags=["MCC", "Images"])

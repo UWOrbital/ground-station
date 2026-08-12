@@ -1,7 +1,7 @@
+from app.api.v1.mcc.schemas.responses import MainTelemetriesResponse, MainTelemetryResponse
 from fastapi import APIRouter
 from fastapi.exceptions import HTTPException
 
-from app.api.v1.mcc.schemas.responses import MainTelemetriesResponse, MainTelemetryResponse
 from app.data.data_wrappers.wrappers import MainTelemetryWrapper
 from app.mcc_keycloak.client import keycloak
 
