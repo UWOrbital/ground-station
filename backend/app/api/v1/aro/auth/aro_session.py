@@ -191,9 +191,15 @@ async def get_current_user(
 
 
 async def require_superuser(user: AROUsers = Depends(get_current_user)) -> AROUsers:
+    """
+    Asserts the user in question is a superuser.
+
+    :param user: AROUsers
+    :returns: AROUsers if user is a superuser
+    """
     if not user.is_superuser:
         raise HTTPException(
             status.HTTP_403_FORBIDDEN,
-            detail={"message": "Superuser permissions are required.", "code": "require_superuser"}
+            detail={"message": "Superuser permissions are required.", "code": "require_superuser"},
         )
     return user

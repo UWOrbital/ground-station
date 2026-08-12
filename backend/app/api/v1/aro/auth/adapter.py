@@ -1,7 +1,7 @@
 """
 adapter.py
 
-The bridge between fastapi-users' BaseUserDatabase protocol and the separate AROUsers / AROUserLogin tables used by this app.
+The bridge between fastapi-users' BaseUserDatabase protocol and the separate AROUsers / AROUserLogin tables.
 """
 
 from typing import Any
@@ -15,10 +15,12 @@ from app.data.models.aro_user_models import AROUserLogin, AROUsers
 login_wrapper = AROUserLoginWrapper()
 user_wrapper = AROUsersWrapper()
 
+
 class AROUserRecord:
     """
     Merges one AROUsers row and one AROUserLogin row into a single object shaped like fastapi_users.models.UserProtocol.
     """
+
     def __init__(self, user: AROUsers, login: AROUserLogin) -> None:
         self._user = user
         self._login = login
@@ -84,9 +86,9 @@ class AROUserDatabaseAdapter(BaseUserDatabase[AROUserRecord, UUID]):
         user = user_wrapper.create(create_dict)
 
         login_data = {
-            "user_id" : user.id,
-            "email" : email,
-            "password" : hashed_password,
+            "user_id": user.id,
+            "email": email,
+            "password": hashed_password,
         }
         login = login_wrapper.create(login_data)
 
