@@ -1,5 +1,12 @@
 name: Keycloak Startup
-on: [push, pull_request]
+
+on:
+  push:
+    paths:
+      - "backend/app/mcc_keycloak/mcc-realm.json"
+  pull_request:
+    paths:
+      - "backend/app/mcc_keycloak/mcc-realm.json"
 
 jobs:
   keycloak-test:
