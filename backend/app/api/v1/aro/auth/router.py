@@ -1,122 +1,135 @@
 """
-api.v1.aro.auth.oauth
+router.py
 
 Email & password authentication.
 
-After initial authentication, the user will need to additionally verify with their callsign.
+After initial authentication, the user can authorize with their callsign at signup, or later in the ARO user dashboard.
 """
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
+from fastapi.security import OAuth2PasswordRequestForm
+from fastapi_users.router import get_register_router
 
-from app.api.v1.aro.auth.dependencies import get_current_user
-from app.api.v1.aro.auth.manual.register import (
-    login_user,
-    logout_user,
-    register_user,
+from app.api.v1.aro.auth.aro_session import (
+    create_access_token,
+    get_user_by_token,
+    issue_refresh_token,
+    rotate_refresh_token,
 )
+from app.api.v1.aro.auth.manager import AROUserManager, get_user_manager
 from app.api.v1.aro.auth.services.callsign_2fa import verify_user_callsign
-from app.api.v1.aro.schemas.auth_requests import (
-    CallsignRequest,
-    LoginRequest,
-    RegisterRequest,
-)
-from app.api.v1.aro.schemas.auth_responses import (
-    TokenResponse,
-    UserResponse,
-)
+from app.api.v1.aro.schemas.auth.requests import CallsignRequest, UserCreate
+from app.api.v1.aro.schemas.auth.responses import AccessTokenResponse, UserRead
 from app.data.models.aro_user_models import AROUsers
-
-# ------------------------------------------------------------
-# CONFIG
-# ------------------------------------------------------------
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
-# ------------------------------------------------------------
-# Email / Password Endpoints
-# ------------------------------------------------------------
+# --- Authentication Endpoints --------------------------------------------------
+
+# POST /api/v1/aro/auth/register
+router.include_router(get_register_router(get_user_manager, UserRead, UserCreate))
 
 
-@router.post("/register", response_model=TokenResponse)
-async def register(request: RegisterRequest) -> TokenResponse:
+@router.post("/login", response_model=AccessTokenResponse)
+async def login(
+    response: Response,
+    request: OAuth2PasswordRequestForm = Depends(),
+    *,
+    user_manager: AROUserManager = Depends(get_user_manager),
+) -> AccessTokenResponse:
     """
-    register
-
-    Register a new user with email and password.
-    Creates AROUsers and AROUserLogin records.
-    Returns an auth token for immediate login.
-
-    :param request
-    :type RegisterRequest
-    :returns: auth token
-    :rtype TokenResponse
-    """
-    auth_token, user = register_user(request)
-
-    return TokenResponse(
-        token=str(auth_token.token),
-        user_id=user.id,
-        expires_at=auth_token.expiry,
-    )
-
-
-@router.post("/login", response_model=TokenResponse)
-async def login(request: LoginRequest) -> TokenResponse:
-    """
-    login
+    POST /api/v1/aro/auth/login
 
     Validates credentials and returns an auth token.
-    If unsuccessful, gives appropriate errors.
 
-    :param request
-    :type LoginRequest
-    :return: auth token
-    :rtype TokenResponse
+    :param response: Response
+    :param request: OAuth2PasswordRequestForm: depends on internal form fields
+    :returns: AccessTokenResponse
     """
+    user = await user_manager.authenticate(credentials=request)
+    if user is None or not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"message": "Invalid credentials.", "code": "invalid_credentials"},
+        )
 
-    auth_token, user = login_user(request)
+    access_token, expiry = create_access_token(user._user)
+    raw_refresh_token = issue_refresh_token(user.id)
 
-    return TokenResponse(
-        token=str(auth_token.token),
-        user_id=user.id,
-        expires_at=auth_token.expiry,
+    response.set_cookie("refresh_token", raw_refresh_token, httponly=True, secure=True, samesite="lax")
+
+    return AccessTokenResponse(access_token=access_token, token_type="bearer", expires_at=expiry)
+
+
+@router.post("/rotate_tokens", response_model=AccessTokenResponse)
+async def rotate_tokens(response: Response, refresh_token: str | None = Cookie(default=None)) -> AccessTokenResponse:
+    """
+    POST /api/v1/aro/auth/rotate_tokens
+
+    Rotates the refresh token and issues a new access token.
+
+    :param response: Response
+    :param refresh_token: str | None: refresh token extracted from the HTTP cookie
+    :returns: AccessTokenResponse
+    """
+    if refresh_token is None:
+        raise HTTPException(
+            status.HTTP_401_UNAUTHORIZED,
+            detail={"message": "Not authenticated.", "code": "missing_refresh_token"},
+        )
+
+    new_raw_refresh, user = rotate_refresh_token(refresh_token)
+    access_token, expiry = create_access_token(user)
+
+    response.set_cookie(
+        "refresh_token",
+        new_raw_refresh,
+        httponly=True,
+        secure=True,
+        samesite="lax",
     )
 
+    return AccessTokenResponse(access_token=access_token, token_type="bearer", expires_at=expiry)
 
-@router.post("/logout/{token}")
-async def logout(token: str) -> dict[str, str]:
+
+@router.post("/logout")
+async def logout(response: Response) -> dict[str, str]:
     """
-    logout
+    POST /api/v1/aro/auth/logout
 
-    Invalidate an auth token (logout).
-    Deletes the token from the database.
+    Invalidate a refresh token (logout).
 
-    :param token
-    :type str
-    :return: logout message
-    :rtype dict[str,str]
+    :param response: Response
+    :returns: dict[str, str]: Logout Message
     """
-    logout_user(token)
-
+    response.delete_cookie(key="refresh_token")
     return {"message": "Logged out successfully."}
 
 
-@router.post("/callsign_callback", response_model=UserResponse)
-async def verify_callsign(request: CallsignRequest, user: AROUsers = Depends(get_current_user)) -> UserResponse:
+# --- Utility Endpoints ---------------------------------------------------------
+
+
+@router.get("/get_current_user", response_model=UserRead)
+async def get_current_user(user: AROUsers = Depends(get_user_by_token)) -> AROUsers:
     """
-    verify_callsign
+    GET /api/v1/aro/auth/get_current_user
 
-    The final step in authentication.
-    Verifies a user's callsign and grants them admin access.
+    Retrive the current user by access token.
 
-    :param request
-    :type CallsignRequest
-    :param user
-    :type AROUsers
-    :return: aro user
-    :rtype UserResponse
+    :param user: AROUsers
+    :returns: AROUsers
     """
-    if not user.is_callsign_verified:
-        user = verify_user_callsign(request, user=user)
+    return user
 
-    return UserResponse(data=user)
+
+@router.post("/callsign_callback", response_model=UserRead)
+async def callsign_callback(request: CallsignRequest, user: AROUsers = Depends(get_user_by_token)) -> AROUsers:
+    """
+    POST /api/v1/aro/auth/callsign_callback
+
+    Validates a user's callsign against the AROUserCallsigns table.
+
+    :param user: AROUsers
+    :returns: AROUsers
+    """
+    return verify_user_callsign(request, user)

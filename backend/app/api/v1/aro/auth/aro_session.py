@@ -37,19 +37,20 @@ def _hash_refresh_token(raw_token: str) -> str:
     return hashlib.sha256(raw_token.encode()).hexdigest()
 
 
-def create_access_token(user: AROUsers) -> str:
+def create_access_token(user: AROUsers) -> tuple[str, datetime]:
     """
     Mint a short-lived JWT carrying just enough to identify the user.
 
     :param user: the authenticated user to encode a token for.
     :return: an encoded JWT access token.
     """
+    expiry = datetime.now(UTC) + ACCESS_TOKEN_LIFETIME
     payload = {
         "sub": str(user.id),
-        "exp": datetime.now(UTC) + ACCESS_TOKEN_LIFETIME,
+        "exp": expiry,
     }
     encoded_jwt = jwt.encode(payload, settings.auth.jwt_secret, algorithm="HS256")
-    return encoded_jwt
+    return encoded_jwt, expiry
 
 
 def issue_refresh_token(user_id: UUID, family_id: UUID | None = None) -> str:
@@ -112,14 +113,8 @@ def rotate_refresh_token(raw_token: str) -> tuple[str, AROUsers]:
             detail={"message": "Session expired.", "code": "refresh_token_invalid"},
         )
 
-    # New refresh token is atomically "claimed" and issued
     if not token_wrapper.claim_rotation(existing.id):
-        # Lost the race from the note above: something else rotated this
-        # exact row between our read and this claim. Nothing is revoked
-        # here — this is not the reuse-detected branch — this request just
-        # fails closed with a 401. Known tradeoff, not a bug: two genuinely
-        # legitimate concurrent refreshes (two tabs, a retry) can have the
-        # loser spuriously rejected even though the winner succeeded.
+        # something else rotated this row, so close with 401
         raise HTTPException(
             status.HTTP_401_UNAUTHORIZED,
             detail={"message": "Session invalid.", "code": "refresh_token_invalid"},
@@ -141,7 +136,7 @@ def revoke_family(family_id: UUID) -> int:
     return AROUserAuthTokenWrapper().revoke_by_family_id(family_id)
 
 
-async def get_current_user(
+async def get_user_by_token(
     credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme),
 ) -> AROUsers:
     """
@@ -190,7 +185,7 @@ async def get_current_user(
     return user
 
 
-async def require_superuser(user: AROUsers = Depends(get_current_user)) -> AROUsers:
+async def require_superuser(user: AROUsers = Depends(get_user_by_token)) -> AROUsers:
     """
     Asserts the user in question is a superuser.
 

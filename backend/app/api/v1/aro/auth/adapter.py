@@ -33,6 +33,7 @@ class AROUserRecord:
 
         self.is_superuser: bool = user.is_superuser
         self.is_verified: bool = False
+        self.is_callsign_verified: bool = user.is_callsign_verified
 
 
 class AROUserDatabaseAdapter(BaseUserDatabase[AROUserRecord, UUID]):
