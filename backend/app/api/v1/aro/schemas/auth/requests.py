@@ -1,5 +1,3 @@
-import re
-
 from fastapi_users import schemas
 from pydantic import BaseModel, field_validator
 
@@ -16,20 +14,12 @@ class UserCreate(schemas.BaseUserCreate):
 
     first_name: FirstName
 
-    @field_validator("first_name", mode="after")
-    @classmethod
-    def validate_first_name(cls, v: str) -> str:
-        """Restrict to letter-like characters and title-case the result."""
-        if not re.match(r"^[A-Za-zÀ-ÿ'\s\-]+$", v):
-            raise ValueError("First name can only contain letters, spaces, hyphens, or apostrophes.")
-        return v.title()
-
     @field_validator("email", mode="after")
     @classmethod
     def normalize_email(cls, v: str) -> str:
         """Enforce email length and lowercase the local part."""
         if len(v) < EMAIL_MIN_LENGTH:
-            raise ValueError(f"First name cannot be shorter than {EMAIL_MIN_LENGTH} characters.")
+            raise ValueError(f"Email cannot be shorter than {EMAIL_MIN_LENGTH} characters.")
         return v.lower()
 
 

@@ -3,6 +3,7 @@
 from typing import Annotated
 
 import phonenumbers
+from pydantic import AfterValidator
 from pydantic.types import StringConstraints
 from pydantic_extra_types.phone_numbers import PhoneNumberValidator
 
@@ -12,7 +13,13 @@ from app.config.data_values import (
     DEFAULT_MAX_LENGTH,
 )
 
-NameField = Annotated[str, StringConstraints(min_length=1, max_length=DEFAULT_MAX_LENGTH, strip_whitespace=True)]
+NameField = Annotated[
+    str,
+    StringConstraints(
+        min_length=1, max_length=DEFAULT_MAX_LENGTH, strip_whitespace=True, pattern=r"^[A-Za-zÀ-ÿ'\s\-]+$"
+    ),
+    AfterValidator(str.title),
+]
 FirstName = NameField
 LastName = NameField
 

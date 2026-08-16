@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr, field_validator
 
 from app.api.v1.aro.schemas.types import CallSign, FirstName, LastName, PhoneNumber
+from app.config.data_values import EMAIL_MIN_LENGTH
 
 # -----------------------------------------------------------------
 # Admin Requests
@@ -21,5 +22,7 @@ class UserRequest(BaseModel):
     @field_validator("email", mode="after")
     @classmethod
     def normalize_email(cls, v: str) -> str:
-        """EmailStr lowercases the domain but not the local part — do that too."""
+        """Enforce email length and lowercase the local part."""
+        if len(v) < EMAIL_MIN_LENGTH:
+            raise ValueError(f"First name cannot be shorter than {EMAIL_MIN_LENGTH} characters.")
         return v.lower()
