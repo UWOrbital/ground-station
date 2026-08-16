@@ -3,8 +3,7 @@ from typing import Final
 from uuid import UUID, uuid4
 
 from pydantic import EmailStr
-from sqlalchemy.dialects.postgresql import UUID as DB_UUID
-from sqlalchemy.schema import Column, ForeignKey
+from sqlalchemy import Column, DateTime
 from sqlmodel import Field
 
 from app.config.data_values import (
@@ -48,10 +47,7 @@ class AROUsers(BaseSQLModel, table=True):
 
     id: UUID = Field(default_factory=uuid4, primary_key=True, index=True)
     call_sign: str | None = Field(
-        min_length=CALL_SIGN_MIN_LENGTH,
-        max_length=CALL_SIGN_MAX_LENGTH,
-        default=None,
-        nullable=True,
+        min_length=CALL_SIGN_MIN_LENGTH, max_length=CALL_SIGN_MAX_LENGTH, default=None, nullable=True
     )
     is_active: bool = Field(default=True)
     is_superuser: bool = Field(default=False)
@@ -61,7 +57,7 @@ class AROUsers(BaseSQLModel, table=True):
     last_name: str | None = Field(max_length=DEFAULT_MAX_LENGTH, nullable=True, default=None)
     phone_number: str | None = Field(default=None)
 
-    __tablename__ = ARO_USER_TABLE_NAME
+    __tablename__: str = ARO_USER_TABLE_NAME
     __table_args__ = {"schema": ARO_USER_SCHEMA_NAME}
 
 
@@ -92,7 +88,7 @@ class AROUserCallsigns(BaseSQLModel, table=True):
     club_province: str | None = Field(max_length=DEFAULT_MAX_LENGTH, nullable=True, default=None)
     club_postal_code: str | None = Field(max_length=DEFAULT_MAX_LENGTH, nullable=True, default=None)
 
-    __tablename__ = ARO_USER_CALLSIGNS
+    __tablename__: str = ARO_USER_CALLSIGNS
     __table_args__ = {"schema": ARO_USER_SCHEMA_NAME}
 
 
@@ -102,24 +98,20 @@ class AROUserLogin(BaseSQLModel, table=True):
 
     :param id: AROUserLogin id
     :param email: AROUserLogin email for login
-    :param password: AROUserLogin password for login
-    :param salt: 16 random bytes for password hashing
+    :param password: AROUserLogin password hash
     :param created_on: datetime object of the time at which AROUserLogin was created
-    :param hashing_algorithm_name: the name of the hashing algorithm for pwd hashing
     :param user_id: id created by AROUsers
-    :param email_verification_token: given after user verifies
     """
 
     id: UUID = Field(default_factory=uuid4, primary_key=True, index=True)  # unique id for logins
     email: EmailStr = Field(min_length=EMAIL_MIN_LENGTH, max_length=DEFAULT_MAX_LENGTH, unique=True)
     password: str = Field(max_length=128)
-    password_salt: str = Field(max_length=32, nullable=True)  # TODO: remove when feasible
-    created_on: datetime = Field(default_factory=lambda: datetime.now(UTC))
-    hashing_algorithm_name: str = Field(min_length=1, max_length=20, nullable=True)  # TODO: remove when feasible
-    user_id: UUID = Column(DB_UUID, ForeignKey(AROUsers.id), unique=True)  # type: ignore
-    email_verification_token: str = Field(min_length=1, max_length=200, nullable=True)  # TODO: remove when feasible
+    created_on: datetime = Field(
+        default_factory=lambda: datetime.now(UTC), sa_column=Column(DateTime(timezone=True), nullable=False)
+    )
+    user_id: UUID = Field(foreign_key="aro_users.users_data.id", unique=True)
 
-    __tablename__ = ARO_USER_LOGIN
+    __tablename__: str = ARO_USER_LOGIN
     __table_args__ = {"schema": ARO_USER_SCHEMA_NAME}
 
 
@@ -138,13 +130,15 @@ class AROUserAuthToken(BaseSQLModel, table=True):
     """
 
     id: UUID = Field(default_factory=uuid4, primary_key=True, index=True)
-    user_id: UUID = Column(DB_UUID, ForeignKey(AROUsers.id))  # type: ignore
+    user_id: UUID = Field(foreign_key="aro_users.users_data.id")
     family_id: UUID = Field(index=True, nullable=False)
     token_hash: str = Field(index=True, unique=True)
-    created_on: datetime = Field(default_factory=lambda: datetime.now(UTC))
-    expiry: datetime = Field()
-    rotated_at: datetime | None = Field(default=None)
-    revoked_at: datetime | None = Field(default=None)
+    created_on: datetime = Field(
+        default_factory=lambda: datetime.now(UTC), sa_column=Column(DateTime(timezone=True), nullable=False)
+    )
+    expiry: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
+    rotated_at: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
+    revoked_at: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
 
-    __tablename__ = ARO_AUTH_TOKEN
+    __tablename__: str = ARO_AUTH_TOKEN
     __table_args__ = {"schema": ARO_USER_SCHEMA_NAME}

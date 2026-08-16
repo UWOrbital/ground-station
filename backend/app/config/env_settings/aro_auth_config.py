@@ -6,6 +6,7 @@ class AROAuthConfig(BaseSettings):
 
     jwt_secret: str
     session_secret: str
+    is_production: bool = True
 
     model_config = SettingsConfigDict(
         env_prefix="ARO_AUTH_",

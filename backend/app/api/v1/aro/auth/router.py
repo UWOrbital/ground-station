@@ -20,6 +20,7 @@ from app.api.v1.aro.auth.manager import AROUserManager, get_user_manager
 from app.api.v1.aro.auth.services.callsign_2fa import verify_user_callsign
 from app.api.v1.aro.schemas.auth.requests import CallsignRequest, UserCreate
 from app.api.v1.aro.schemas.auth.responses import AccessTokenResponse, UserRead
+from app.config.env_settings.backend_config import settings
 from app.data.models.aro_user_models import AROUsers
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
@@ -28,6 +29,22 @@ router = APIRouter(prefix="/auth", tags=["authentication"])
 
 # POST /api/v1/aro/auth/register
 router.include_router(get_register_router(get_user_manager, UserRead, UserCreate))
+
+
+def _set_refresh_cookie(response: Response, raw_refresh_token: str) -> None:
+    """
+    Set the refresh-token cookie.
+
+    :param response: the outgoing Response to set the cookie on.
+    :param raw_refresh_token: the raw (unhashed) refresh token value.
+    """
+    response.set_cookie(
+        "refresh_token",
+        raw_refresh_token,
+        httponly=True,
+        secure=settings.auth.is_production,
+        samesite="lax",
+    )
 
 
 @router.post("/login", response_model=AccessTokenResponse)
@@ -56,7 +73,7 @@ async def login(
     access_token, expiry = create_access_token(user._user)
     raw_refresh_token = issue_refresh_token(user.id)
 
-    response.set_cookie("refresh_token", raw_refresh_token, httponly=True, secure=True, samesite="lax")
+    _set_refresh_cookie(response, raw_refresh_token)
 
     return AccessTokenResponse(access_token=access_token, token_type="bearer", expires_at=expiry)
 
@@ -81,13 +98,7 @@ async def rotate_tokens(response: Response, refresh_token: str | None = Cookie(d
     new_raw_refresh, user = rotate_refresh_token(refresh_token)
     access_token, expiry = create_access_token(user)
 
-    response.set_cookie(
-        "refresh_token",
-        new_raw_refresh,
-        httponly=True,
-        secure=True,
-        samesite="lax",
-    )
+    _set_refresh_cookie(response, new_raw_refresh)
 
     return AccessTokenResponse(access_token=access_token, token_type="bearer", expires_at=expiry)
 
