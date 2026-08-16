@@ -14,6 +14,7 @@ from app.api.v1.aro.auth.aro_session import (
     create_access_token,
     get_user_by_token,
     issue_refresh_token,
+    revoke_token,
     rotate_refresh_token,
 )
 from app.api.v1.aro.auth.manager import AROUserManager, get_user_manager
@@ -35,8 +36,8 @@ def _set_refresh_cookie(response: Response, raw_refresh_token: str) -> None:
     """
     Set the refresh-token cookie.
 
-    :param response: the outgoing Response to set the cookie on.
-    :param raw_refresh_token: the raw (unhashed) refresh token value.
+    :param response: the outgoing response
+    :param raw_refresh_token: the unhashed refresh token value
     """
     response.set_cookie(
         "refresh_token",
@@ -104,7 +105,7 @@ async def rotate_tokens(response: Response, refresh_token: str | None = Cookie(d
 
 
 @router.post("/logout")
-async def logout(response: Response) -> dict[str, str]:
+async def logout(response: Response, refresh_token: str | None = Cookie(default=None)) -> dict[str, str]:
     """
     POST /api/v1/aro/auth/logout
 
@@ -113,6 +114,7 @@ async def logout(response: Response) -> dict[str, str]:
     :param response: Response
     :returns: dict[str, str]: Logout Message
     """
+    revoke_token(refresh_token)
     response.delete_cookie(key="refresh_token")
     return {"message": "Logged out successfully."}
 

@@ -26,6 +26,8 @@ REFRESH_TOKEN_LIFETIME = timedelta(days=14)  # real session length
 
 _bearer_scheme = HTTPBearer(auto_error=False)
 
+token_wrapper = AROUserAuthTokenWrapper()
+
 
 def _hash_refresh_token(raw_token: str) -> str:
     """
@@ -88,7 +90,6 @@ def rotate_refresh_token(raw_token: str) -> tuple[str, AROUsers]:
     :raises HTTPException: 401 refresh_token_invalid
     """
     token_hash = _hash_refresh_token(raw_token)
-    token_wrapper = AROUserAuthTokenWrapper()
 
     existing = token_wrapper.get_first_by(token_hash=token_hash)
     if existing is None:
@@ -124,6 +125,20 @@ def rotate_refresh_token(raw_token: str) -> tuple[str, AROUsers]:
     user = AROUsersWrapper().get_by_id(existing.user_id)
 
     return (new_raw, user)
+
+
+def revoke_token(refresh_token: str | None) -> None:
+    """
+    Invalidate a single refresh token.
+
+    :param refresh_token: str | None
+    :returns: None
+    """
+    if refresh_token is not None:
+        token_hash = _hash_refresh_token(refresh_token)
+        existing = token_wrapper.get_first_by(token_hash=token_hash)
+        if existing is not None:
+            token_wrapper.update(existing.id, {"revoked_at": datetime.now(UTC)})
 
 
 def revoke_family(family_id: UUID) -> int:

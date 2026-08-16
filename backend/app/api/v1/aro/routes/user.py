@@ -4,9 +4,10 @@ from fastapi import APIRouter
 
 from app.api.v1.aro.schemas.admin.requests import UserRequest
 from app.api.v1.aro.schemas.admin.responses import AllUsersResponse, UserResponse
-from app.data.data_wrappers.wrappers import AROUsersWrapper
+from app.data.data_wrappers.wrappers import AROUserAuthTokenWrapper, AROUserLoginWrapper, AROUsersWrapper
 
 aro_user_router = APIRouter(tags=["ARO", "User Information"])
+users_wrapper = AROUsersWrapper()
 
 
 @aro_user_router.get("/get_all_users", response_model=AllUsersResponse)
@@ -16,7 +17,7 @@ async def get_all_users() -> AllUsersResponse:
 
     :return: all users
     """
-    users = AROUsersWrapper().get_all()
+    users = users_wrapper.get_all()
     return AllUsersResponse(data=users)
 
 
@@ -28,7 +29,7 @@ def get_user(userid: str) -> UserResponse:
     :param userid: The unique identifier of the user
     :return: the user
     """
-    user = AROUsersWrapper().get_by_id(UUID(userid))
+    user = users_wrapper.get_by_id(UUID(userid))
     return UserResponse(data=user)
 
 
@@ -40,7 +41,7 @@ def create_user(payload: UserRequest) -> UserResponse:
     :return: returns the user created
     """
 
-    user = AROUsersWrapper().create(
+    user = users_wrapper.create(
         data={
             "call_sign": payload.call_sign,
             "email": payload.email,
@@ -60,5 +61,12 @@ def delete_user(userid: str) -> UserResponse:
     :param userid: The unique identifier of the user to be deleted
     :return: returns the deleted users
     """
-    deleted_user = AROUsersWrapper().delete_by_id(UUID(userid))
+    user_id = UUID(userid)
+
+    # While `userId` is an FK, it's not `ON DELETE CASCADE`
+    AROUserAuthTokenWrapper().delete_all_by_user_id(user_id)
+    AROUserLoginWrapper().delete_all_by_user_id(user_id)
+
+    deleted_user = users_wrapper.delete_by_id(user_id)
+
     return UserResponse(data=deleted_user)

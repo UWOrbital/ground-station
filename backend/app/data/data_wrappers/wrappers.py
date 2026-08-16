@@ -2,7 +2,7 @@ from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from pydantic import EmailStr
-from sqlalchemy import update
+from sqlalchemy import delete, update
 from sqlmodel import col, select
 
 from app.api.v1.mcc.schemas.responses import TelemetryEntry, TelemetrySubrow
@@ -99,8 +99,10 @@ class AROUserAuthTokenWrapper(AbstractWrapper[AROUserAuthToken, UUID]):
 
     def get_row_by_user_id(self, user_id: UUID) -> AROUserAuthToken | None:
         """
-        :user_id UUID
-        returns AROUserAuthToken | None
+        Retrives the latest (active) refresh token.
+
+        :param user_id: UUID
+        :returns: AROUserAuthToken | None
         """
         with get_db_session() as session:
             return session.exec(
@@ -108,6 +110,18 @@ class AROUserAuthTokenWrapper(AbstractWrapper[AROUserAuthToken, UUID]):
                 .where(AROUserAuthToken.user_id == user_id)
                 .where(AROUserAuthToken.expiry > datetime.now(UTC))
             ).first()
+
+    def delete_all_by_user_id(self, user_id: UUID) -> int:
+        """
+        **Deletes** every AROUserAuthToken row for a user.
+
+        :param user_id: UUID
+        :returns: int: number of rows deleted
+        """
+        with get_db_session() as session:
+            r = session.exec(delete(AROUserAuthToken).where(col(AROUserAuthToken.user_id) == user_id))
+            session.commit()
+            return r.rowcount
 
 
 class AROUserCallsignWrapper(AbstractWrapper[AROUserCallsigns, UUID]):
@@ -133,16 +147,17 @@ class AROUserLoginWrapper(AbstractWrapper[AROUserLogin, UUID]):
 
     model = AROUserLogin
 
-    def get_row_by_email(self, email: EmailStr) -> AROUserLogin | None:
+    def delete_all_by_user_id(self, user_id: UUID) -> int:
         """
-        Find and return a user by their email address.
+        **Deletes** every AROUserLogin row for a user.
 
-        :email pydantic.EmailStr
-        :returns AROUserLogin | None
+        :param user_id: UUID
+        :returns: int: number of rows deleted
         """
         with get_db_session() as session:
-            found_login = session.exec(select(AROUserLogin).where(AROUserLogin.email == email)).first()
-        return found_login
+            r = session.exec(delete(AROUserLogin).where(col(AROUserLogin.user_id) == user_id))
+            session.commit()
+            return r.rowcount
 
 
 class ARORequestWrapper(AbstractWrapper[ARORequest, UUID]):

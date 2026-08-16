@@ -99,7 +99,9 @@ class AbstractWrapper[T, PK](ABC):
         :return: the updated instance
         """
         with get_db_session() as session:
-            obj = self.get_by_id(obj_id)
+            obj = session.get(self.model, obj_id)
+            if not obj:
+                raise ValueError(f"{self.model.__name__} with ID {obj_id} not found.")
 
             for field, value in data.items():
                 if not hasattr(obj, field):

@@ -57,7 +57,7 @@ class AROUsers(BaseSQLModel, table=True):
     last_name: str | None = Field(max_length=DEFAULT_MAX_LENGTH, nullable=True, default=None)
     phone_number: str | None = Field(default=None)
 
-    __tablename__: str = ARO_USER_TABLE_NAME
+    __tablename__ = ARO_USER_TABLE_NAME
     __table_args__ = {"schema": ARO_USER_SCHEMA_NAME}
 
 
@@ -88,7 +88,7 @@ class AROUserCallsigns(BaseSQLModel, table=True):
     club_province: str | None = Field(max_length=DEFAULT_MAX_LENGTH, nullable=True, default=None)
     club_postal_code: str | None = Field(max_length=DEFAULT_MAX_LENGTH, nullable=True, default=None)
 
-    __tablename__: str = ARO_USER_CALLSIGNS
+    __tablename__ = ARO_USER_CALLSIGNS
     __table_args__ = {"schema": ARO_USER_SCHEMA_NAME}
 
 
@@ -111,7 +111,7 @@ class AROUserLogin(BaseSQLModel, table=True):
     )
     user_id: UUID = Field(foreign_key="aro_users.users_data.id", unique=True)
 
-    __tablename__: str = ARO_USER_LOGIN
+    __tablename__ = ARO_USER_LOGIN
     __table_args__ = {"schema": ARO_USER_SCHEMA_NAME}
 
 
@@ -140,5 +140,5 @@ class AROUserAuthToken(BaseSQLModel, table=True):
     rotated_at: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
     revoked_at: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
 
-    __tablename__: str = ARO_AUTH_TOKEN
+    __tablename__ = ARO_AUTH_TOKEN
     __table_args__ = {"schema": ARO_USER_SCHEMA_NAME}
