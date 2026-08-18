@@ -16,6 +16,7 @@ def normalize_email(email: str) -> str:
     return f"{localpart.lower()}@{domain}"
 
 
+
 NameField = Annotated[
     str,
     StringConstraints(
