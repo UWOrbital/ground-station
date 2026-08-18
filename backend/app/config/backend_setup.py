@@ -1,6 +1,5 @@
 import logging
 
-from backend.app.api.v1.aro.routes.auth import router as aro_auth_router
 from fastapi import FastAPI
 from loguru import logger
 from starlette.middleware.sessions import SessionMiddleware
