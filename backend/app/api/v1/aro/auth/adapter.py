@@ -14,7 +14,9 @@ from app.data.models.aro_user_models import AROUserLogin, AROUsers
 
 
 class AROUserRecord:
-    """Merges 1 AROUsers row and 1 AROUserLogin row into a single object shaped like fastapi_users.models.UserProtocol."""
+    """
+    Merge 1 AROUsers row and 1 AROUserLogin row into a single object shaped like fastapi_users.models.UserProtocol.
+    """
 
     def __init__(self, user: AROUsers, login: AROUserLogin) -> None:
         self._user = user
@@ -35,10 +37,10 @@ class AROUserDatabaseAdapter(BaseUserDatabase[AROUserRecord, UUID]):
     """
     fastapi_users database adapter.
     """
-    def __init__(self):
+
+    def __init__(self) -> None:
         self.login_wrapper = AROUserLoginWrapper()
         self.user_wrapper = AROUsersWrapper()
-    
 
     def _load(self, user: AROUsers) -> AROUserRecord | None:
         """

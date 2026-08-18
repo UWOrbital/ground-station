@@ -5,19 +5,16 @@ from pydantic import AfterValidator, EmailStr
 from pydantic.types import StringConstraints
 from pydantic_extra_types.phone_numbers import PhoneNumberValidator
 
-from app.config.data_values import (
-    CALL_SIGN_MAX_LENGTH,
-    CALL_SIGN_MIN_LENGTH,
-    DEFAULT_MAX_LENGTH,
-    EMAIL_MIN_LENGTH
-)
+from app.config.data_values import CALL_SIGN_MAX_LENGTH, CALL_SIGN_MIN_LENGTH, DEFAULT_MAX_LENGTH, EMAIL_MIN_LENGTH
+
 
 def normalize_email(email: str) -> str:
     """Enforce email length and lowercase the local part."""
     if len(email) < EMAIL_MIN_LENGTH:
         raise ValueError(f"First name cannot be shorter than {EMAIL_MIN_LENGTH} characters.")
     localpart, domain = email.split("@", 1)
-    return f"{localpart.lower}@{domain}"
+    return f"{localpart.lower()}@{domain}"
+
 
 NameField = Annotated[
     str,

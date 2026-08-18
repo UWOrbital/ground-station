@@ -10,6 +10,7 @@ from app.data.models.aro_user_models import AROUsers
 
 aro_user_router = APIRouter(tags=["ARO", "User Information"])
 
+
 @aro_user_router.get("/get_all_users", response_model=AllUsersResponse)
 async def get_all_users(user: AROUsers = Depends(require_superuser)) -> AllUsersResponse:
     """
