@@ -12,14 +12,9 @@ from fastapi_users.db import BaseUserDatabase
 from app.data.data_wrappers.wrappers import AROUserLoginWrapper, AROUsersWrapper
 from app.data.models.aro_user_models import AROUserLogin, AROUsers
 
-login_wrapper = AROUserLoginWrapper()
-user_wrapper = AROUsersWrapper()
-
 
 class AROUserRecord:
-    """
-    Merges one AROUsers row and one AROUserLogin row into a single object shaped like fastapi_users.models.UserProtocol.
-    """
+    """Merges 1 AROUsers row and 1 AROUserLogin row into a single object shaped like fastapi_users.models.UserProtocol."""
 
     def __init__(self, user: AROUsers, login: AROUserLogin) -> None:
         self._user = user
@@ -40,6 +35,10 @@ class AROUserDatabaseAdapter(BaseUserDatabase[AROUserRecord, UUID]):
     """
     fastapi_users database adapter.
     """
+    def __init__(self):
+        self.login_wrapper = AROUserLoginWrapper()
+        self.user_wrapper = AROUsersWrapper()
+    
 
     def _load(self, user: AROUsers) -> AROUserRecord | None:
         """
@@ -48,7 +47,7 @@ class AROUserDatabaseAdapter(BaseUserDatabase[AROUserRecord, UUID]):
         :param user: AROUsers
         :return: composite AROUserRecord | None
         """
-        login = login_wrapper.get_first_by(user_id=user.id)
+        login = self.login_wrapper.get_first_by(user_id=user.id)
         if login is None:
             # The two tables have drifted apart
             return None
@@ -59,7 +58,7 @@ class AROUserDatabaseAdapter(BaseUserDatabase[AROUserRecord, UUID]):
         :param id: UUID: AROUsers PK
         :return: composite AROUserRecord | None
         """
-        user = user_wrapper.get_first_by(id=id)
+        user = self.user_wrapper.get_first_by(id=id)
         if user is None:
             return None
         return self._load(user)
@@ -69,7 +68,7 @@ class AROUserDatabaseAdapter(BaseUserDatabase[AROUserRecord, UUID]):
         :param email: str
         :return: composite AROUserRecord | None
         """
-        user = user_wrapper.get_first_by(email=email)
+        user = self.user_wrapper.get_first_by(email=email)
         if user is None:
             return None
         return self._load(user)
@@ -84,14 +83,14 @@ class AROUserDatabaseAdapter(BaseUserDatabase[AROUserRecord, UUID]):
         hashed_password = create_dict.pop("hashed_password")
         email = create_dict.get("email")
 
-        user = user_wrapper.create(create_dict)
+        user = self.user_wrapper.create(create_dict)
 
         login_data = {
             "user_id": user.id,
             "email": email,
             "password": hashed_password,
         }
-        login = login_wrapper.create(login_data)
+        login = self.login_wrapper.create(login_data)
 
         return AROUserRecord(user, login)
 
@@ -113,11 +112,11 @@ class AROUserDatabaseAdapter(BaseUserDatabase[AROUserRecord, UUID]):
         # Using _load returns AROUserRecord | None, update needs to return certainty
         updated_login = user._login
         if login_update:
-            updated_login = login_wrapper.update(user._login.id, login_update)
+            updated_login = self.login_wrapper.update(user._login.id, login_update)
 
         updated_user = user._user
         if update_dict:
-            updated_user = user_wrapper.update(user.id, update_dict)
+            updated_user = self.user_wrapper.update(user.id, update_dict)
 
         return AROUserRecord(updated_user, updated_login)
 
@@ -129,6 +128,6 @@ class AROUserDatabaseAdapter(BaseUserDatabase[AROUserRecord, UUID]):
         :return: the same record that was just deleted.
         """
         # No CASCADE on FK
-        login_wrapper.delete_by_id(user._login.id)
-        user_wrapper.delete_by_id(user.id)
+        self.login_wrapper.delete_by_id(user._login.id)
+        self.user_wrapper.delete_by_id(user.id)
         return user

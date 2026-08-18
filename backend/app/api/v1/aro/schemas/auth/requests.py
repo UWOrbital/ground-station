@@ -1,7 +1,7 @@
 from fastapi_users import schemas
 from pydantic import BaseModel, field_validator
 
-from app.api.v1.aro.schemas.types import CallSign, FirstName
+from app.api.v1.aro.schemas.types import CallSign, AROEmailField, FirstName
 from app.config.data_values import EMAIL_MIN_LENGTH
 
 # -----------------------------------------------------------------
@@ -13,14 +13,7 @@ class UserCreate(schemas.BaseUserCreate):
     """Registration payload accepted by the built-in /register route."""
 
     first_name: FirstName
-
-    @field_validator("email", mode="after")
-    @classmethod
-    def normalize_email(cls, v: str) -> str:
-        """Enforce email length and lowercase the local part."""
-        if len(v) < EMAIL_MIN_LENGTH:
-            raise ValueError(f"Email cannot be shorter than {EMAIL_MIN_LENGTH} characters.")
-        return v.lower()
+    email: AROEmailField
 
 
 class CallsignRequest(BaseModel):

@@ -9,8 +9,6 @@ from app.data.data_wrappers.wrappers import AROUserAuthTokenWrapper, AROUserLogi
 from app.data.models.aro_user_models import AROUsers
 
 aro_user_router = APIRouter(tags=["ARO", "User Information"])
-users_wrapper = AROUsersWrapper()
-
 
 @aro_user_router.get("/get_all_users", response_model=AllUsersResponse)
 async def get_all_users(user: AROUsers = Depends(require_superuser)) -> AllUsersResponse:
@@ -19,7 +17,7 @@ async def get_all_users(user: AROUsers = Depends(require_superuser)) -> AllUsers
 
     :return: all users
     """
-    users = users_wrapper.get_all()
+    users = AROUsersWrapper().get_all()
     return AllUsersResponse(data=users)
 
 
@@ -31,7 +29,7 @@ def get_user(userid: str, user: AROUsers = Depends(require_superuser)) -> UserRe
     :param userid: The unique identifier of the user
     :return: the user
     """
-    user = users_wrapper.get_by_id(UUID(userid))
+    user = AROUsersWrapper().get_by_id(UUID(userid))
     return UserResponse(data=user)
 
 
@@ -43,7 +41,7 @@ def create_user(payload: UserRequest, user: AROUsers = Depends(require_superuser
     :return: returns the user created
     """
 
-    user = users_wrapper.create(
+    user = AROUsersWrapper().create(
         data={
             "call_sign": payload.call_sign,
             "email": payload.email,
@@ -69,6 +67,6 @@ def delete_user(userid: str, user: AROUsers = Depends(require_superuser)) -> Use
     AROUserAuthTokenWrapper().delete_all_by_user_id(user_id)
     AROUserLoginWrapper().delete_all_by_user_id(user_id)
 
-    deleted_user = users_wrapper.delete_by_id(user_id)
+    deleted_user = AROUsersWrapper().delete_by_id(user_id)
 
     return UserResponse(data=deleted_user)

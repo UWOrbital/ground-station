@@ -19,7 +19,6 @@ dependencies = [
     # settings
     "pydantic-settings==2.14.1",
     # security
-    "authlib==1.7.2",
     "itsdangerous==2.2.0",
     "python-keycloak==7.1.1",
     "pyjwt==2.13.0",
@@ -76,7 +75,7 @@ markers = [
 ]
 
 [tool.mypy]
-exclude = ["backend/tests/*", "backend/migrations/*", "archive/*"]
+exclude = ["backend/tests/*", "backend/migrations/*"]
 strict = true
 plugins = "pydantic.mypy"
 
@@ -90,10 +89,6 @@ ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = "tinyaes.*"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = "authlib.*"
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]

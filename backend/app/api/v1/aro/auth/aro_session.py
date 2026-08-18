@@ -10,7 +10,7 @@ Deliberately has no import from manager.py or adapter.py. This file doesn't need
 
 import hashlib
 import secrets
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 import jwt
@@ -20,14 +20,9 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from app.config.env_settings.backend_config import settings
 from app.data.data_wrappers.wrappers import AROUserAuthTokenWrapper, AROUsersWrapper
 from app.data.models.aro_user_models import AROUsers
-
-ACCESS_TOKEN_LIFETIME = timedelta(minutes=10)
-REFRESH_TOKEN_LIFETIME = timedelta(days=14)  # real session length
+from app.config.data_values import ACCESS_TOKEN_LIFETIME, REFRESH_TOKEN_LIFETIME
 
 _bearer_scheme = HTTPBearer(auto_error=False)
-
-token_wrapper = AROUserAuthTokenWrapper()
-
 
 def _hash_refresh_token(raw_token: str) -> str:
     """
@@ -66,8 +61,7 @@ def issue_refresh_token(user_id: UUID, family_id: UUID | None = None) -> str:
     raw_token = secrets.token_urlsafe(32)
     family_id = family_id or uuid4()
 
-    token_wrapper = AROUserAuthTokenWrapper()
-    token_wrapper.create(
+    AROUserAuthTokenWrapper().create(
         {
             "token_hash": _hash_refresh_token(raw_token),
             "family_id": family_id,
@@ -91,7 +85,7 @@ def rotate_refresh_token(raw_token: str) -> tuple[str, AROUsers]:
     """
     token_hash = _hash_refresh_token(raw_token)
 
-    existing = token_wrapper.get_first_by(token_hash=token_hash)
+    existing = AROUserAuthTokenWrapper().get_first_by(token_hash=token_hash)
     if existing is None:
         # Unknown token
         raise HTTPException(
@@ -114,7 +108,7 @@ def rotate_refresh_token(raw_token: str) -> tuple[str, AROUsers]:
             detail={"message": "Session expired.", "code": "refresh_token_invalid"},
         )
 
-    if not token_wrapper.claim_rotation(existing.id):
+    if not AROUserAuthTokenWrapper().claim_rotation(existing.id):
         # something else rotated this row, so close with 401
         raise HTTPException(
             status.HTTP_401_UNAUTHORIZED,
@@ -136,9 +130,9 @@ def revoke_token(refresh_token: str | None) -> None:
     """
     if refresh_token is not None:
         token_hash = _hash_refresh_token(refresh_token)
-        existing = token_wrapper.get_first_by(token_hash=token_hash)
+        existing = AROUserAuthTokenWrapper().get_first_by(token_hash=token_hash)
         if existing is not None:
-            token_wrapper.update(existing.id, {"revoked_at": datetime.now(UTC)})
+            AROUserAuthTokenWrapper().update(existing.id, {"revoked_at": datetime.now(UTC)})
 
 
 def revoke_family(family_id: UUID) -> int:
