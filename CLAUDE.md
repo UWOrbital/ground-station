@@ -67,13 +67,13 @@ npm run test      # vitest
 
 ### Docker dev environment
 
-Keycloak is decoupled into its own `docker-compose.keycloak.yml` (mirrors an external Keycloak). `start.sh` brings Keycloak up, waits for the `mcc` realm to import, then starts the main stack. `docker-compose.yml` brings up backend + both frontends + db and reaches Keycloak over `host.docker.internal` — the api service's `extra_hosts: host.docker.internal:host-gateway`. The backend reads `.env` at the repo root (not `backend/.env`). Run from the repo root:
+Keycloak is decoupled into its own `docker-compose.keycloak.yml` (mirrors an external Keycloak). `start.sh` brings Keycloak up, waits for the `mcc` realm to import, then starts the main stack. `docker-compose.yml` brings up backend + both frontends + db. The backend reads `.env` at the repo root (not `backend/.env`). Run from the repo root:
 
 ```sh
 ./start.sh          # keycloak stack, then the main stack
 ```
 
-The single `KEYCLOAK_URL` (default `http://host.docker.internal:8080`) must resolve identically from the backend and the browser. The container resolves it via `host-gateway`; for the host browser add `127.0.0.1 host.docker.internal` to `/etc/hosts` (Docker Desktop often adds this already).
+`KEYCLOAK_URL` is a single field defaulting to `http://localhost:8080` — right for a host-run backend (`uv run fastapi dev`), the browser, and CI, so no host-file edits there. The dockerized api service overrides it to `http://host.docker.internal:8080` (via `environment:` + `extra_hosts: host.docker.internal:host-gateway`), mirroring `GS_DATABASE_LOCATION`. Only that full-`docker compose up` path needs `127.0.0.1 host.docker.internal` in the browser's `/etc/hosts` (Docker Desktop often adds it already).
 
 ## Architecture notes
 

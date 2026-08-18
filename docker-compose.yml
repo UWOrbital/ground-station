@@ -14,6 +14,10 @@ services:
     environment:
       - PYTHONPATH=/app/backend
       - GS_DATABASE_LOCATION=host.docker.internal
+      # Keycloak runs in docker-compose.keycloak.yml, published on the host. From
+      # inside this container reach it via the host gateway; the browser and a
+      # host-run backend use the localhost default in .env instead.
+      - KEYCLOAK_URL=http://host.docker.internal:8080
   aro-frontend:
     build:
       context: frontend/aro

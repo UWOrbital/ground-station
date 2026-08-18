@@ -18,10 +18,6 @@ services:
       KC_BOOTSTRAP_ADMIN_USERNAME: mcc-admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: uworbital
       KC_HEALTH_ENABLED: true
-      # Fixed hostname so the token issuer is stable and identical for both the
-      # browser redirect and the backend backchannel. Must match KEYCLOAK_URL.
-      KC_HOSTNAME: http://host.docker.internal:8080
-      KC_HOSTNAME_STRICT: false
     ports:
       - "8080:8080"
     volumes:
