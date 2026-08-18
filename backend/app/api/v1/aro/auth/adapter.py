@@ -35,10 +35,10 @@ class AROUserDatabaseAdapter(BaseUserDatabase[AROUserRecord, UUID]):
     """
     fastapi_users database adapter.
     """
+
     def __init__(self):
         self.login_wrapper = AROUserLoginWrapper()
         self.user_wrapper = AROUsersWrapper()
-    
 
     def _load(self, user: AROUsers) -> AROUserRecord | None:
         """

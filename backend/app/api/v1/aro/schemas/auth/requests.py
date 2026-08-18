@@ -1,8 +1,7 @@
 from fastapi_users import schemas
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel
 
-from app.api.v1.aro.schemas.types import CallSign, AROEmailField, FirstName
-from app.config.data_values import EMAIL_MIN_LENGTH
+from app.api.v1.aro.schemas.types import AROEmailField, CallSign, FirstName
 
 # -----------------------------------------------------------------
 # Auth Requests

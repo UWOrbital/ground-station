@@ -17,12 +17,13 @@ import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
+from app.config.data_values import ACCESS_TOKEN_LIFETIME, REFRESH_TOKEN_LIFETIME
 from app.config.env_settings.backend_config import settings
 from app.data.data_wrappers.wrappers import AROUserAuthTokenWrapper, AROUsersWrapper
 from app.data.models.aro_user_models import AROUsers
-from app.config.data_values import ACCESS_TOKEN_LIFETIME, REFRESH_TOKEN_LIFETIME
 
 _bearer_scheme = HTTPBearer(auto_error=False)
+
 
 def _hash_refresh_token(raw_token: str) -> str:
     """
