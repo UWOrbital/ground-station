@@ -1,0 +1,38 @@
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        /opt/keycloak/bin/kc.sh start-dev --import-realm &
+        until echo > /dev/tcp/localhost/8080; do sleep 2; done
+        sleep 5
+        /opt/keycloak/bin/kcadm.sh config credentials \
+          --server http://localhost:8080 \
+          --realm master \
+          --user mcc-admin \
+          --password uworbital
+        /opt/keycloak/bin/kcadm.sh update realms/master -s sslRequired=NONE
+        wait
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: mcc-admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: uworbital
+      KC_HEALTH_ENABLED: true
+    ports:
+      - "8080:8080"
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+      - ./backend/app/mcc_keycloak/mcc-realm.json:/opt/keycloak/data/import/mcc-realm.json
+    # Health endpoints are served on the management port 9000 (KC_HEALTH_ENABLED).
+    # The image ships without curl/wget, so probe via bash /dev/tcp socket redirection.
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - "{ printf 'GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3; grep -q '200 OK' <&3; } 3<>/dev/tcp/localhost/9000"
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+volumes:
+  keycloak_data:

@@ -3,6 +3,7 @@ import json
 import app.api.v1.mcc.routes.auth as mcc_auth
 from unittest.mock import patch, PropertyMock
 from app.mcc_keycloak.client import KeycloakClient
+from app.config.env_settings.keycloak_config import KeycloakConfig
 from fastapi.testclient import TestClient
 from main import app
 from app.config.env_settings.backend_config import settings
@@ -89,3 +90,17 @@ def test_logout_endpoint(client):
     assert response.status_code == 307
     assert "openid-connect/logout" in response.headers["location"]
     assert response.cookies.get("access_token") == None and response.cookies.get("id_token") == None
+
+
+SINGLE_URL = "http://keycloak.example:8080"
+
+
+def test_logout_url_uses_single_url():
+    """Test that logout_url is built from the single configured Keycloak URL (no internal/public split)."""
+    config = KeycloakConfig(url=SINGLE_URL, client_secret="dummy")
+    client = KeycloakClient(config)
+
+    logout_url = client.logout_url("mock_id_token")
+
+    assert logout_url.startswith(f"{SINGLE_URL}/realms/{config.realm}/protocol/openid-connect/logout")
+    assert "id_token_hint=mock_id_token" in logout_url

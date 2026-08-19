@@ -9,6 +9,9 @@ os.environ.setdefault("GS_DATABASE_USER", "testuser")
 os.environ.setdefault("GS_DATABASE_PASSWORD", "testpassword")
 os.environ.setdefault("GS_DATABASE_NAME", "testdb")
 
+os.environ.setdefault("KEYCLOAK_URL", "http://localhost:8080")
+os.environ.setdefault("KEYCLOAK_CLIENT_SECRET", "dummy")
+
 import pytest
 from app.data.database.engine import setup_database
 from app.data.models.transactional_models import CommsSession
