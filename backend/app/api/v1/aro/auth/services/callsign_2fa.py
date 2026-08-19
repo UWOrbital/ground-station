@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 
-from app.api.v1.aro.schemas.auth_requests import CallsignRequest
+from app.api.v1.aro.schemas.auth.requests import CallsignRequest
 from app.data.data_wrappers.wrappers import AROUserCallsignWrapper, AROUsersWrapper
 from app.data.models.aro_user_models import AROUsers
 
@@ -9,11 +9,11 @@ def callsign_verified(qual_levels: tuple[bool, ...], user_call_sign: str) -> boo
     """
     Checks call_sign against the government CSV file.
 
-    TODO: Inquire about any further specifications before return
-    TODO: Use % matching on callsigns instead of hardcoded methods
+    :qual_levels: tuple[bool, ...]: user qualification levels
+    :user_call_sign: str: a user's provided call sign
     """
     callsigns = AROUserCallsignWrapper()
-    record = callsigns.get_callsign(user_call_sign)
+    record = callsigns.get_row_by_callsign(user_call_sign)
 
     if not record:
         return False

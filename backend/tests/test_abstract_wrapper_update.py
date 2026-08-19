@@ -7,15 +7,15 @@ from app.data.models.base_model import BaseSQLModel
 from sqlmodel import Field
 
 
-class TestModel(BaseSQLModel, table=True):
+class MockModel(BaseSQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: Optional[str] = Field(default=None, nullable=True)
     age: int
     address: Optional[str] = Field(default=None, nullable=True)
 
 
-class TestWrapper(AbstractWrapper[TestModel, int]):
-    model = TestModel
+class MockWrapper(AbstractWrapper[MockModel, int]):
+    model = MockModel
 
 
 @pytest.fixture
@@ -28,12 +28,12 @@ def mock_session():
 
 @pytest.fixture
 def wrapper():
-    return TestWrapper()
+    return MockWrapper()
 
 
 @pytest.fixture
 def obj():
-    return TestModel(id=1, name="old", age=25)
+    return MockModel(id=1, name="old", age=25)
 
 
 def test_update_success(wrapper, mock_session, obj):
@@ -41,7 +41,7 @@ def test_update_success(wrapper, mock_session, obj):
 
     result = wrapper.update(obj.id, {"name": "new", "age": 18})
 
-    mock_session.get.assert_called_once_with(TestModel, 1)
+    mock_session.get.assert_called_once_with(MockModel, 1)
 
     assert result.name == "new"
     assert result.age == 18

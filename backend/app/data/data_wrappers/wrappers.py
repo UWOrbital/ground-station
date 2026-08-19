@@ -2,6 +2,7 @@ from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from pydantic import EmailStr
+from sqlalchemy import delete, update
 from sqlmodel import col, select
 
 from app.api.v1.mcc.schemas.responses import TelemetryEntry, TelemetrySubrow
@@ -47,18 +48,6 @@ class AROUsersWrapper(AbstractWrapper[AROUsers, UUID]):
             found_user = session.exec(select(AROUsers).where(AROUsers.email == email)).first()
         return found_user
 
-    def get_user_by_google_id(self, google_id: str) -> AROUsers | None:
-        """
-        Find and return a user by their Google ID.
-
-        :google_id str
-        :returns AROUsers | None
-        """
-        # Find a user from their Google ID.
-        with get_db_session() as session:
-            found_user = session.exec(select(AROUsers).where(AROUsers.google_id == google_id)).first()
-        return found_user
-
 
 class AROUserAuthTokenWrapper(AbstractWrapper[AROUserAuthToken, UUID]):
     """
@@ -67,22 +56,53 @@ class AROUserAuthTokenWrapper(AbstractWrapper[AROUserAuthToken, UUID]):
 
     model = AROUserAuthToken
 
-    def get_token_by_token(self, token: str | UUID) -> AROUserAuthToken | None:
+    def claim_rotation(self, pk: UUID) -> bool:
         """
-        :token str | UUID
-        returns AROUserAuthToken | None
-        """
-        try:
-            token_uuid = token if isinstance(token, UUID) else UUID(str(token))
-        except ValueError:
-            return None
-        with get_db_session() as session:
-            return session.exec(select(AROUserAuthToken).where(AROUserAuthToken.token == token_uuid)).first()
+        Atomically mark a refresh-token row as rotated, iff it hasn't been already.
 
-    def get_token_by_user_id(self, user_id: UUID) -> AROUserAuthToken | None:
+        Single conditional UPDATE rather than a read-then-write, so two
+        concurrent callers can't both believe they won the rotation.
+
+        :param pk: id of the AROUserAuthToken row being rotated.
+        :return: True if this call was the one that claimed the rotation,
+            False if the row was already rotated (or doesn't exist).
         """
-        :user_id UUID
-        returns AROUserAuthToken | None
+        now = datetime.now(UTC)
+        token_table = AROUserAuthToken
+
+        with get_db_session() as session:
+            r = session.exec(
+                update(AROUserAuthToken)
+                .where(col(token_table.id) == pk)
+                .where(col(token_table.rotated_at).is_(None))
+                .values(rotated_at=now)
+            )
+            session.commit()
+            return r.rowcount == 1
+
+    def revoke_by_family_id(self, family_id: UUID) -> int:
+        """
+        Atomically revoke every refresh-token row in a family, in one statement.
+
+        :param family_id: the family to revoke.
+        :return: number of rows revoked.
+        """
+        now = datetime.now(UTC)
+        token_table = AROUserAuthToken
+
+        with get_db_session() as session:
+            r = session.exec(
+                update(AROUserAuthToken).where(col(token_table.family_id) == family_id).values(revoked_at=now)
+            )
+            session.commit()
+            return r.rowcount
+
+    def get_row_by_user_id(self, user_id: UUID) -> AROUserAuthToken | None:
+        """
+        Retrives the latest (active) refresh token.
+
+        :param user_id: UUID
+        :returns: AROUserAuthToken | None
         """
         with get_db_session() as session:
             return session.exec(
@@ -90,6 +110,18 @@ class AROUserAuthTokenWrapper(AbstractWrapper[AROUserAuthToken, UUID]):
                 .where(AROUserAuthToken.user_id == user_id)
                 .where(AROUserAuthToken.expiry > datetime.now(UTC))
             ).first()
+
+    def delete_all_by_user_id(self, user_id: UUID) -> int:
+        """
+        **Deletes** every AROUserAuthToken row for a user.
+
+        :param user_id: UUID
+        :returns: int: number of rows deleted
+        """
+        with get_db_session() as session:
+            r = session.exec(delete(AROUserAuthToken).where(col(AROUserAuthToken.user_id) == user_id))
+            session.commit()
+            return r.rowcount
 
 
 class AROUserCallsignWrapper(AbstractWrapper[AROUserCallsigns, UUID]):
@@ -99,7 +131,7 @@ class AROUserCallsignWrapper(AbstractWrapper[AROUserCallsigns, UUID]):
 
     model = AROUserCallsigns
 
-    def get_callsign(self, user_cs: str) -> AROUserCallsigns | None:
+    def get_row_by_callsign(self, user_cs: str) -> AROUserCallsigns | None:
         """
         :user_cs str
         return AROUserCallsigns | None
@@ -115,16 +147,17 @@ class AROUserLoginWrapper(AbstractWrapper[AROUserLogin, UUID]):
 
     model = AROUserLogin
 
-    def get_login_by_email(self, email: EmailStr) -> AROUserLogin | None:
+    def delete_all_by_user_id(self, user_id: UUID) -> int:
         """
-        Find and return a user by their email address.
+        **Deletes** every AROUserLogin row for a user.
 
-        :email pydantic.EmailStr
-        :returns AROUserLogin | None
+        :param user_id: UUID
+        :returns: int: number of rows deleted
         """
         with get_db_session() as session:
-            found_login = session.exec(select(AROUserLogin).where(AROUserLogin.email == email)).first()
-        return found_login
+            r = session.exec(delete(AROUserLogin).where(col(AROUserLogin.user_id) == user_id))
+            session.commit()
+            return r.rowcount
 
 
 class ARORequestWrapper(AbstractWrapper[ARORequest, UUID]):

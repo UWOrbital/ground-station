@@ -1,11 +1,9 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Final
 from uuid import UUID, uuid4
 
 from pydantic import EmailStr
-from sqlalchemy import Enum
-from sqlalchemy.dialects.postgresql import UUID as DB_UUID
-from sqlalchemy.schema import Column, ForeignKey
+from sqlalchemy import Column, DateTime
 from sqlmodel import Field
 
 from app.config.data_values import (
@@ -14,7 +12,6 @@ from app.config.data_values import (
     DEFAULT_MAX_LENGTH,
     EMAIL_MIN_LENGTH,
 )
-from app.data.enums.aro_auth_token import AROAuthToken
 from app.data.models.base_model import BaseSQLModel
 
 # Schema information
@@ -35,6 +32,7 @@ class AROUsers(BaseSQLModel, table=True):
     :type id: UUID
     :param call_sign: ARO User's call sign that we will use to communicate with them
     :type call_sign: str
+    :param is_active: bool
     :param is_callsign_verified: ARO User's callsign verification status
     :type is_callsign_verified: bool
     :param email: Valid email
@@ -49,23 +47,16 @@ class AROUsers(BaseSQLModel, table=True):
 
     id: UUID = Field(default_factory=uuid4, primary_key=True, index=True)
     call_sign: str | None = Field(
-        min_length=CALL_SIGN_MIN_LENGTH,
-        max_length=CALL_SIGN_MAX_LENGTH,
-        default=None,
-        nullable=True,
+        min_length=CALL_SIGN_MIN_LENGTH, max_length=CALL_SIGN_MAX_LENGTH, default=None, nullable=True
     )
-
-    # Critical 2FA variable
-    google_id: str | None = Field(default=None, unique=True, index=True)
+    is_active: bool = Field(default=True)
+    is_superuser: bool = Field(default=False)
     is_callsign_verified: bool = Field(default=False)
-
-    # We are currently verifying with email + pwd
     email: EmailStr = Field(min_length=EMAIL_MIN_LENGTH, max_length=DEFAULT_MAX_LENGTH, unique=True)
     first_name: str = Field(max_length=DEFAULT_MAX_LENGTH)
     last_name: str | None = Field(max_length=DEFAULT_MAX_LENGTH, nullable=True, default=None)
     phone_number: str | None = Field(default=None)
 
-    # table information
     __tablename__ = ARO_USER_TABLE_NAME
     __table_args__ = {"schema": ARO_USER_SCHEMA_NAME}
 
@@ -107,22 +98,18 @@ class AROUserLogin(BaseSQLModel, table=True):
 
     :param id: AROUserLogin id
     :param email: AROUserLogin email for login
-    :param password: AROUserLogin password for login
-    :param salt: 16 random bytes for password hashing
+    :param password: AROUserLogin password hash
     :param created_on: datetime object of the time at which AROUserLogin was created
-    :param hashing_algorithm_name: the name of the hashing algorithm for pwd hashing
     :param user_id: id created by AROUsers
-    :param email_verification_token: given after user verifies
     """
 
     id: UUID = Field(default_factory=uuid4, primary_key=True, index=True)  # unique id for logins
     email: EmailStr = Field(min_length=EMAIL_MIN_LENGTH, max_length=DEFAULT_MAX_LENGTH, unique=True)
     password: str = Field(max_length=128)
-    password_salt: str = Field(max_length=32)
-    created_on: datetime = Field(default_factory=datetime.now)
-    hashing_algorithm_name: str = Field(min_length=1, max_length=20)
-    user_id: UUID = Column(DB_UUID, ForeignKey(AROUsers.id))  # type: ignore
-    email_verification_token: str = Field(min_length=1, max_length=200)
+    created_on: datetime = Field(
+        default_factory=lambda: datetime.now(UTC), sa_column=Column(DateTime(timezone=True), nullable=False)
+    )
+    user_id: UUID = Field(foreign_key="aro_users.users_data.id", unique=True)
 
     __tablename__ = ARO_USER_LOGIN
     __table_args__ = {"schema": ARO_USER_SCHEMA_NAME}
@@ -130,22 +117,28 @@ class AROUserLogin(BaseSQLModel, table=True):
 
 class AROUserAuthToken(BaseSQLModel, table=True):
     """
-    Stores all information for User Auth Tokens
+    Stores all information for User Auth Refresh Tokens
 
     :param id: a unique identifier for the user auth token
     :param user_id: id created by AROUser
-    :param token: UUID token
+    :param token_hash: hashed UUID token
+    :param family_id: shared id for all tokens descending from one login
     :param created_on: datetime object which tracks the date and time at which user auth token was created
     :param expiry: datetime object which represents the time at which the token expires
-    :param type_: the type of the token
+    :param rotated_at: when the refresh token was rotated
+    :param revoked_at: when a compromised refresh token was revoked
     """
 
     id: UUID = Field(default_factory=uuid4, primary_key=True, index=True)
-    user_id: UUID = Column(DB_UUID, ForeignKey(AROUsers.id))  # type: ignore
-    token: UUID = Field(default_factory=uuid4)
-    created_on: datetime = Field(default_factory=datetime.now)
-    expiry: datetime = Field()
-    type_: AROAuthToken = Field(sa_column=Column("type", Enum(AROAuthToken, name="auth_type"), nullable=False))
+    user_id: UUID = Field(foreign_key="aro_users.users_data.id")
+    family_id: UUID = Field(index=True, nullable=False)
+    token_hash: str = Field(index=True, unique=True)
+    created_on: datetime = Field(
+        default_factory=lambda: datetime.now(UTC), sa_column=Column(DateTime(timezone=True), nullable=False)
+    )
+    expiry: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
+    rotated_at: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
+    revoked_at: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
 
     __tablename__ = ARO_AUTH_TOKEN
     __table_args__ = {"schema": ARO_USER_SCHEMA_NAME}
