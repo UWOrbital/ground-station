@@ -1,13 +1,3 @@
-"""
-aro_session.py
-
-Everything fastapi-users does NOT provide.
-1. A short-lived, stateless accesstoken (raw PyJWT, not JWTStrategy — see note above)
-2. A long-lived, DB-backed, rotating refresh token.
-
-Deliberately has no import from manager.py or adapter.py. This file doesn't need to know fastapi-users exists.
-"""
-
 import hashlib
 import secrets
 from datetime import UTC, datetime

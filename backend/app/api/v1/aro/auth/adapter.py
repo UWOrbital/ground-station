@@ -1,9 +1,3 @@
-"""
-adapter.py
-
-The bridge between fastapi-users' BaseUserDatabase protocol and the separate AROUsers / AROUserLogin tables.
-"""
-
 from typing import Any
 from uuid import UUID
 
