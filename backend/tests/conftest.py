@@ -63,14 +63,11 @@ async def migrate_db(db_engine: AsyncEngine) -> None:
     async with AsyncSession(db_engine) as setup_session:
         await setup_database(setup_session)
 
-    # Run Alembic migrations to create tables. Alembic is synchronous, so hand it a
-    # sync driver URL by swapping asyncpg for psycopg.
+    # Run Alembic migrations to create tables.
     repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     env = os.environ.copy()
     # Engine.url by default censors the password into "***" which breaks things.
-    # Alembic is synchronous, so hand it a sync driver URL (swap asyncpg for psycopg).
-    sync_url = db_engine.url.render_as_string(hide_password=False).replace("+asyncpg", "+psycopg")
-    env["SQLALCHEMY_DATABASE_URL"] = sync_url
+    env["SQLALCHEMY_DATABASE_URL"] = db_engine.url.render_as_string(hide_password=False)
     subprocess.run([sys.executable, "-m", "alembic", "upgrade", "head"], cwd=repo_root, env=env, check=True)
 
 

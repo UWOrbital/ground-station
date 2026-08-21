@@ -15,9 +15,8 @@ dependencies = [
     # database
     "sqlmodel==0.0.38",
     "alembic==1.18.4",
-    "psycopg2-binary==2.9.12",  # sync driver, used by Alembic migrations
-    "asyncpg==0.30.0",  # async driver, used by the app's async engine
-    "greenlet==3.2.4",  # required by SQLAlchemy's async engine
+    "asyncpg==0.30.0",
+    "greenlet==3.2.4",
     # settings
     "pydantic-settings==2.14.1",
     # security
@@ -50,7 +49,6 @@ dev = [
     "pytest-asyncio>=1.4.0",
     "pytest-cov==7.1.0",
     "testcontainers>=4.14.2",
-    "psycopg[binary]>=3.1.0",
     "httpx2>=0.28.0",
     "hypothesis>=6.100.0,<7.0.0",
     # static checking
@@ -73,8 +71,6 @@ sdist.only-include = ["backend"]
 addopts = "-v"
 testpaths = ["backend/tests"]
 asyncio_mode = "auto"
-# Run every async fixture and test on a single session-scoped event loop so the
-# session-scoped async engine and its asyncpg connections never cross loops.
 asyncio_default_fixture_loop_scope = "session"
 asyncio_default_test_loop_scope = "session"
 markers = [

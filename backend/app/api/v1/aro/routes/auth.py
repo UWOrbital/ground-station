@@ -72,7 +72,7 @@ async def login(
         )
 
     access_token, expiry = create_access_token(user._user)
-    raw_refresh_token = issue_refresh_token(user.id)
+    raw_refresh_token = await issue_refresh_token(user.id)
 
     _set_refresh_cookie(response, raw_refresh_token)
 
@@ -96,7 +96,7 @@ async def rotate_tokens(response: Response, refresh_token: str | None = Cookie(d
             detail={"message": "Not authenticated.", "code": "missing_refresh_token"},
         )
 
-    new_raw_refresh, user = rotate_refresh_token(refresh_token)
+    new_raw_refresh, user = await rotate_refresh_token(refresh_token)
     access_token, expiry = create_access_token(user)
 
     _set_refresh_cookie(response, new_raw_refresh)
@@ -114,7 +114,7 @@ async def logout(response: Response, refresh_token: str | None = Cookie(default=
     :param response: Response
     :returns: dict[str, str]: Logout Message
     """
-    revoke_token(refresh_token)
+    await revoke_token(refresh_token)
     response.delete_cookie(key="refresh_token")
     return {"message": "Logged out successfully."}
 
@@ -145,4 +145,4 @@ async def callsign_callback(request: CallsignRequest, user: AROUsers = Depends(g
     :param user: AROUsers
     :returns: AROUsers
     """
-    return verify_user_callsign(request, user)
+    return await verify_user_callsign(request, user)

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Request
+from fastapi.concurrency import run_in_threadpool
 from fastapi.exceptions import HTTPException
 from fastapi.responses import RedirectResponse, Response
 from keycloak.exceptions import KeycloakError
@@ -23,7 +24,10 @@ async def login() -> RedirectResponse:
     """
     Login endpoint for redirecting to keycloak's login/registration page
     """
-    return RedirectResponse(url=keycloak.login_url, status_code=303)
+    # keycloak.login_url internally makes a synchronous well-known HTTP call; offload it
+    # so it doesn't block the event loop.
+    login_url = await run_in_threadpool(lambda: keycloak.login_url)
+    return RedirectResponse(url=login_url, status_code=303)
 
 
 @mcc_auth_router.get("/callback")
