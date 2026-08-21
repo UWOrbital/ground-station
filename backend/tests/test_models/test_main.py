@@ -1,15 +1,16 @@
 import pytest
 from app.data.models.main_models import MainCommand, MainTelemetry
 from app.exceptions.exceptions import DatabaseError
-from sqlmodel import Session, select
+from sqlmodel import select
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 
-def test_main_command_basic(db_session: Session):
+async def test_main_command_basic(db_session: AsyncSession):
     test1 = MainCommand(id=1, name="Test 1", data_size=1, total_size=2, format="int 7 bytes", params="time")
     db_session.add(test1)
-    db_session.commit()
+    await db_session.commit()
     query = select(MainCommand)
-    items = db_session.exec(query).all()
+    items = (await db_session.exec(query)).all()
     assert len(items) == 1
     returned_item1 = items[0]
     assert returned_item1.id == 1
@@ -20,12 +21,12 @@ def test_main_command_basic(db_session: Session):
     assert returned_item1.params == "time"
 
 
-def test_main_telemetry_basic(db_session: Session):
+async def test_main_telemetry_basic(db_session: AsyncSession):
     test1 = MainTelemetry(id=1, name="Test 1", data_size=1, total_size=2, format="int 7 bytes")
     db_session.add(test1)
-    db_session.commit()
+    await db_session.commit()
     query = select(MainTelemetry)
-    items = db_session.exec(query).all()
+    items = (await db_session.exec(query)).all()
     assert len(items) == 1
     returned_item1 = items[0]
     assert returned_item1.id == 1
@@ -60,7 +61,7 @@ def test_main_command_no_params_and_no_format():
     assert main_command.total_size == 2
 
 
-def test_main_command_no_format(db_session):
+async def test_main_command_no_format(db_session):
     with pytest.raises(DatabaseError, match="Missing format"):
         db_session.add(
             MainCommand(
@@ -71,10 +72,10 @@ def test_main_command_no_format(db_session):
                 total_size=2,
             )
         )
-        db_session.commit()
+        await db_session.commit()
 
 
-def test_main_command_no_params(db_session):
+async def test_main_command_no_params(db_session):
     with pytest.raises(DatabaseError, match="Missing params"):
         db_session.add(
             MainCommand(
@@ -85,10 +86,10 @@ def test_main_command_no_params(db_session):
                 total_size=2,
             )
         )
-        db_session.commit()
+        await db_session.commit()
 
 
-def test_main_command_params_format_mismatch(db_session):
+async def test_main_command_params_format_mismatch(db_session):
     with pytest.raises(DatabaseError, match="Params and format do not have the same number of values"):
         db_session.add(
             MainCommand(
@@ -100,4 +101,4 @@ def test_main_command_params_format_mismatch(db_session):
                 total_size=2,
             )
         )
-        db_session.commit()
+        await db_session.commit()

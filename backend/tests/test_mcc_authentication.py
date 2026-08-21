@@ -1,7 +1,7 @@
 import pytest
 import json
 import app.api.v1.mcc.routes.auth as mcc_auth
-from unittest.mock import patch, PropertyMock
+from unittest.mock import AsyncMock, patch, PropertyMock
 from app.mcc_keycloak.client import KeycloakClient
 from app.config.env_settings.keycloak_config import KeycloakConfig
 from fastapi.testclient import TestClient
@@ -46,9 +46,9 @@ def test_login_endpoint(client):
 
 def test_callback_endpoint(client):
     """Test callback endpoint keycloak functions called properly"""
-    with patch.object(mcc_auth.keycloak, "get_tokens", return_value=MOCK_TOKENS) as mock_get_tokens, \
-         patch.object(mcc_auth.keycloak, "decode_token", return_value=MOCK_USER_INFO) as mock_decode_token, \
-         patch.object(mcc_auth.MCCUsersWrapper, "create", return_value=None) as mock_create:
+    with patch.object(mcc_auth.keycloak, "get_tokens", new_callable=AsyncMock, return_value=MOCK_TOKENS) as mock_get_tokens, \
+         patch.object(mcc_auth.keycloak, "decode_token", new_callable=AsyncMock, return_value=MOCK_USER_INFO) as mock_decode_token, \
+         patch.object(mcc_auth.MCCUsersWrapper, "create", new_callable=AsyncMock, return_value=None) as mock_create:
 
         response = client.get(f"{AUTH_PREFIX}/callback?code=temp_code", follow_redirects=False)
 
@@ -67,8 +67,8 @@ def test_callback_endpoint(client):
 
 def test_callback_endpoint_exceptions(client):
     """Test that callback endpoint can handle bad input (500 status code)"""
-    with patch.object(mcc_auth.keycloak, "get_tokens", return_value=MOCK_TOKENS) as mock_get_tokens, \
-         patch.object(mcc_auth.keycloak, "decode_token", return_value=MOCK_BAD_USER_INFO) as mock_decode_token:
+    with patch.object(mcc_auth.keycloak, "get_tokens", new_callable=AsyncMock, return_value=MOCK_TOKENS) as mock_get_tokens, \
+         patch.object(mcc_auth.keycloak, "decode_token", new_callable=AsyncMock, return_value=MOCK_BAD_USER_INFO) as mock_decode_token:
 
         response = client.get(f"{AUTH_PREFIX}/callback?code=temp_code", follow_redirects=False)
 

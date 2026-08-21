@@ -3,6 +3,7 @@ from urllib.parse import urlencode
 from uuid import UUID
 
 from fastapi import Depends, Request, status
+from fastapi.concurrency import run_in_threadpool
 from fastapi.exceptions import HTTPException
 from jwcrypto.jwt import JWTExpired
 from keycloak import KeycloakAdmin, KeycloakError, KeycloakOpenID, KeycloakOpenIDConnection
@@ -56,18 +57,32 @@ class KeycloakClient:
         )
         return f"{self.config.url}/realms/{self.config.realm}/protocol/openid-connect/logout?{params}"
 
-    def get_tokens(self, code: str) -> dict[str, Any]:
-        """Makes API call to keycloak service to get user tokens."""
-        return self.internal_client.token(
+    async def get_tokens(self, code: str) -> dict[str, Any]:
+        """
+        Makes API call to keycloak service to get user tokens.
+
+        :param code: the authorization code returned by keycloak's login redirect.
+        :return: the token set (access/id/refresh tokens) from keycloak.
+        """
+        # python-keycloak is synchronous; offload the HTTP call so it doesn't block the loop.
+        tokens: dict[str, Any] = await run_in_threadpool(
+            self.internal_client.token,
             grant_type="authorization_code",
             code=code,
             redirect_uri=self.config.callback_url,
         )
+        return tokens
 
-    def decode_token(self, token: str) -> dict[str, Any]:
-        """Decodes and verifies keycloak tokens via JWKS signature verification."""
+    async def decode_token(self, token: str) -> dict[str, Any]:
+        """
+        Decodes and verifies keycloak tokens via JWKS signature verification.
+
+        :param token: the encoded JWT to decode and verify.
+        :return: the decoded token claims.
+        """
         try:
-            claims: dict[str, Any] = self.internal_client.decode_token(token)
+            # Offload the (potentially network-bound, synchronous) JWKS verification off the loop.
+            claims: dict[str, Any] = await run_in_threadpool(self.internal_client.decode_token, token)
         except JWTExpired as e:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired") from e
         except KeycloakError as e:
@@ -79,26 +94,36 @@ class KeycloakClient:
             raise ValueError("Invalid token audience")
         return claims
 
-    def authenticate(self, request: Request) -> dict[str, Any]:
-        """Authenticates user tokens."""
+    async def authenticate(self, request: Request) -> dict[str, Any]:
+        """
+        Authenticates user tokens.
+
+        :param request: the incoming request carrying the access_token cookie.
+        :return: the decoded token claims.
+        """
         access_token = request.cookies.get("access_token")
         if not access_token:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
         try:
-            return self.decode_token(access_token)
+            return await self.decode_token(access_token)
         except KeycloakError as e:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token") from e
 
-    def get_current_user(self, request: Request) -> MCCUsers:
+    async def get_current_user(self, request: Request) -> MCCUsers:
         """Authenticates user tokens and yields their corresponding MCCUsers objects."""
-        user_info = self.authenticate(request)
+        user_info = await self.authenticate(request)
         try:
-            return MCCUsersWrapper().get_by_id(UUID(user_info["sub"]))
+            return await MCCUsersWrapper().get_by_id(UUID(user_info["sub"]))
         except ValueError as e:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found") from e
 
-    def sync_user_changes(self, user_id: UUID, data: dict[str, Any]) -> None:
-        """Syncs user information changes to the Keycloak service"""
+    async def sync_user_changes(self, user_id: UUID, data: dict[str, Any]) -> None:
+        """
+        Syncs user information changes to the Keycloak service.
+
+        :param user_id: the keycloak/MCC user id to update.
+        :param data: the new field values to push to keycloak.
+        """
         payload: dict[str, Any] = {
             "email": "email",
             "firstName": "first_name",
@@ -109,14 +134,18 @@ class KeycloakClient:
             payload[key] = data[value]
 
         try:
-            self.admin_client.update_user(user_id=str(user_id), payload=payload)
+            await run_in_threadpool(self.admin_client.update_user, user_id=str(user_id), payload=payload)
         except ValueError as e:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found") from e
 
-    def sync_user_deletion(self, user_id: UUID) -> None:
-        """Syncs a user deletion to the Keycloak service"""
+    async def sync_user_deletion(self, user_id: UUID) -> None:
+        """
+        Syncs a user deletion to the Keycloak service.
+
+        :param user_id: the keycloak/MCC user id to delete.
+        """
         try:
-            self.admin_client.delete_user(user_id=str(user_id))
+            await run_in_threadpool(self.admin_client.delete_user, user_id=str(user_id))
         except ValueError as e:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found") from e
 

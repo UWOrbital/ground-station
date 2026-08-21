@@ -2,7 +2,7 @@ import pytest
 import json
 import app.api.v1.mcc.routes.users as mcc_users
 from uuid import UUID
-from unittest.mock import patch, PropertyMock, MagicMock
+from unittest.mock import patch, PropertyMock, MagicMock, AsyncMock
 from app.mcc_keycloak.client import KeycloakClient
 from fastapi.testclient import TestClient
 from app.data.models.mcc_user_models import MCCUsers
@@ -70,8 +70,8 @@ def test_users_update_endpoint(client):
         "phone_number": "1234",
     }
 
-    with patch.object(mcc_users.MCCUsersWrapper, "update", return_value=MOCK_USER) as mock_update, \
-         patch.object(mcc_users.keycloak, "sync_user_changes", return_value=None) as mock_sync_changes:
+    with patch.object(mcc_users.MCCUsersWrapper, "update", new_callable=AsyncMock, return_value=MOCK_USER) as mock_update, \
+         patch.object(mcc_users.keycloak, "sync_user_changes", new_callable=AsyncMock, return_value=None) as mock_sync_changes:
         response = client.patch(f"{USERS_PREFIX}/me", json=payload)
 
     assert response.status_code == 200
@@ -97,8 +97,8 @@ def test_users_update_endpoint_failure(client):
         "last_name": "updated_last_name",
     }
 
-    with patch.object(mcc_users.MCCUsersWrapper, "update", side_effect=RuntimeError()) as mock_update, \
-         patch.object(mcc_users.keycloak, "sync_user_changes", return_value=None) as mock_sync_changes:
+    with patch.object(mcc_users.MCCUsersWrapper, "update", new_callable=AsyncMock, side_effect=RuntimeError()) as mock_update, \
+         patch.object(mcc_users.keycloak, "sync_user_changes", new_callable=AsyncMock, return_value=None) as mock_sync_changes:
         response = client.patch(f"{USERS_PREFIX}/me", json=payload)
 
     assert response.status_code == 500
@@ -110,8 +110,8 @@ def test_users_update_endpoint_failure(client):
 
 def test_users_delete_endpoint(client):
     """Test that delete /me can handle delete users by their id."""
-    with patch.object(mcc_users.MCCUsersWrapper, "delete_by_id", return_value=MOCK_USER) as mock_delete_by_id, \
-         patch.object(mcc_users.keycloak, "sync_user_deletion", return_value=None) as mock_sync_deletion:
+    with patch.object(mcc_users.MCCUsersWrapper, "delete_by_id", new_callable=AsyncMock, return_value=MOCK_USER) as mock_delete_by_id, \
+         patch.object(mcc_users.keycloak, "sync_user_deletion", new_callable=AsyncMock, return_value=None) as mock_sync_deletion:
         response = client.delete(f"{USERS_PREFIX}/me", follow_redirects=False)
 
     assert response.status_code == 200
@@ -121,8 +121,8 @@ def test_users_delete_endpoint(client):
 
 def test_users_delete_endpoint_failure(client):
     """Test that delete /me does not call keycloak sync if DB fails to update."""
-    with patch.object(mcc_users.MCCUsersWrapper, "delete_by_id", side_effect=ValueError()) as mock_delete_by_id, \
-         patch.object(mcc_users.keycloak, "sync_user_deletion", return_value=None) as mock_sync_deletion:
+    with patch.object(mcc_users.MCCUsersWrapper, "delete_by_id", new_callable=AsyncMock, side_effect=ValueError()) as mock_delete_by_id, \
+         patch.object(mcc_users.keycloak, "sync_user_deletion", new_callable=AsyncMock, return_value=None) as mock_sync_deletion:
         response = client.delete(f"{USERS_PREFIX}/me", follow_redirects=False)
 
     assert response.status_code == 404

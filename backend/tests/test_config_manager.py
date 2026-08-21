@@ -60,7 +60,7 @@ def test_database_connection_string(monkeypatch):
     db = cfg.db
 
     assert db.password.get_secret_value() == "testpassword"
-    expected_url = "postgresql://testuser:testpassword@localhost:5432/testdb"
+    expected_url = "postgresql+asyncpg://testuser:testpassword@localhost:5432/testdb"
     assert db.connection_string == expected_url
 
 

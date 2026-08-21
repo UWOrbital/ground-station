@@ -38,7 +38,7 @@ async def get_satellite_status() -> SatelliteStatusResponse:
     :return: SatelliteStatusResponse with status, last contact, session duration, and telemetry data
     """
 
-    session = CommsSessionWrapper().get_most_recent_session()
+    session = await CommsSessionWrapper().get_most_recent_session()
 
     if session is None:
         return SatelliteStatusResponse(
@@ -61,7 +61,7 @@ async def get_satellite_status() -> SatelliteStatusResponse:
 
     telemetry_data = []
     for telemetry_id, label in TELEMETRY_IDS.items():
-        result = TelemetryWrapper().get_most_recent_by_type(telemetry_id)
+        result = await TelemetryWrapper().get_most_recent_by_type(telemetry_id)
         if result is not None:
             telemetry_data.append(
                 TelemetryDataResponse(

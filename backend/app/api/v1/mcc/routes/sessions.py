@@ -24,5 +24,5 @@ async def get_comms_sessions(
     :param limit: maximum number of sessions to return (1-500, default 100)
     :return: matching session entries
     """
-    items = CommsSessionWrapper().get_in_range(start_after, start_before, limit)
+    items = await CommsSessionWrapper().get_in_range(start_after, start_before, limit)
     return CommsSessionsResponse(data=items)
