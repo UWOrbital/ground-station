@@ -21,7 +21,7 @@ async def get_commands() -> CommandsResponse:
 
     :return: All command entries.
     """
-    return CommandsResponse(data=CommandsWrapper().get_all())
+    return CommandsResponse(data=await CommandsWrapper().get_all())
 
 
 @commands_router.get("/session/{session_id}", dependencies=[keycloak.require_auth])
@@ -32,7 +32,7 @@ async def get_commands_by_session(session_id: UUID) -> CommandsResponse:
     :param session_id: UUID of the target session.
     :return: All commands tied to that session.
     """
-    return CommandsResponse(data=CommandsWrapper().get_by_session(session_id))
+    return CommandsResponse(data=await CommandsWrapper().get_by_session(session_id))
 
 
 @commands_router.post("/", dependencies=[keycloak.require_auth])
@@ -48,7 +48,7 @@ async def create_command(
     :return: The newly created command.
     """
     try:
-        session = CommsSessionWrapper().get_by_id(request.session_id)
+        session = await CommsSessionWrapper().get_by_id(request.session_id)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
 
@@ -57,7 +57,7 @@ async def create_command(
     except ValueError as e:
         raise HTTPException(status_code=409, detail=str(e)) from e
 
-    created_command = CommandsWrapper().create(
+    created_command = await CommandsWrapper().create(
         {
             "type_": request.type_,
             "params": request.params,
@@ -78,7 +78,7 @@ async def get_command(command_id: UUID) -> CommandResponse:
     :return: The matching command entry.
     """
     try:
-        command = CommandsWrapper().get_by_id(command_id)
+        command = await CommandsWrapper().get_by_id(command_id)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
     return CommandResponse(data=command)
@@ -97,15 +97,15 @@ async def update_command(command_id: UUID, request: UpdateCommandRequest) -> Com
     if not updates:
         raise HTTPException(status_code=422, detail="At least one field must be provided to update")
     try:
-        existing_command = CommandsWrapper().get_by_id(command_id)
+        existing_command = await CommandsWrapper().get_by_id(command_id)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
     try:
-        session = CommsSessionWrapper().get_by_id(existing_command.session_id)
+        session = await CommsSessionWrapper().get_by_id(existing_command.session_id)
         assert_not_locked_out(session)
     except ValueError as e:
         raise HTTPException(status_code=409, detail=str(e)) from e
-    updated_command = CommandsWrapper().update(command_id, updates)
+    updated_command = await CommandsWrapper().update(command_id, updates)
     return CommandResponse(data=updated_command)
 
 
@@ -118,13 +118,13 @@ async def delete_command(command_id: UUID) -> DeleteCommandResponse:
     :return: Confirmation message with the deleted command ID.
     """
     try:
-        existing_command = CommandsWrapper().get_by_id(command_id)
+        existing_command = await CommandsWrapper().get_by_id(command_id)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
     try:
-        session = CommsSessionWrapper().get_by_id(existing_command.session_id)
+        session = await CommsSessionWrapper().get_by_id(existing_command.session_id)
         assert_not_locked_out(session)
     except ValueError as e:
         raise HTTPException(status_code=409, detail=str(e)) from e
-    CommandsWrapper().delete_by_id(command_id)
+    await CommandsWrapper().delete_by_id(command_id)
     return DeleteCommandResponse(message=f"Command {command_id} deleted successfully")

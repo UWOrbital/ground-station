@@ -11,7 +11,7 @@ mcc_users_router = APIRouter(tags=["MCC", "Users"], dependencies=[keycloak.requi
 
 
 @mcc_users_router.get("/me")
-def get_me(user: MCCUsers = Depends(keycloak.get_current_user)) -> UserInformationResponse:
+async def get_me(user: MCCUsers = Depends(keycloak.get_current_user)) -> UserInformationResponse:
     """
     Login endpoint for redirecting to keycloak's login/registration page
     """
@@ -25,7 +25,7 @@ def get_me(user: MCCUsers = Depends(keycloak.get_current_user)) -> UserInformati
 
 
 @mcc_users_router.patch("/me")
-def update_me(
+async def update_me(
     request: UpdateUserRequest, user: MCCUsers = Depends(keycloak.get_current_user)
 ) -> UserInformationResponse:
     """
@@ -40,7 +40,7 @@ def update_me(
     }
 
     try:
-        MCCUsersWrapper().update(user.id, data)
+        await MCCUsersWrapper().update(user.id, data)
     except ValueError as e:
         raise HTTPException(status_code=404, detail="User not found or field unavailable") from e
     except TypeError as e:
@@ -48,20 +48,20 @@ def update_me(
     except RuntimeError as e:
         raise HTTPException(status_code=500, detail="Failed to update user") from e
 
-    keycloak.sync_user_changes(user.id, data)
+    await keycloak.sync_user_changes(user.id, data)
 
-    return get_me(user)
+    return await get_me(user)
 
 
 @mcc_users_router.delete("/me")
-def delete_me(user: MCCUsers = Depends(keycloak.get_current_user)) -> dict[str, str]:
+async def delete_me(user: MCCUsers = Depends(keycloak.get_current_user)) -> dict[str, str]:
     """
     Endpoint for deleting user from keycloak service in use.
     """
     try:
-        MCCUsersWrapper().delete_by_id(user.id)
+        await MCCUsersWrapper().delete_by_id(user.id)
     except ValueError as e:
         raise HTTPException(status_code=404, detail="User not found") from e
 
-    keycloak.sync_user_deletion(user.id)
+    await keycloak.sync_user_deletion(user.id)
     return {"status": "success"}

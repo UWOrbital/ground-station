@@ -5,7 +5,7 @@ from app.data.data_wrappers.wrappers import AROUserCallsignWrapper, AROUsersWrap
 from app.data.models.aro_user_models import AROUsers
 
 
-def callsign_verified(qual_levels: tuple[bool, ...], user_call_sign: str) -> bool:
+async def callsign_verified(qual_levels: tuple[bool, ...], user_call_sign: str) -> bool:
     """
     Checks call_sign against the government CSV file.
 
@@ -13,7 +13,7 @@ def callsign_verified(qual_levels: tuple[bool, ...], user_call_sign: str) -> boo
     :user_call_sign: str: a user's provided call sign
     """
     callsigns = AROUserCallsignWrapper()
-    record = callsigns.get_row_by_callsign(user_call_sign)
+    record = await callsigns.get_row_by_callsign(user_call_sign)
 
     if not record:
         return False
@@ -34,7 +34,7 @@ def callsign_verified(qual_levels: tuple[bool, ...], user_call_sign: str) -> boo
     return True
 
 
-def verify_user_callsign(request: CallsignRequest, user: AROUsers) -> AROUsers:
+async def verify_user_callsign(request: CallsignRequest, user: AROUsers) -> AROUsers:
     """
     Verify a user's callsign and update their verification status if valid.
 
@@ -51,11 +51,11 @@ def verify_user_callsign(request: CallsignRequest, user: AROUsers) -> AROUsers:
         request.qual_level_e,
     )
 
-    if not callsign_verified(qual_levels=qual_levels, user_call_sign=request.call_sign):
+    if not await callsign_verified(qual_levels=qual_levels, user_call_sign=request.call_sign):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Callsign unable to be verified.")
 
     users = AROUsersWrapper()
-    updated_user = users.update(
+    updated_user = await users.update(
         user.id,
         {
             "callsign": request.call_sign,

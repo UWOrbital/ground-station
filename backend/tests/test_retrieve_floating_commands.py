@@ -10,23 +10,23 @@ from app.data.data_wrappers.wrappers import (
 from app.data.enums.transactional import MainPacketType
 
 
-def test_retrieve_floating_commands_filters():
+async def test_retrieve_floating_commands_filters():
     cw = CommandsWrapper()
     mc = MainCommandWrapper()
     pw = PacketWrapper()
     csw = CommsSessionWrapper()
 
-    cmd_type = mc.create(
+    cmd_type = (await mc.create(
         dict(
             id=1,
             name="test",
             data_size=1,
             total_size=1,
         )
-    ).id
+    )).id
 
-    comms_session = csw.create({"id": uuid4(), "start_time": datetime.now(UTC), "end_time": datetime.now(UTC) + timedelta(minutes=5)})
-    packet = pw.create(
+    comms_session = await csw.create({"id": uuid4(), "start_time": datetime.now(UTC), "end_time": datetime.now(UTC) + timedelta(minutes=5)})
+    packet = await pw.create(
         dict(
             id=uuid4(),
             session_id=comms_session.id,
@@ -38,37 +38,37 @@ def test_retrieve_floating_commands_filters():
     )
 
     # A command assigned to a packet is no longer floating
-    cmd_in_packet = cw.create(dict(id=uuid4(), type_=cmd_type, session_id=comms_session.id, packet_id=packet.id, sequence_index=0))
-    cmd_free = cw.create(dict(id=uuid4(), type_=cmd_type, session_id=comms_session.id))
-    cmd_free2 = cw.create(dict(id=uuid4(), type_=cmd_type, session_id=comms_session.id))
+    cmd_in_packet = await cw.create(dict(id=uuid4(), type_=cmd_type, session_id=comms_session.id, packet_id=packet.id, sequence_index=0))
+    cmd_free = await cw.create(dict(id=uuid4(), type_=cmd_type, session_id=comms_session.id))
+    cmd_free2 = await cw.create(dict(id=uuid4(), type_=cmd_type, session_id=comms_session.id))
 
-    result = cw.retrieve_floating_commands()
+    result = await cw.retrieve_floating_commands()
     result_ids = {command.id for command in result}
 
     assert cmd_in_packet.id not in result_ids
     assert result_ids == {cmd_free.id, cmd_free2.id}
 
 
-def test_retrieve_floating_commands_no_packet():
+async def test_retrieve_floating_commands_no_packet():
     cw = CommandsWrapper()
     mc = MainCommandWrapper()
     csw = CommsSessionWrapper()
 
-    cmd_type = mc.create(
+    cmd_type = (await mc.create(
         dict(
             id=2,
             name="test",
             data_size=1,
             total_size=1,
         )
-    ).id
+    )).id
 
     # wrapper layer knows nothing about lockout, only endpoint does
-    comms_session = csw.create({"id": uuid4(), "start_time": datetime.now(UTC), "end_time": datetime.now(UTC) + timedelta(minutes=5)})
+    comms_session = await csw.create({"id": uuid4(), "start_time": datetime.now(UTC), "end_time": datetime.now(UTC) + timedelta(minutes=5)})
 
-    cw.create(dict(id=uuid4(), type_=cmd_type, session_id=comms_session.id))
-    cw.create(dict(id=uuid4(), type_=cmd_type, session_id=comms_session.id))
+    await cw.create(dict(id=uuid4(), type_=cmd_type, session_id=comms_session.id))
+    await cw.create(dict(id=uuid4(), type_=cmd_type, session_id=comms_session.id))
 
-    result = cw.retrieve_floating_commands()
-    expected = cw.get_all()
+    result = await cw.retrieve_floating_commands()
+    expected = await cw.get_all()
     assert {c.id for c in result} == {c.id for c in expected}

@@ -23,8 +23,11 @@ class DatabaseConfig(BaseSettings):
     @property
     def connection_string(self) -> str:
         """
-        Returns the database connection string
+        Returns the async database connection string
+
+        Uses the asyncpg driver so the string is consumable by SQLAlchemy's async engine.
+        Alembic builds its own synchronous URL in migrations/env.py and does not use this.
         """
 
         pwd = self.password.get_secret_value()
-        return f"postgresql://{self.user}:{pwd}@{self.location}:{self.port}/{self.name}"
+        return f"postgresql+asyncpg://{self.user}:{pwd}@{self.location}:{self.port}/{self.name}"

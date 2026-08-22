@@ -1,5 +1,5 @@
 from typing import Optional
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from app.data.data_wrappers.abstract_wrapper import AbstractWrapper
@@ -22,7 +22,14 @@ class MockWrapper(AbstractWrapper[MockModel, int]):
 def mock_session():
     with patch("app.data.data_wrappers.abstract_wrapper.get_db_session") as mock_get_sess:
         mock_sess_instance = MagicMock()
-        mock_get_sess.return_value.__enter__.return_value = mock_sess_instance
+        # DB operations are awaited by the async wrapper, so they must be AsyncMocks.
+        mock_sess_instance.get = AsyncMock()
+        mock_sess_instance.commit = AsyncMock()
+        mock_sess_instance.refresh = AsyncMock()
+        mock_sess_instance.delete = AsyncMock()
+        # get_db_session() is used as an async context manager (`async with`).
+        mock_get_sess.return_value.__aenter__ = AsyncMock(return_value=mock_sess_instance)
+        mock_get_sess.return_value.__aexit__ = AsyncMock(return_value=None)
         yield mock_sess_instance
 
 
@@ -36,10 +43,10 @@ def obj():
     return MockModel(id=1, name="old", age=25)
 
 
-def test_update_success(wrapper, mock_session, obj):
+async def test_update_success(wrapper, mock_session, obj):
     mock_session.get.return_value = obj
 
-    result = wrapper.update(obj.id, {"name": "new", "age": 18})
+    result = await wrapper.update(obj.id, {"name": "new", "age": 18})
 
     mock_session.get.assert_called_once_with(MockModel, 1)
 
@@ -50,46 +57,46 @@ def test_update_success(wrapper, mock_session, obj):
     mock_session.commit.assert_called_once()
 
 
-def test_update_not_found(wrapper, mock_session, obj):
+async def test_update_not_found(wrapper, mock_session, obj):
     mock_session.get.return_value = None
 
     with pytest.raises(ValueError):
-        wrapper.update(obj.id, {"name": "new"})
+        await wrapper.update(obj.id, {"name": "new"})
 
     mock_session.commit.assert_not_called()
 
 
-def test_update_field_not_found(wrapper, mock_session, obj):
+async def test_update_field_not_found(wrapper, mock_session, obj):
     mock_session.get.return_value = obj
 
     with pytest.raises(ValueError):
-        wrapper.update(obj.id, {"test": "test"})
+        await wrapper.update(obj.id, {"test": "test"})
 
     mock_session.commit.assert_not_called()
 
 
-def test_update_uneditable_field(wrapper, mock_session, obj):
+async def test_update_uneditable_field(wrapper, mock_session, obj):
     mock_session.get.return_value = obj
 
     with pytest.raises(ValueError):
-        wrapper.update(obj.id, {"id": 2})
+        await wrapper.update(obj.id, {"id": 2})
 
     mock_session.commit.assert_not_called()
 
 
-def test_update_type_mismatch(wrapper, mock_session, obj):
+async def test_update_type_mismatch(wrapper, mock_session, obj):
     mock_session.get.return_value = obj
 
     with pytest.raises(TypeError):
-        wrapper.update(obj.id, {"age": "five"})
+        await wrapper.update(obj.id, {"age": "five"})
 
     mock_session.commit.assert_not_called()
 
 
-def test_update_partial(wrapper, mock_session, obj):
+async def test_update_partial(wrapper, mock_session, obj):
     mock_session.get.return_value = obj
 
-    result = wrapper.update(obj.id, {"name": "new"})
+    result = await wrapper.update(obj.id, {"name": "new"})
 
     assert result.name == "new"
     assert result.age == 25
@@ -97,10 +104,10 @@ def test_update_partial(wrapper, mock_session, obj):
     mock_session.commit.assert_called_once()
 
 
-def test_update_nullify(wrapper, mock_session, obj):
+async def test_update_nullify(wrapper, mock_session, obj):
     mock_session.get.return_value = obj
 
-    result = wrapper.update(obj.id, {"name": None})
+    result = await wrapper.update(obj.id, {"name": None})
 
     assert not result.name
     assert result.age == 25
@@ -108,10 +115,10 @@ def test_update_nullify(wrapper, mock_session, obj):
     mock_session.commit.assert_called_once()
 
 
-def test_update_unnullify(wrapper, mock_session, obj):
+async def test_update_unnullify(wrapper, mock_session, obj):
     mock_session.get.return_value = obj
 
-    result = wrapper.update(obj.id, {"address": "home"})
+    result = await wrapper.update(obj.id, {"address": "home"})
 
     assert result.name == "old"
     assert result.age == 25
@@ -120,10 +127,10 @@ def test_update_unnullify(wrapper, mock_session, obj):
     mock_session.commit.assert_called_once()
 
 
-def test_update_unnullify_error(wrapper, mock_session, obj):
+async def test_update_unnullify_error(wrapper, mock_session, obj):
     mock_session.get.return_value = obj
 
     with pytest.raises(RuntimeError):
-        wrapper.update(obj.id, {"address": 5})
+        await wrapper.update(obj.id, {"address": 5})
 
     mock_session.commit.assert_not_called()

@@ -14,7 +14,7 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
     # Initialize FastAPI Cache (in memory cache)
     FastAPICache.init(InMemoryBackend())
 
-    # Must all the get_db_session each time when pass it into a separate function.
-    # Otherwise, will get transaction is inactive error
-    setup_database(get_db_session())
+    # Create the schemas on startup using a fresh async session.
+    async with get_db_session() as session:
+        await setup_database(session)
     yield

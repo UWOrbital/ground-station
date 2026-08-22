@@ -11,5 +11,5 @@ async def get_telemetry() -> TelemetryListResponse:
     """
     Retrieves all telemetry.
     """
-    telemetry = TelemetryWrapper().get_all()
+    telemetry = await TelemetryWrapper().get_all()
     return TelemetryListResponse(data=telemetry)

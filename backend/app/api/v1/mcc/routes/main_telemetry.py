@@ -15,7 +15,7 @@ async def get_all_telemetries() -> MainTelemetriesResponse:
 
     :return: list of all telemetries
     """
-    items = MainTelemetryWrapper().get_all()
+    items = await MainTelemetryWrapper().get_all()
     return MainTelemetriesResponse(data=items)
 
 
@@ -28,7 +28,7 @@ async def get_telemetry_by_id(telemetry_id: int) -> MainTelemetryResponse:
     :return: the matching telemetry.
     """
     try:
-        telemetry = MainTelemetryWrapper().get_by_id(telemetry_id)
+        telemetry = await MainTelemetryWrapper().get_by_id(telemetry_id)
     except ValueError as e:
         raise HTTPException(status_code=404, detail="Telemetry not found") from e
     return MainTelemetryResponse(data=telemetry)

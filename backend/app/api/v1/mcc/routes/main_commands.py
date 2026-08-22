@@ -15,7 +15,7 @@ async def get_all_commands() -> MainCommandsResponse:
 
     :return: the list of all commands.
     """
-    items = MainCommandWrapper().get_all()
+    items = await MainCommandWrapper().get_all()
     return MainCommandsResponse(data=items)
 
 
@@ -28,7 +28,7 @@ async def get_command_by_id(command_id: int) -> MainCommandResponse:
     :return: the matching command.
     """
     try:
-        command = MainCommandWrapper().get_by_id(command_id)
+        command = await MainCommandWrapper().get_by_id(command_id)
     except ValueError as e:
         raise HTTPException(status_code=404, detail="Command not found") from e
     return MainCommandResponse(data=command)

@@ -1,22 +1,23 @@
 from datetime import UTC, datetime
 from uuid import uuid4
 
-import pytest
+import pytest_asyncio
 from app.data.enums.transactional import SessionStatus
 from app.data.models.main_models import MainTelemetry
 from app.data.models.transactional_models import CommsSession, Packet, Telemetry
-from fastapi.testclient import TestClient
+from httpx import ASGITransport, AsyncClient
 from main import app
 
 
-@pytest.fixture
-def client() -> TestClient:
-    """TestClient with no auth overrides (telemetry endpoint is unauthenticated)."""
-    yield TestClient(app)
+@pytest_asyncio.fixture
+async def client() -> AsyncClient:
+    """AsyncClient with no auth overrides (telemetry endpoint is unauthenticated)."""
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        yield ac
 
 
-@pytest.fixture(autouse=True)
-def setup_main_telemetries(db_session):
+@pytest_asyncio.fixture(autouse=True)
+async def setup_main_telemetries(db_session):
     """Create MainTelemetry reference records needed for the join in get_all()."""
     telemetries = [
         MainTelemetry(id=1, name="Battery Voltage", format="float", data_size=4, total_size=4),
@@ -25,11 +26,11 @@ def setup_main_telemetries(db_session):
     ]
     for t in telemetries:
         db_session.add(t)
-    db_session.commit()
+    await db_session.commit()
 
 
-@pytest.fixture
-def comms_session(db_session) -> CommsSession:
+@pytest_asyncio.fixture
+async def comms_session(db_session) -> CommsSession:
     """Create a test comms session."""
     session = CommsSession(
         id=uuid4(),
@@ -38,12 +39,12 @@ def comms_session(db_session) -> CommsSession:
         status=SessionStatus.COMPLETED,
     )
     db_session.add(session)
-    db_session.commit()
+    await db_session.commit()
     return session
 
 
-@pytest.fixture
-def packet(db_session, comms_session: CommsSession) -> Packet:
+@pytest_asyncio.fixture
+async def packet(db_session, comms_session: CommsSession) -> Packet:
     """Create a test packet linked to the comms session."""
     pkt = Packet(
         id=uuid4(),
@@ -54,14 +55,14 @@ def packet(db_session, comms_session: CommsSession) -> Packet:
         offset=0,
     )
     db_session.add(pkt)
-    db_session.commit()
+    await db_session.commit()
     return pkt
 
 
 # ---------------------------------------------Testing the GET / endpoint--------------------------------------------- #
 
 
-def test_get_telemetry_duplicate_types(client: TestClient, db_session) -> None:
+async def test_get_telemetry_duplicate_types(client: AsyncClient, db_session) -> None:
     """Test that multiple telemetry entries sharing the same type_ are all returned (no deduplication)."""
     t1 = Telemetry(
         id=uuid4(),
@@ -77,9 +78,9 @@ def test_get_telemetry_duplicate_types(client: TestClient, db_session) -> None:
     )
     db_session.add(t1)
     db_session.add(t2)
-    db_session.commit()
+    await db_session.commit()
 
-    response = client.get("/api/v1/mcc/telemetry/")
+    response = await client.get("/api/v1/mcc/telemetry/")
 
     assert response.status_code == 200
     data = response.json()["data"]
@@ -88,7 +89,7 @@ def test_get_telemetry_duplicate_types(client: TestClient, db_session) -> None:
     assert data[1]["type"] == "Battery Voltage"
 
 
-def test_get_telemetry_value_none(client: TestClient, db_session) -> None:
+async def test_get_telemetry_value_none(client: AsyncClient, db_session) -> None:
     """Test that telemetry with value=None serializes as null in the response."""
     telemetry = Telemetry(
         id=uuid4(),
@@ -97,9 +98,9 @@ def test_get_telemetry_value_none(client: TestClient, db_session) -> None:
         timestamp=datetime(2025, 6, 1, 12, 0, 5, tzinfo=UTC),
     )
     db_session.add(telemetry)
-    db_session.commit()
+    await db_session.commit()
 
-    response = client.get("/api/v1/mcc/telemetry/")
+    response = await client.get("/api/v1/mcc/telemetry/")
 
     assert response.status_code == 200
     data = response.json()["data"]
@@ -107,7 +108,7 @@ def test_get_telemetry_value_none(client: TestClient, db_session) -> None:
     assert data[0]["value"] is None
 
 
-def test_get_telemetry_success(client: TestClient, db_session) -> None:
+async def test_get_telemetry_success(client: AsyncClient, db_session) -> None:
     """Test successful retrieval of all telemetry entries."""
     telemetry = Telemetry(
         id=uuid4(),
@@ -116,9 +117,9 @@ def test_get_telemetry_success(client: TestClient, db_session) -> None:
         timestamp=datetime(2025, 6, 1, 12, 0, 5, tzinfo=UTC),
     )
     db_session.add(telemetry)
-    db_session.commit()
+    await db_session.commit()
 
-    response = client.get("/api/v1/mcc/telemetry/")
+    response = await client.get("/api/v1/mcc/telemetry/")
 
     assert response.status_code == 200
     data = response.json()["data"]
@@ -127,15 +128,15 @@ def test_get_telemetry_success(client: TestClient, db_session) -> None:
     assert data[0]["value"] == "3.7"
 
 
-def test_get_telemetry_empty(client: TestClient) -> None:
+async def test_get_telemetry_empty(client: AsyncClient) -> None:
     """Test that an empty telemetry table returns an empty list."""
-    response = client.get("/api/v1/mcc/telemetry/")
+    response = await client.get("/api/v1/mcc/telemetry/")
 
     assert response.status_code == 200
     assert response.json()["data"] == []
 
 
-def test_get_telemetry_multiple_types(client: TestClient, db_session) -> None:
+async def test_get_telemetry_multiple_types(client: AsyncClient, db_session) -> None:
     """Test retrieving telemetry entries of different types."""
     t1 = Telemetry(
         id=uuid4(),
@@ -151,9 +152,9 @@ def test_get_telemetry_multiple_types(client: TestClient, db_session) -> None:
     )
     db_session.add(t1)
     db_session.add(t2)
-    db_session.commit()
+    await db_session.commit()
 
-    response = client.get("/api/v1/mcc/telemetry/")
+    response = await client.get("/api/v1/mcc/telemetry/")
 
     assert response.status_code == 200
     data = response.json()["data"]
@@ -162,8 +163,8 @@ def test_get_telemetry_multiple_types(client: TestClient, db_session) -> None:
     assert types == {"Battery Voltage", "Temperature"}
 
 
-def test_get_telemetry_with_packet_and_session(
-    client: TestClient, db_session, comms_session: CommsSession, packet: Packet
+async def test_get_telemetry_with_packet_and_session(
+    client: AsyncClient, db_session, comms_session: CommsSession, packet: Packet
 ) -> None:
     """Test that telemetry with a packet/session chain populates subrows."""
     telemetry = Telemetry(
@@ -174,9 +175,9 @@ def test_get_telemetry_with_packet_and_session(
         timestamp=datetime(2025, 6, 1, 12, 0, 5, tzinfo=UTC),
     )
     db_session.add(telemetry)
-    db_session.commit()
+    await db_session.commit()
 
-    response = client.get("/api/v1/mcc/telemetry/")
+    response = await client.get("/api/v1/mcc/telemetry/")
 
     assert response.status_code == 200
     data = response.json()["data"]
@@ -194,7 +195,7 @@ def test_get_telemetry_with_packet_and_session(
     assert sub["obc_state"] == "completed"
 
 
-def test_get_telemetry_without_packet(client: TestClient, db_session) -> None:
+async def test_get_telemetry_without_packet(client: AsyncClient, db_session) -> None:
     """Test that telemetry without a packet_id still returns (subrows use empty strings)."""
     telemetry = Telemetry(
         id=uuid4(),
@@ -204,9 +205,9 @@ def test_get_telemetry_without_packet(client: TestClient, db_session) -> None:
         timestamp=datetime(2025, 6, 1, 12, 0, 15, tzinfo=UTC),
     )
     db_session.add(telemetry)
-    db_session.commit()
+    await db_session.commit()
 
-    response = client.get("/api/v1/mcc/telemetry/")
+    response = await client.get("/api/v1/mcc/telemetry/")
 
     assert response.status_code == 200
     data = response.json()["data"]
@@ -223,7 +224,7 @@ def test_get_telemetry_without_packet(client: TestClient, db_session) -> None:
     assert sub["obc_state"] == ""
 
 
-def test_get_telemetry_response_shape(client: TestClient, db_session) -> None:
+async def test_get_telemetry_response_shape(client: AsyncClient, db_session) -> None:
     """Test that the response model shape is correct (id, type, value, timestamp, subrows)."""
     telemetry = Telemetry(
         id=uuid4(),
@@ -232,9 +233,9 @@ def test_get_telemetry_response_shape(client: TestClient, db_session) -> None:
         timestamp=datetime(2025, 6, 1, 12, 1, 0, tzinfo=UTC),
     )
     db_session.add(telemetry)
-    db_session.commit()
+    await db_session.commit()
 
-    response = client.get("/api/v1/mcc/telemetry/")
+    response = await client.get("/api/v1/mcc/telemetry/")
     assert response.status_code == 200
     data = response.json()["data"]
     assert len(data) == 1

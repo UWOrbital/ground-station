@@ -15,7 +15,8 @@ dependencies = [
     # database
     "sqlmodel==0.0.38",
     "alembic==1.18.4",
-    "psycopg2-binary==2.9.12",
+    "asyncpg==0.30.0",
+    "greenlet==3.2.4",
     # settings
     "pydantic-settings==2.14.1",
     # security
@@ -48,7 +49,6 @@ dev = [
     "pytest-asyncio>=1.4.0",
     "pytest-cov==7.1.0",
     "testcontainers>=4.14.2",
-    "psycopg[binary]>=3.1.0",
     "httpx2>=0.28.0",
     "hypothesis>=6.100.0,<7.0.0",
     # static checking
@@ -70,6 +70,9 @@ sdist.only-include = ["backend"]
 [tool.pytest.ini_options]
 addopts = "-v"
 testpaths = ["backend/tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
 markers = [
     "integration: marks tests that depend on external services or large workloads",
 ]

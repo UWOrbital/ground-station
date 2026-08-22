@@ -14,7 +14,7 @@ async def get_latest_image() -> ImageResponse | dict[str, str]:
     :return: the latest Image, or a message if none exist.
     """
     wrapper = ImageWrapper()
-    image = wrapper.get_latest()
+    image = await wrapper.get_latest()
     if image is None:
         return {"message": "No images available"}
     return ImageResponse(id=image.id, data=image.data)

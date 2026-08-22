@@ -41,7 +41,7 @@ def create_access_token(user: AROUsers) -> tuple[str, datetime]:
     return encoded_jwt, expiry
 
 
-def issue_refresh_token(user_id: UUID, family_id: UUID | None = None) -> str:
+async def issue_refresh_token(user_id: UUID, family_id: UUID | None = None) -> str:
     """
     Create a new refresh-token row, return the raw (unhashed) value.
 
@@ -52,7 +52,7 @@ def issue_refresh_token(user_id: UUID, family_id: UUID | None = None) -> str:
     raw_token = secrets.token_urlsafe(32)
     family_id = family_id or uuid4()
 
-    AROUserAuthTokenWrapper().create(
+    await AROUserAuthTokenWrapper().create(
         {
             "token_hash": _hash_refresh_token(raw_token),
             "family_id": family_id,
@@ -66,7 +66,7 @@ def issue_refresh_token(user_id: UUID, family_id: UUID | None = None) -> str:
     return raw_token
 
 
-def rotate_refresh_token(raw_token: str) -> tuple[str, AROUsers]:
+async def rotate_refresh_token(raw_token: str) -> tuple[str, AROUsers]:
     """
     Exchange one refresh token for the next one in its family.
 
@@ -76,7 +76,7 @@ def rotate_refresh_token(raw_token: str) -> tuple[str, AROUsers]:
     """
     token_hash = _hash_refresh_token(raw_token)
 
-    existing = AROUserAuthTokenWrapper().get_first_by(token_hash=token_hash)
+    existing = await AROUserAuthTokenWrapper().get_first_by(token_hash=token_hash)
     if existing is None:
         # Unknown token
         raise HTTPException(
@@ -86,7 +86,7 @@ def rotate_refresh_token(raw_token: str) -> tuple[str, AROUsers]:
 
     if existing.rotated_at is not None:
         # Reuse detected -> kill all descendants
-        revoke_family(existing.family_id)
+        await revoke_family(existing.family_id)
 
         raise HTTPException(
             status.HTTP_401_UNAUTHORIZED,
@@ -99,20 +99,20 @@ def rotate_refresh_token(raw_token: str) -> tuple[str, AROUsers]:
             detail={"message": "Session expired.", "code": "refresh_token_invalid"},
         )
 
-    if not AROUserAuthTokenWrapper().claim_rotation(existing.id):
+    if not await AROUserAuthTokenWrapper().claim_rotation(existing.id):
         # something else rotated this row, so close with 401
         raise HTTPException(
             status.HTTP_401_UNAUTHORIZED,
             detail={"message": "Session invalid.", "code": "refresh_token_invalid"},
         )
 
-    new_raw = issue_refresh_token(existing.user_id, existing.family_id)
-    user = AROUsersWrapper().get_by_id(existing.user_id)
+    new_raw = await issue_refresh_token(existing.user_id, existing.family_id)
+    user = await AROUsersWrapper().get_by_id(existing.user_id)
 
     return (new_raw, user)
 
 
-def revoke_token(refresh_token: str | None) -> None:
+async def revoke_token(refresh_token: str | None) -> None:
     """
     Invalidate a single refresh token.
 
@@ -121,19 +121,19 @@ def revoke_token(refresh_token: str | None) -> None:
     """
     if refresh_token is not None:
         token_hash = _hash_refresh_token(refresh_token)
-        existing = AROUserAuthTokenWrapper().get_first_by(token_hash=token_hash)
+        existing = await AROUserAuthTokenWrapper().get_first_by(token_hash=token_hash)
         if existing is not None:
-            AROUserAuthTokenWrapper().update(existing.id, {"revoked_at": datetime.now(UTC)})
+            await AROUserAuthTokenWrapper().update(existing.id, {"revoked_at": datetime.now(UTC)})
 
 
-def revoke_family(family_id: UUID) -> int:
+async def revoke_family(family_id: UUID) -> int:
     """
     Invalidate every refresh token descended from one login.
 
     :param family_id: the family to kill
     :return revoked_rows: number of rows revoked
     """
-    return AROUserAuthTokenWrapper().revoke_by_family_id(family_id)
+    return await AROUserAuthTokenWrapper().revoke_by_family_id(family_id)
 
 
 async def get_user_by_token(
@@ -173,7 +173,7 @@ async def get_user_by_token(
         )
 
     try:
-        user = AROUsersWrapper().get_by_id(UUID(raw_user_id))
+        user = await AROUsersWrapper().get_by_id(UUID(raw_user_id))
     except ValueError:
         # UUID(raw_user_id) raises ValueError if "sub" wasn't a valid UUID
         # get_by_id raises its own plain ValueError when no row matches

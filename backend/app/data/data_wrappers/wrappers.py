@@ -37,15 +37,15 @@ class AROUsersWrapper(AbstractWrapper[AROUsers, UUID]):
 
     model = AROUsers
 
-    def get_user_by_email(self, email: EmailStr) -> AROUsers | None:
+    async def get_user_by_email(self, email: EmailStr) -> AROUsers | None:
         """
         Find and return a user by their email address.
 
         :email pydantic.EmailStr
         :returns AROUsers | None
         """
-        with get_db_session() as session:
-            found_user = session.exec(select(AROUsers).where(AROUsers.email == email)).first()
+        async with get_db_session() as session:
+            found_user = (await session.exec(select(AROUsers).where(AROUsers.email == email))).first()
         return found_user
 
 
@@ -56,7 +56,7 @@ class AROUserAuthTokenWrapper(AbstractWrapper[AROUserAuthToken, UUID]):
 
     model = AROUserAuthToken
 
-    def claim_rotation(self, pk: UUID) -> bool:
+    async def claim_rotation(self, pk: UUID) -> bool:
         """
         Atomically mark a refresh-token row as rotated, iff it hasn't been already.
 
@@ -70,17 +70,17 @@ class AROUserAuthTokenWrapper(AbstractWrapper[AROUserAuthToken, UUID]):
         now = datetime.now(UTC)
         token_table = AROUserAuthToken
 
-        with get_db_session() as session:
-            r = session.exec(
+        async with get_db_session() as session:
+            r = await session.exec(
                 update(AROUserAuthToken)
                 .where(col(token_table.id) == pk)
                 .where(col(token_table.rotated_at).is_(None))
                 .values(rotated_at=now)
             )
-            session.commit()
+            await session.commit()
             return r.rowcount == 1
 
-    def revoke_by_family_id(self, family_id: UUID) -> int:
+    async def revoke_by_family_id(self, family_id: UUID) -> int:
         """
         Atomically revoke every refresh-token row in a family, in one statement.
 
@@ -90,37 +90,39 @@ class AROUserAuthTokenWrapper(AbstractWrapper[AROUserAuthToken, UUID]):
         now = datetime.now(UTC)
         token_table = AROUserAuthToken
 
-        with get_db_session() as session:
-            r = session.exec(
+        async with get_db_session() as session:
+            r = await session.exec(
                 update(AROUserAuthToken).where(col(token_table.family_id) == family_id).values(revoked_at=now)
             )
-            session.commit()
+            await session.commit()
             return r.rowcount
 
-    def get_row_by_user_id(self, user_id: UUID) -> AROUserAuthToken | None:
+    async def get_row_by_user_id(self, user_id: UUID) -> AROUserAuthToken | None:
         """
         Retrives the latest (active) refresh token.
 
         :param user_id: UUID
         :returns: AROUserAuthToken | None
         """
-        with get_db_session() as session:
-            return session.exec(
-                select(AROUserAuthToken)
-                .where(AROUserAuthToken.user_id == user_id)
-                .where(AROUserAuthToken.expiry > datetime.now(UTC))
+        async with get_db_session() as session:
+            return (
+                await session.exec(
+                    select(AROUserAuthToken)
+                    .where(AROUserAuthToken.user_id == user_id)
+                    .where(AROUserAuthToken.expiry > datetime.now(UTC))
+                )
             ).first()
 
-    def delete_all_by_user_id(self, user_id: UUID) -> int:
+    async def delete_all_by_user_id(self, user_id: UUID) -> int:
         """
         **Deletes** every AROUserAuthToken row for a user.
 
         :param user_id: UUID
         :returns: int: number of rows deleted
         """
-        with get_db_session() as session:
-            r = session.exec(delete(AROUserAuthToken).where(col(AROUserAuthToken.user_id) == user_id))
-            session.commit()
+        async with get_db_session() as session:
+            r = await session.exec(delete(AROUserAuthToken).where(col(AROUserAuthToken.user_id) == user_id))
+            await session.commit()
             return r.rowcount
 
 
@@ -131,13 +133,13 @@ class AROUserCallsignWrapper(AbstractWrapper[AROUserCallsigns, UUID]):
 
     model = AROUserCallsigns
 
-    def get_row_by_callsign(self, user_cs: str) -> AROUserCallsigns | None:
+    async def get_row_by_callsign(self, user_cs: str) -> AROUserCallsigns | None:
         """
         :user_cs str
         return AROUserCallsigns | None
         """
-        with get_db_session() as session:
-            return session.exec(select(AROUserCallsigns).where(AROUserCallsigns.call_sign == user_cs)).first()
+        async with get_db_session() as session:
+            return (await session.exec(select(AROUserCallsigns).where(AROUserCallsigns.call_sign == user_cs))).first()
 
 
 class AROUserLoginWrapper(AbstractWrapper[AROUserLogin, UUID]):
@@ -147,16 +149,16 @@ class AROUserLoginWrapper(AbstractWrapper[AROUserLogin, UUID]):
 
     model = AROUserLogin
 
-    def delete_all_by_user_id(self, user_id: UUID) -> int:
+    async def delete_all_by_user_id(self, user_id: UUID) -> int:
         """
         **Deletes** every AROUserLogin row for a user.
 
         :param user_id: UUID
         :returns: int: number of rows deleted
         """
-        with get_db_session() as session:
-            r = session.exec(delete(AROUserLogin).where(col(AROUserLogin.user_id) == user_id))
-            session.commit()
+        async with get_db_session() as session:
+            r = await session.exec(delete(AROUserLogin).where(col(AROUserLogin.user_id) == user_id))
+            await session.commit()
             return r.rowcount
 
 
@@ -191,17 +193,17 @@ class CommsSessionWrapper(AbstractWrapper[CommsSession, UUID]):
 
     model = CommsSession
 
-    def get_most_recent_session(self) -> CommsSession | None:
+    async def get_most_recent_session(self) -> CommsSession | None:
         """
 
         Retrieves the Comms session if there is one with the most recent start_time
 
         :return: CommsSession | None
         """
-        with get_db_session() as session:
-            return session.exec(select(CommsSession).order_by(col(CommsSession.start_time).desc())).first()
+        async with get_db_session() as session:
+            return (await session.exec(select(CommsSession).order_by(col(CommsSession.start_time).desc()))).first()
 
-    def get_in_range(
+    async def get_in_range(
         self, start_after: datetime | None, start_before: datetime | None, limit: int = 100
     ) -> list[CommsSession]:
         """
@@ -212,13 +214,13 @@ class CommsSessionWrapper(AbstractWrapper[CommsSession, UUID]):
         :param limit: maximum number of rows to return
         :return: matching session entries, ordered by start_time ascending
         """
-        with get_db_session() as session:
+        async with get_db_session() as session:
             query = select(CommsSession)
             if start_after:
                 query = query.where(CommsSession.start_time >= start_after)
             if start_before:
                 query = query.where(CommsSession.start_time < start_before)
-            return list(session.exec(query.order_by(col(CommsSession.start_time).asc()).limit(limit)).all())
+            return list((await session.exec(query.order_by(col(CommsSession.start_time).asc()).limit(limit))).all())
 
     def is_locked_out(self, session: CommsSession) -> bool:
         """
@@ -246,22 +248,22 @@ class CommandsWrapper(AbstractWrapper[Command, UUID]):
 
     model = Command
 
-    def get_by_session(self, session_id: UUID) -> list[Command]:
+    async def get_by_session(self, session_id: UUID) -> list[Command]:
         """
         Retrieves all commands for a given session.
 
         :param session_id: UUID of the target session.
         :return: list of Command entries tied to that session.
         """
-        with get_db_session() as session:
-            return list(session.exec(select(Command).where(Command.session_id == session_id)).all())
+        async with get_db_session() as session:
+            return list((await session.exec(select(Command).where(Command.session_id == session_id))).all())
 
-    def retrieve_floating_commands(self) -> list[Command]:
+    async def retrieve_floating_commands(self) -> list[Command]:
         """
         Retrieves all commands which have not yet been assigned to a packet.
         A floating command is any command whose `packet_id` is still null.
         """
-        commands = self.get_all()
+        commands = await self.get_all()
         floating_commands = [command for command in commands if command.packet_id is None]
 
         return floating_commands
@@ -274,7 +276,7 @@ class TelemetryWrapper(AbstractWrapper[Telemetry, UUID]):
 
     model = Telemetry
 
-    def get_most_recent_by_type(self, telemetry_id: int) -> Telemetry | None:
+    async def get_most_recent_by_type(self, telemetry_id: int) -> Telemetry | None:
         """
 
         Get the most recent telemetry filtered by the type id
@@ -284,19 +286,19 @@ class TelemetryWrapper(AbstractWrapper[Telemetry, UUID]):
         :return: Telemetry | None
         """
 
-        with get_db_session() as session:
-            return session.exec(select(Telemetry).where(Telemetry.type_ == telemetry_id)).first()
+        async with get_db_session() as session:
+            return (await session.exec(select(Telemetry).where(Telemetry.type_ == telemetry_id))).first()
 
-    def get_all_by_type(self, telemetry_id: int) -> list[Telemetry]:
+    async def get_all_by_type(self, telemetry_id: int) -> list[Telemetry]:
         """
         Retrieves all telemetry filtered by the type id.
 
         :param telemetry_id: The MainTelemetryID to filter by.
         :return: list[Telemetry]
         """
-        return self.get_all_by(type_=telemetry_id)
+        return await self.get_all_by(type_=telemetry_id)
 
-    def get_all(self) -> list[TelemetryEntry]:  # type: ignore[override]
+    async def get_all(self) -> list[TelemetryEntry]:  # type: ignore[override]
         """
         Retrieves all telemetry entries, joined with MainTelemetry to expose the type name.
 
@@ -306,12 +308,14 @@ class TelemetryWrapper(AbstractWrapper[Telemetry, UUID]):
 
         :return: list[TelemetryEntry]
         """
-        with get_db_session() as session:
-            results = session.execute(
-                select(Telemetry, MainTelemetry.name, Packet.session_id, CommsSession.status)
-                .join(MainTelemetry, Telemetry.type_ == MainTelemetry.id)  # type: ignore[arg-type]
-                .join(Packet, Telemetry.packet_id == Packet.id, isouter=True)  # type: ignore[arg-type]
-                .join(CommsSession, Packet.session_id == CommsSession.id, isouter=True)  # type: ignore[arg-type]
+        async with get_db_session() as session:
+            results = (
+                await session.execute(
+                    select(Telemetry, MainTelemetry.name, Packet.session_id, CommsSession.status)
+                    .join(MainTelemetry, Telemetry.type_ == MainTelemetry.id)  # type: ignore[arg-type]
+                    .join(Packet, Telemetry.packet_id == Packet.id, isouter=True)  # type: ignore[arg-type]
+                    .join(CommsSession, Packet.session_id == CommsSession.id, isouter=True)  # type: ignore[arg-type]
+                )
             ).all()
             return [
                 TelemetryEntry(
@@ -338,11 +342,11 @@ class ImageWrapper(AbstractWrapper[Image, UUID]):
 
     model = Image
 
-    def get_latest(self) -> Image | None:
+    async def get_latest(self) -> Image | None:
         """
         Return the most recently inserted image, or None if the table is empty.
 
         :return: the newest Image row, or None.
         """
-        with get_db_session() as session:
-            return session.exec(select(Image).order_by(col(Image.id).desc())).first()
+        async with get_db_session() as session:
+            return (await session.exec(select(Image).order_by(col(Image.id).desc()))).first()

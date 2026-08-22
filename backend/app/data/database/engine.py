@@ -1,7 +1,8 @@
 from functools import lru_cache
 
-from sqlalchemy import Engine
-from sqlmodel import Session, create_engine, text
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.config.env_settings.backend_config import settings
 from app.data.models.aro_user_models import ARO_USER_SCHEMA_NAME
@@ -10,14 +11,14 @@ from app.data.models.transactional_models import TRANSACTIONAL_SCHEMA_NAME
 
 
 @lru_cache(maxsize=1)
-def get_db_engine() -> Engine:
+def get_db_engine() -> AsyncEngine:
     """
-    Creates (once) and returns the database engine
+    Creates (once) and returns the async database engine
     Cached so the connection pool is reused across requests
 
     :return: engine
     """
-    return create_engine(
+    return create_async_engine(
         settings.db.connection_string,
         pool_size=5,
         max_overflow=10,
@@ -26,28 +27,30 @@ def get_db_engine() -> Engine:
     )
 
 
-def get_db_session() -> Session:
+def get_db_session() -> AsyncSession:
     """
-    Creates a new session bound to the shared engine
+    Creates a new async session bound to the shared engine
 
     :return: session
     """
     engine = get_db_engine()
-    return Session(engine)
+    # expire_on_commit=False keeps returned ORM objects usable after the session's
+    # async context closes (async sessions can't lazily reload attributes afterwards).
+    return AsyncSession(engine, expire_on_commit=False)
 
 
-def _create_schemas(session: Session) -> None:
+async def _create_schemas(session: AsyncSession) -> None:
     """
     Creates the schemas in the database.
 
     :param session: The session for which to create the schemas
     """
-    connection = session.connection()
+    connection = await session.connection()
     schemas = [MAIN_SCHEMA_NAME, TRANSACTIONAL_SCHEMA_NAME, ARO_USER_SCHEMA_NAME]
     for schema in schemas:
         # sqlalchemy doesn't check if the schema exists before attempting to create one
-        connection.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema}"))
-    connection.commit()
+        await connection.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema}"))
+    await session.commit()
 
 
 '''Deprecated method to create tables, now handled by Alembic migrations
@@ -65,11 +68,11 @@ def _create_tables(session: Session) -> None:
 '''
 
 
-def setup_database(session: Session) -> None:
+async def setup_database(session: AsyncSession) -> None:
     """
     Creates the schemas for the session.
     Table creation is now handled by Alembic migrations
 
     :param session: The session for which to create the schemas
     """
-    _create_schemas(session)
+    await _create_schemas(session)
