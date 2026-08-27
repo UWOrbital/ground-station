@@ -169,6 +169,28 @@ class ARORequestWrapper(AbstractWrapper[ARORequest, UUID]):
 
     model = ARORequest
 
+    async def get_recent_by_aro(self, aro_id: UUID, count: int, offset: int) -> list[ARORequest]:
+        """
+        Retrieves a most-recent-first page of a single ARO's picture requests.
+
+        :param aro_id: the owning ARO user's id.
+        :param count: maximum number of requests to return.
+        :param offset: number of most-recent requests to skip (for paging).
+        :return: the requested page of ARORequest rows, newest first.
+        """
+        async with get_db_session() as session:
+            return list(
+                (
+                    await session.exec(
+                        select(ARORequest)
+                        .where(ARORequest.aro_id == aro_id)
+                        .order_by(col(ARORequest.created_on).desc())
+                        .limit(count)
+                        .offset(offset)
+                    )
+                ).all()
+            )
+
 
 class MainCommandWrapper(AbstractWrapper[MainCommand, int]):
     """

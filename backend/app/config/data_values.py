@@ -12,5 +12,7 @@ COORDINATE_DECIMAL_NUMBER: Final[int] = 3
 LATITUDE_MAX_DIGIT_NUMBER: Final[int] = 5
 LONGITUDE_MAX_DIGIT_NUMBER: Final[int] = 6
 SESSION_LOCKOUT_SECONDS: Final[int] = 10
+# Window after creation during which a PENDING ARO picture request may still be deleted.
+PICTURE_REQUEST_DELETE_WINDOW: Final[timedelta] = timedelta(hours=24)
 ACCESS_TOKEN_LIFETIME = timedelta(minutes=10)
 REFRESH_TOKEN_LIFETIME = timedelta(days=14)
