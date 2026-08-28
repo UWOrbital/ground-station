@@ -63,6 +63,7 @@ class ARORequest(BaseSQLModel, table=True):
     )
     pic_taken_on: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
     pic_transmitted_on: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
+    delete_deadline: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
     packet_id: UUID | None = Field(
         default=None,
         foreign_key=to_foreign_key_value(TRANSACTIONAL_SCHEMA_NAME, PACKETS_TABLE_NAME),
