@@ -1,20 +1,20 @@
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
-from app.data.data_wrappers.wrappers import (
-    CommandsWrapper,
-    CommsSessionWrapper,
-    MainCommandWrapper,
-    PacketWrapper,
+from app.data.repositories.repositories import (
+    CommandsRepository,
+    CommsSessionRepository,
+    MainCommandRepository,
+    PacketRepository,
 )
 from app.data.enums.transactional import MainPacketType
 
 
 async def test_retrieve_floating_commands_filters():
-    cw = CommandsWrapper()
-    mc = MainCommandWrapper()
-    pw = PacketWrapper()
-    csw = CommsSessionWrapper()
+    cw = CommandsRepository()
+    mc = MainCommandRepository()
+    pw = PacketRepository()
+    csw = CommsSessionRepository()
 
     cmd_type = (await mc.create(
         dict(
@@ -50,9 +50,9 @@ async def test_retrieve_floating_commands_filters():
 
 
 async def test_retrieve_floating_commands_no_packet():
-    cw = CommandsWrapper()
-    mc = MainCommandWrapper()
-    csw = CommsSessionWrapper()
+    cw = CommandsRepository()
+    mc = MainCommandRepository()
+    csw = CommsSessionRepository()
 
     cmd_type = (await mc.create(
         dict(

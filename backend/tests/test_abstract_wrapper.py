@@ -1,9 +1,9 @@
 import pytest
-from app.data.data_wrappers import wrappers
+from app.data.repositories import repositories
 from uuid import uuid4
 @pytest.fixture
 def wrapper():
-    wrapper=wrappers.AROUsersWrapper()
+    wrapper=repositories.AROUsersRepository()
     return wrapper
 @pytest.fixture
 def obj1():

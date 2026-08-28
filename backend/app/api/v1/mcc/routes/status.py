@@ -1,10 +1,12 @@
 from datetime import datetime
+from typing import Annotated
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
 from app.api.v1.mcc.schemas.responses import SatelliteStatusResponse, TelemetryDataResponse
-from app.data.data_wrappers.wrappers import CommsSessionWrapper, TelemetryWrapper
 from app.data.enums.transactional import SessionStatus
+from app.data.repositories.dal import DAL
+from app.data.repositories.repositories import CommsSessionRepository, TelemetryRepository
 
 status_router = APIRouter(tags=["MCC", "Status"])
 
@@ -28,17 +30,22 @@ TELEMETRY_IDS = {
 
 
 @status_router.get("/status")
-async def get_satellite_status() -> SatelliteStatusResponse:
+async def get_satellite_status(
+    comms_sessions: Annotated[CommsSessionRepository, Depends(DAL.get_repo(DAL.comms_sessions))],
+    telemetry_repo: Annotated[TelemetryRepository, Depends(DAL.get_repo(DAL.telemetry))],
+) -> SatelliteStatusResponse:
     """
 
     Get the current satellite connection status and telemetry snapshot
 
     this endpoint references the telemetry IDs of the sensors in this spreadsheet : https://docs.google.com/spreadsheets/d/1XWXgp3--NHZ4XlxOyBYPS-M_LOU_ai-I6TcvotKhR1s/edit?gid=0#gid=0
 
+    :param comms_sessions: injected CommsSession repository.
+    :param telemetry_repo: injected Telemetry repository.
     :return: SatelliteStatusResponse with status, last contact, session duration, and telemetry data
     """
 
-    session = await CommsSessionWrapper().get_most_recent_session()
+    session = await comms_sessions.get_most_recent_session()
 
     if session is None:
         return SatelliteStatusResponse(
@@ -61,7 +68,7 @@ async def get_satellite_status() -> SatelliteStatusResponse:
 
     telemetry_data = []
     for telemetry_id, label in TELEMETRY_IDS.items():
-        result = await TelemetryWrapper().get_most_recent_by_type(telemetry_id)
+        result = await telemetry_repo.get_most_recent_by_type(telemetry_id)
         if result is not None:
             telemetry_data.append(
                 TelemetryDataResponse(

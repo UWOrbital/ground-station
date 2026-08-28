@@ -6,11 +6,11 @@ import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
 from app.api.v1.aro.auth.aro_session import create_access_token
-from app.data.data_wrappers.wrappers import (
-    ARORequestWrapper,
-    AROUsersWrapper,
-    CommsSessionWrapper,
-    PacketWrapper,
+from app.data.repositories.repositories import (
+    ARORequestRepository,
+    AROUsersRepository,
+    CommsSessionRepository,
+    PacketRepository,
 )
 from app.data.enums.aro_requests import ARORequestStatus
 from app.data.enums.transactional import MainPacketType
@@ -28,7 +28,7 @@ async def client():
 
 async def _make_user(email: str) -> AROUsers:
     """Create an ARO user to own picture requests."""
-    return await AROUsersWrapper().create({"email": email, "first_name": "Test"})
+    return await AROUsersRepository().create({"email": email, "first_name": "Test"})
 
 
 def _headers(user: AROUsers) -> dict[str, str]:
@@ -121,14 +121,14 @@ async def test_list_is_scoped_to_current_user(client, user_a, user_b, payload):
 
 async def _seed_request_with_packet(aro_id) -> tuple[str, bytes]:
     """Create a request whose packet is populated, returning (request_id, raw bytes)."""
-    session = await CommsSessionWrapper().create(
+    session = await CommsSessionRepository().create(
         {
             "start_time": datetime.now(UTC),
             "end_time": datetime.now(UTC) + timedelta(minutes=5),
         }
     )
     raw = b"\x01\x02\x03\x04"
-    packet = await PacketWrapper().create(
+    packet = await PacketRepository().create(
         {
             "session_id": session.id,
             "raw_data": raw,
@@ -137,7 +137,7 @@ async def _seed_request_with_packet(aro_id) -> tuple[str, bytes]:
             "offset": 0,
         }
     )
-    request = await ARORequestWrapper().create(
+    request = await ARORequestRepository().create(
         {
             "aro_id": aro_id,
             "latitude": Decimal("12.345"),
@@ -204,7 +204,7 @@ async def test_delete_non_deletable_request_conflicts(client, user_a, payload):
     # Move it out of the deletable PENDING state.
     from uuid import UUID
 
-    await ARORequestWrapper().update(UUID(created["id"]), {"status": ARORequestStatus.SCHEDULED})
+    await ARORequestRepository().update(UUID(created["id"]), {"status": ARORequestStatus.SCHEDULED})
 
     response = await client.delete(f"/api/v1/aro/requests/{created['id']}", headers=_headers(user_a))
     assert response.status_code == 409

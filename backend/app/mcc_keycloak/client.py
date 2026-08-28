@@ -10,8 +10,8 @@ from keycloak import KeycloakAdmin, KeycloakError, KeycloakOpenID, KeycloakOpenI
 
 from app.config.env_settings.backend_config import settings
 from app.config.env_settings.keycloak_config import KeycloakConfig
-from app.data.data_wrappers.wrappers import MCCUsersWrapper
 from app.data.models.mcc_user_models import MCCUsers
+from app.data.repositories.dal import DAL
 
 
 class KeycloakClient:
@@ -113,7 +113,7 @@ class KeycloakClient:
         """Authenticates user tokens and yields their corresponding MCCUsers objects."""
         user_info = await self.authenticate(request)
         try:
-            return await MCCUsersWrapper().get_by_id(UUID(user_info["sub"]))
+            return await DAL.mcc_users().get_by_id(UUID(user_info["sub"]))
         except ValueError as e:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found") from e
 

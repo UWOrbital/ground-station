@@ -9,8 +9,8 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.config.data_values import ACCESS_TOKEN_LIFETIME, REFRESH_TOKEN_LIFETIME
 from app.config.env_settings.backend_config import settings
-from app.data.data_wrappers.wrappers import AROUserAuthTokenWrapper, AROUsersWrapper
 from app.data.models.aro_user_models import AROUsers
+from app.data.repositories.dal import DAL
 
 _bearer_scheme = HTTPBearer(auto_error=False)
 
@@ -52,7 +52,7 @@ async def issue_refresh_token(user_id: UUID, family_id: UUID | None = None) -> s
     raw_token = secrets.token_urlsafe(32)
     family_id = family_id or uuid4()
 
-    await AROUserAuthTokenWrapper().create(
+    await DAL.aro_user_auth_tokens().create(
         {
             "token_hash": _hash_refresh_token(raw_token),
             "family_id": family_id,
@@ -76,7 +76,7 @@ async def rotate_refresh_token(raw_token: str) -> tuple[str, AROUsers]:
     """
     token_hash = _hash_refresh_token(raw_token)
 
-    existing = await AROUserAuthTokenWrapper().get_first_by(token_hash=token_hash)
+    existing = await DAL.aro_user_auth_tokens().get_first_by(token_hash=token_hash)
     if existing is None:
         # Unknown token
         raise HTTPException(
@@ -99,7 +99,7 @@ async def rotate_refresh_token(raw_token: str) -> tuple[str, AROUsers]:
             detail={"message": "Session expired.", "code": "refresh_token_invalid"},
         )
 
-    if not await AROUserAuthTokenWrapper().claim_rotation(existing.id):
+    if not await DAL.aro_user_auth_tokens().claim_rotation(existing.id):
         # something else rotated this row, so close with 401
         raise HTTPException(
             status.HTTP_401_UNAUTHORIZED,
@@ -107,7 +107,7 @@ async def rotate_refresh_token(raw_token: str) -> tuple[str, AROUsers]:
         )
 
     new_raw = await issue_refresh_token(existing.user_id, existing.family_id)
-    user = await AROUsersWrapper().get_by_id(existing.user_id)
+    user = await DAL.aro_users().get_by_id(existing.user_id)
 
     return (new_raw, user)
 
@@ -121,9 +121,9 @@ async def revoke_token(refresh_token: str | None) -> None:
     """
     if refresh_token is not None:
         token_hash = _hash_refresh_token(refresh_token)
-        existing = await AROUserAuthTokenWrapper().get_first_by(token_hash=token_hash)
+        existing = await DAL.aro_user_auth_tokens().get_first_by(token_hash=token_hash)
         if existing is not None:
-            await AROUserAuthTokenWrapper().update(existing.id, {"revoked_at": datetime.now(UTC)})
+            await DAL.aro_user_auth_tokens().update(existing.id, {"revoked_at": datetime.now(UTC)})
 
 
 async def revoke_family(family_id: UUID) -> int:
@@ -133,7 +133,7 @@ async def revoke_family(family_id: UUID) -> int:
     :param family_id: the family to kill
     :return revoked_rows: number of rows revoked
     """
-    return await AROUserAuthTokenWrapper().revoke_by_family_id(family_id)
+    return await DAL.aro_user_auth_tokens().revoke_by_family_id(family_id)
 
 
 async def get_user_by_token(
@@ -173,7 +173,7 @@ async def get_user_by_token(
         )
 
     try:
-        user = await AROUsersWrapper().get_by_id(UUID(raw_user_id))
+        user = await DAL.aro_users().get_by_id(UUID(raw_user_id))
     except ValueError:
         # UUID(raw_user_id) raises ValueError if "sub" wasn't a valid UUID
         # get_by_id raises its own plain ValueError when no row matches

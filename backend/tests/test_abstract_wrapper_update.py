@@ -2,7 +2,7 @@ from typing import Optional
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from app.data.data_wrappers.abstract_wrapper import AbstractWrapper
+from app.data.repositories.abstract_repository import AbstractRepository
 from app.data.models.base_model import BaseSQLModel
 from sqlmodel import Field
 
@@ -14,13 +14,13 @@ class MockModel(BaseSQLModel, table=True):
     address: Optional[str] = Field(default=None, nullable=True)
 
 
-class MockWrapper(AbstractWrapper[MockModel, int]):
+class MockRepository(AbstractRepository[MockModel, int]):
     model = MockModel
 
 
 @pytest.fixture
 def mock_session():
-    with patch("app.data.data_wrappers.abstract_wrapper.get_db_session") as mock_get_sess:
+    with patch("app.data.repositories.abstract_repository.get_db_session") as mock_get_sess:
         mock_sess_instance = MagicMock()
         # DB operations are awaited by the async wrapper, so they must be AsyncMocks.
         mock_sess_instance.get = AsyncMock()
@@ -35,7 +35,7 @@ def mock_session():
 
 @pytest.fixture
 def wrapper():
-    return MockWrapper()
+    return MockRepository()
 
 
 @pytest.fixture
