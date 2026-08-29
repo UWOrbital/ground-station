@@ -13,6 +13,8 @@ from app.mcc_keycloak.client import keycloak
 
 mcc_auth_router = APIRouter(tags=["MCC", "Authentication"])
 
+MCCUsersRepo = Annotated[MCCUsersRepository, Depends(DAL.get_repo(DAL.mcc_users))]
+
 
 @mcc_auth_router.get("/ping", dependencies=[keycloak.require_auth])
 async def ping() -> dict[str, str]:
@@ -36,7 +38,7 @@ async def login() -> RedirectResponse:
 @mcc_auth_router.get("/callback")
 async def auth_token_callback(
     code: str,
-    mcc_users: Annotated[MCCUsersRepository, Depends(DAL.get_repo(DAL.mcc_users))],
+    mcc_users: MCCUsersRepo,
 ) -> Response:
     """
     Callback endpoint redirected to by keycloak for tokens

@@ -12,6 +12,8 @@ from app.mcc_keycloak.client import keycloak
 
 mcc_users_router = APIRouter(tags=["MCC", "Users"], dependencies=[keycloak.require_auth])
 
+MCCUsersRepo = Annotated[MCCUsersRepository, Depends(DAL.get_repo(DAL.mcc_users))]
+
 
 @mcc_users_router.get("/me")
 async def get_me(user: MCCUsers = Depends(keycloak.get_current_user)) -> UserInformationResponse:
@@ -30,7 +32,7 @@ async def get_me(user: MCCUsers = Depends(keycloak.get_current_user)) -> UserInf
 @mcc_users_router.patch("/me")
 async def update_me(
     request: UpdateUserRequest,
-    mcc_users: Annotated[MCCUsersRepository, Depends(DAL.get_repo(DAL.mcc_users))],
+    mcc_users: MCCUsersRepo,
     user: MCCUsers = Depends(keycloak.get_current_user),
 ) -> UserInformationResponse:
     """
@@ -60,7 +62,7 @@ async def update_me(
 
 @mcc_users_router.delete("/me")
 async def delete_me(
-    mcc_users: Annotated[MCCUsersRepository, Depends(DAL.get_repo(DAL.mcc_users))],
+    mcc_users: MCCUsersRepo,
     user: MCCUsers = Depends(keycloak.get_current_user),
 ) -> dict[str, str]:
     """

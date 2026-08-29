@@ -8,10 +8,12 @@ from app.data.repositories.repositories import ImageRepository
 
 images_router = APIRouter(tags=["MCC", "Images"])
 
+ImagesRepo = Annotated[ImageRepository, Depends(DAL.get_repo(DAL.images))]
+
 
 @images_router.get("/latest")
 async def get_latest_image(
-    images: Annotated[ImageRepository, Depends(DAL.get_repo(DAL.images))],
+    images: ImagesRepo,
 ) -> ImageResponse | dict[str, str]:
     """
     Return the most recent image downlinked from the satellite.

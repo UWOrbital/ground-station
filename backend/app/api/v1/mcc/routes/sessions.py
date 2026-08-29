@@ -10,10 +10,12 @@ from app.mcc_keycloak.client import keycloak
 
 comms_sessions_router = APIRouter(tags=["MCC", "Sessions"])
 
+CommsSessionRepo = Annotated[CommsSessionRepository, Depends(DAL.get_repo(DAL.comms_sessions))]
+
 
 @comms_sessions_router.get("/", dependencies=[keycloak.require_auth])
 async def get_comms_sessions(
-    comms_sessions: Annotated[CommsSessionRepository, Depends(DAL.get_repo(DAL.comms_sessions))],
+    comms_sessions: CommsSessionRepo,
     start_after: Annotated[datetime | None, Query()] = None,
     start_before: Annotated[datetime | None, Query()] = None,
     limit: Annotated[int, Query(ge=1, le=500)] = 100,

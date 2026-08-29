@@ -8,10 +8,12 @@ from app.data.repositories.repositories import TelemetryRepository
 
 telemetry_router = APIRouter(tags=["MCC", "Telemetry"])
 
+TelemetryRepo = Annotated[TelemetryRepository, Depends(DAL.get_repo(DAL.telemetry))]
+
 
 @telemetry_router.get("/")
 async def get_telemetry(
-    telemetry_repo: Annotated[TelemetryRepository, Depends(DAL.get_repo(DAL.telemetry))],
+    telemetry_repo: TelemetryRepo,
 ) -> TelemetryListResponse:
     """
     Retrieves all telemetry.

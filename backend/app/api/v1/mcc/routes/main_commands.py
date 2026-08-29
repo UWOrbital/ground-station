@@ -10,10 +10,12 @@ from app.mcc_keycloak.client import keycloak
 
 main_commands_router = APIRouter(tags=["MCC", "Main Commands"])
 
+MainCommandRepo = Annotated[MainCommandRepository, Depends(DAL.get_repo(DAL.main_commands))]
+
 
 @main_commands_router.get("/", dependencies=[keycloak.require_auth])
 async def get_all_commands(
-    main_commands: Annotated[MainCommandRepository, Depends(DAL.get_repo(DAL.main_commands))],
+    main_commands: MainCommandRepo,
 ) -> MainCommandsResponse:
     """
     Gets the main commands that are available for the MCC
@@ -28,7 +30,7 @@ async def get_all_commands(
 @main_commands_router.get("/{command_id}", dependencies=[keycloak.require_auth])
 async def get_command_by_id(
     command_id: int,
-    main_commands: Annotated[MainCommandRepository, Depends(DAL.get_repo(DAL.main_commands))],
+    main_commands: MainCommandRepo,
 ) -> MainCommandResponse:
     """
     Gets the main command by the id provided

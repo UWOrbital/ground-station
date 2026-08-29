@@ -1,9 +1,9 @@
 import pytest
-from app.data.repositories import repositories
+from app.data.repositories.dal import DAL
 from uuid import uuid4
 @pytest.fixture
 def wrapper():
-    wrapper=repositories.AROUsersRepository()
+    wrapper=DAL.aro_users()
     return wrapper
 @pytest.fixture
 def obj1():

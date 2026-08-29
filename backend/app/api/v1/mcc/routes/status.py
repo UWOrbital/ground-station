@@ -10,6 +10,9 @@ from app.data.repositories.repositories import CommsSessionRepository, Telemetry
 
 status_router = APIRouter(tags=["MCC", "Status"])
 
+CommsSessionRepo = Annotated[CommsSessionRepository, Depends(DAL.get_repo(DAL.comms_sessions))]
+TelemetryRepo = Annotated[TelemetryRepository, Depends(DAL.get_repo(DAL.telemetry))]
+
 # TODO : Expand the states of the backend to have a status of pending,
 # scheduled and completed instead of idle
 STATUS_MAP = {
@@ -31,8 +34,8 @@ TELEMETRY_IDS = {
 
 @status_router.get("/status")
 async def get_satellite_status(
-    comms_sessions: Annotated[CommsSessionRepository, Depends(DAL.get_repo(DAL.comms_sessions))],
-    telemetry_repo: Annotated[TelemetryRepository, Depends(DAL.get_repo(DAL.telemetry))],
+    comms_sessions: CommsSessionRepo,
+    telemetry_repo: TelemetryRepo,
 ) -> SatelliteStatusResponse:
     """
 

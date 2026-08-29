@@ -6,12 +6,7 @@ import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
 from app.api.v1.aro.auth.aro_session import create_access_token
-from app.data.repositories.repositories import (
-    ARORequestRepository,
-    AROUsersRepository,
-    CommsSessionRepository,
-    PacketRepository,
-)
+from app.data.repositories.dal import DAL
 from app.data.enums.aro_requests import ARORequestStatus
 from app.data.enums.transactional import MainPacketType
 from app.data.models.aro_user_models import AROUsers
@@ -28,7 +23,7 @@ async def client():
 
 async def _make_user(email: str) -> AROUsers:
     """Create an ARO user to own picture requests."""
-    return await AROUsersRepository().create({"email": email, "first_name": "Test"})
+    return await DAL.aro_users().create({"email": email, "first_name": "Test"})
 
 
 def _headers(user: AROUsers) -> dict[str, str]:
@@ -121,14 +116,14 @@ async def test_list_is_scoped_to_current_user(client, user_a, user_b, payload):
 
 async def _seed_request_with_packet(aro_id) -> tuple[str, bytes]:
     """Create a request whose packet is populated, returning (request_id, raw bytes)."""
-    session = await CommsSessionRepository().create(
+    session = await DAL.comms_sessions().create(
         {
             "start_time": datetime.now(UTC),
             "end_time": datetime.now(UTC) + timedelta(minutes=5),
         }
     )
     raw = b"\x01\x02\x03\x04"
-    packet = await PacketRepository().create(
+    packet = await DAL.packets().create(
         {
             "session_id": session.id,
             "raw_data": raw,
@@ -137,7 +132,7 @@ async def _seed_request_with_packet(aro_id) -> tuple[str, bytes]:
             "offset": 0,
         }
     )
-    request = await ARORequestRepository().create(
+    request = await DAL.aro_requests().create(
         {
             "aro_id": aro_id,
             "latitude": Decimal("12.345"),
@@ -204,7 +199,7 @@ async def test_delete_non_deletable_request_conflicts(client, user_a, payload):
     # Move it out of the deletable PENDING state.
     from uuid import UUID
 
-    await ARORequestRepository().update(UUID(created["id"]), {"status": ARORequestStatus.SCHEDULED})
+    await DAL.aro_requests().update(UUID(created["id"]), {"status": ARORequestStatus.SCHEDULED})
 
     response = await client.delete(f"/api/v1/aro/requests/{created['id']}", headers=_headers(user_a))
     assert response.status_code == 409

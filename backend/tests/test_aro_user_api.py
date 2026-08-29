@@ -3,7 +3,7 @@ import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
 from app.api.v1.aro.auth.aro_session import create_access_token
-from app.data.repositories.repositories import AROUsersRepository
+from app.data.repositories.dal import DAL
 from main import app
 
 
@@ -16,7 +16,7 @@ async def client():
 @pytest_asyncio.fixture
 async def auth_headers():
     """Bearer token headers for a superuser, required by every /user route."""
-    superuser = await AROUsersRepository().create(
+    superuser = await DAL.aro_users().create(
         {
             "email": "admin@test.com",
             "first_name": "Admin",
@@ -149,7 +149,7 @@ async def test_get_all_users_requires_auth(client):
 
 # Test that non-superusers are rejected
 async def test_get_all_users_requires_superuser(client):
-    regular_user = await AROUsersRepository().create({"email": "regular@test.com", "first_name": "Regular"})
+    regular_user = await DAL.aro_users().create({"email": "regular@test.com", "first_name": "Regular"})
     token, _ = create_access_token(regular_user)
     res = await client.get("/api/v1/aro/user/get_all_users", headers={"Authorization": f"Bearer {token}"})
     assert res.status_code == 403

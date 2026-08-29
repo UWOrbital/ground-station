@@ -1,20 +1,15 @@
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
-from app.data.repositories.repositories import (
-    CommandsRepository,
-    CommsSessionRepository,
-    MainCommandRepository,
-    PacketRepository,
-)
+from app.data.repositories.dal import DAL
 from app.data.enums.transactional import MainPacketType
 
 
 async def test_retrieve_floating_commands_filters():
-    cw = CommandsRepository()
-    mc = MainCommandRepository()
-    pw = PacketRepository()
-    csw = CommsSessionRepository()
+    cw = DAL.commands()
+    mc = DAL.main_commands()
+    pw = DAL.packets()
+    csw = DAL.comms_sessions()
 
     cmd_type = (await mc.create(
         dict(
@@ -50,9 +45,9 @@ async def test_retrieve_floating_commands_filters():
 
 
 async def test_retrieve_floating_commands_no_packet():
-    cw = CommandsRepository()
-    mc = MainCommandRepository()
-    csw = CommsSessionRepository()
+    cw = DAL.commands()
+    mc = DAL.main_commands()
+    csw = DAL.comms_sessions()
 
     cmd_type = (await mc.create(
         dict(
