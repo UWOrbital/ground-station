@@ -1,6 +1,7 @@
 import hashlib
 import secrets
 from datetime import UTC, datetime
+from typing import Annotated
 from uuid import UUID, uuid4
 
 import jwt
@@ -11,8 +12,11 @@ from app.config.data_values import ACCESS_TOKEN_LIFETIME, REFRESH_TOKEN_LIFETIME
 from app.config.env_settings.backend_config import settings
 from app.data.models.aro_user_models import AROUsers
 from app.data.repositories.dal import DAL
+from app.data.repositories.repositories import AROUsersRepository
 
 _bearer_scheme = HTTPBearer(auto_error=False)
+
+AROUsersRepo = Annotated[AROUsersRepository, Depends(DAL.get_repo(DAL.aro_users))]
 
 
 def _hash_refresh_token(raw_token: str) -> str:
@@ -137,11 +141,13 @@ async def revoke_family(family_id: UUID) -> int:
 
 
 async def get_user_by_token(
+    aro_users: AROUsersRepo,
     credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme),
 ) -> AROUsers:
     """
     Resolve the bearer access token on a request to an AROUsers row. Every protected ARO route depends on this.
 
+    :param aro_users: injected AROUsers repository.
     :param credentials: the parsed Authorization header, or None if absent.
     :return the authenticated AROUsers row.
     :raises HTTPException: 401 with a `code` distinguishing why.
@@ -173,7 +179,7 @@ async def get_user_by_token(
         )
 
     try:
-        user = await DAL.aro_users().get_by_id(UUID(raw_user_id))
+        user = await aro_users.get_by_id(UUID(raw_user_id))
     except ValueError:
         # UUID(raw_user_id) raises ValueError if "sub" wasn't a valid UUID
         # get_by_id raises its own plain ValueError when no row matches
