@@ -14,6 +14,8 @@ from app.data.models.mcc_user_models import MCCUsers
 from app.data.repositories.dal import DAL
 from app.data.repositories.repositories import MCCUsersRepository
 
+MCCUsersRepo = Annotated[MCCUsersRepository, Depends(DAL.get_repo(DAL.mcc_users))]
+
 
 class KeycloakClient:
     """Encapsulating class for MCC authentication/authorization variables and functions."""
@@ -113,7 +115,7 @@ class KeycloakClient:
     async def get_current_user(
         self,
         request: Request,
-        mcc_users: Annotated[MCCUsersRepository, Depends(DAL.get_repo(DAL.mcc_users))],
+        mcc_users: MCCUsersRepo,
     ) -> MCCUsers:
         """
         Authenticates user tokens and yields their corresponding MCCUsers objects.
