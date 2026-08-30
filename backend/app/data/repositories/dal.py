@@ -3,6 +3,7 @@ from typing import Any, TypeVar, cast
 
 from app.data.repositories.abstract_repository import AbstractRepository
 from app.data.repositories.repositories import (
+    APILogRepository,
     ARORequestRepository,
     AROUserAuthTokenRepository,
     AROUserCallsignRepository,
@@ -50,6 +51,7 @@ class DAL:
     commands = CommandsRepository
     telemetry = TelemetryRepository
     images = ImageRepository
+    api_logs = APILogRepository
 
     # Cache of provider callables keyed by repository class. FastAPI keys
     # dependency_overrides by callable identity, so get_repo must return the
