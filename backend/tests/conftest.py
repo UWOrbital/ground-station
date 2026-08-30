@@ -121,12 +121,12 @@ def test_get_db_session(monkeypatch, db_session: AsyncSession):
         yield db_session
 
     monkeypatch.setattr(
-        "app.data.data_wrappers.abstract_wrapper.get_db_session",
+        "app.data.repositories.abstract_repository.get_db_session",
         _get_db_session,
         raising=True,
     )
     monkeypatch.setattr(
-        "app.data.data_wrappers.wrappers.get_db_session",
+        "app.data.repositories.repositories.get_db_session",
         _get_db_session,
         raising=True,
     )

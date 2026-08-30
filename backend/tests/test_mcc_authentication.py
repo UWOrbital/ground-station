@@ -1,9 +1,10 @@
 import pytest
 import json
 import app.api.v1.mcc.routes.auth as mcc_auth
-from unittest.mock import AsyncMock, patch, PropertyMock
+from unittest.mock import AsyncMock, MagicMock, patch, PropertyMock
 from app.mcc_keycloak.client import KeycloakClient
 from app.config.env_settings.keycloak_config import KeycloakConfig
+from app.data.repositories.dal import DAL
 from fastapi.testclient import TestClient
 from main import app
 from app.config.env_settings.backend_config import settings
@@ -46,23 +47,29 @@ def test_login_endpoint(client):
 
 def test_callback_endpoint(client):
     """Test callback endpoint keycloak functions called properly"""
-    with patch.object(mcc_auth.keycloak, "get_tokens", new_callable=AsyncMock, return_value=MOCK_TOKENS) as mock_get_tokens, \
-         patch.object(mcc_auth.keycloak, "decode_token", new_callable=AsyncMock, return_value=MOCK_USER_INFO) as mock_decode_token, \
-         patch.object(mcc_auth.MCCUsersWrapper, "create", new_callable=AsyncMock, return_value=None) as mock_create:
+    mock_repo = MagicMock()
+    mock_repo.create = AsyncMock(return_value=None)
+    app.dependency_overrides[DAL.get_repo(DAL.mcc_users)] = lambda: mock_repo
 
-        response = client.get(f"{AUTH_PREFIX}/callback?code=temp_code", follow_redirects=False)
+    try:
+        with patch.object(mcc_auth.keycloak, "get_tokens", new_callable=AsyncMock, return_value=MOCK_TOKENS) as mock_get_tokens, \
+             patch.object(mcc_auth.keycloak, "decode_token", new_callable=AsyncMock, return_value=MOCK_USER_INFO) as mock_decode_token:
 
-    mock_get_tokens.assert_called_once_with("temp_code")
-    mock_decode_token.assert_called_once_with("mock_id_token")
+            response = client.get(f"{AUTH_PREFIX}/callback?code=temp_code", follow_redirects=False)
 
-    mock_create.assert_called_once_with({
-        "id": MOCK_USER_INFO["sub"],
-        "email": MOCK_USER_INFO["email"],
-        "phone_number": "",
-    })
-    assert response.status_code == 302
-    assert response.cookies["id_token"] == "mock_id_token"
-    assert response.cookies["access_token"] == "mock_access_token"
+        mock_get_tokens.assert_called_once_with("temp_code")
+        mock_decode_token.assert_called_once_with("mock_id_token")
+
+        mock_repo.create.assert_called_once_with({
+            "id": MOCK_USER_INFO["sub"],
+            "email": MOCK_USER_INFO["email"],
+            "phone_number": "",
+        })
+        assert response.status_code == 302
+        assert response.cookies["id_token"] == "mock_id_token"
+        assert response.cookies["access_token"] == "mock_access_token"
+    finally:
+        app.dependency_overrides.clear()
 
 
 def test_callback_endpoint_exceptions(client):

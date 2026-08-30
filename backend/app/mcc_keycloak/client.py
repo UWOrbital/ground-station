@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Annotated, Any
 from urllib.parse import urlencode
 from uuid import UUID
 
@@ -10,8 +10,11 @@ from keycloak import KeycloakAdmin, KeycloakError, KeycloakOpenID, KeycloakOpenI
 
 from app.config.env_settings.backend_config import settings
 from app.config.env_settings.keycloak_config import KeycloakConfig
-from app.data.data_wrappers.wrappers import MCCUsersWrapper
 from app.data.models.mcc_user_models import MCCUsers
+from app.data.repositories.dal import DAL
+from app.data.repositories.repositories import MCCUsersRepository
+
+MCCUsersRepo = Annotated[MCCUsersRepository, Depends(DAL.get_repo(DAL.mcc_users))]
 
 
 class KeycloakClient:
@@ -109,11 +112,21 @@ class KeycloakClient:
         except KeycloakError as e:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token") from e
 
-    async def get_current_user(self, request: Request) -> MCCUsers:
-        """Authenticates user tokens and yields their corresponding MCCUsers objects."""
+    async def get_current_user(
+        self,
+        request: Request,
+        mcc_users: MCCUsersRepo,
+    ) -> MCCUsers:
+        """
+        Authenticates user tokens and yields their corresponding MCCUsers objects.
+
+        :param request: the incoming request carrying the access_token cookie.
+        :param mcc_users: injected MCCUsers repository.
+        :return: the authenticated MCC user.
+        """
         user_info = await self.authenticate(request)
         try:
-            return await MCCUsersWrapper().get_by_id(UUID(user_info["sub"]))
+            return await mcc_users.get_by_id(UUID(user_info["sub"]))
         except ValueError as e:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found") from e
 

@@ -7,7 +7,6 @@ from sqlmodel import col, select
 
 from app.api.v1.mcc.schemas.responses import TelemetryEntry, TelemetrySubrow
 from app.config.data_values import SESSION_LOCKOUT_SECONDS
-from app.data.data_wrappers.abstract_wrapper import AbstractWrapper  # SEE abstract_wrapper.py FOR LOGIC
 from app.data.database.engine import get_db_session
 from app.data.models.aro_user_models import AROUserAuthToken, AROUserCallsigns, AROUserLogin, AROUsers
 from app.data.models.main_models import MainCommand, MainTelemetry
@@ -20,19 +19,20 @@ from app.data.models.transactional_models import (
     Packet,
     Telemetry,
 )
+from app.data.repositories.abstract_repository import AbstractRepository  # SEE abstract_repository.py FOR LOGIC
 
 
-class MCCUsersWrapper(AbstractWrapper[MCCUsers, UUID]):
+class MCCUsersRepository(AbstractRepository[MCCUsers, UUID]):
     """
-    Data wrapper for MCCUsers table.
+    Repository for MCCUsers table.
     """
 
     model = MCCUsers
 
 
-class AROUsersWrapper(AbstractWrapper[AROUsers, UUID]):
+class AROUsersRepository(AbstractRepository[AROUsers, UUID]):
     """
-    Data wrapper for AROUsers table.
+    Repository for AROUsers table.
     """
 
     model = AROUsers
@@ -49,9 +49,9 @@ class AROUsersWrapper(AbstractWrapper[AROUsers, UUID]):
         return found_user
 
 
-class AROUserAuthTokenWrapper(AbstractWrapper[AROUserAuthToken, UUID]):
+class AROUserAuthTokenRepository(AbstractRepository[AROUserAuthToken, UUID]):
     """
-    Data wrapper for AROUserAuthToken table.
+    Repository for AROUserAuthToken table.
     """
 
     model = AROUserAuthToken
@@ -126,9 +126,9 @@ class AROUserAuthTokenWrapper(AbstractWrapper[AROUserAuthToken, UUID]):
             return r.rowcount
 
 
-class AROUserCallsignWrapper(AbstractWrapper[AROUserCallsigns, UUID]):
+class AROUserCallsignRepository(AbstractRepository[AROUserCallsigns, UUID]):
     """
-    Data wrapper for the AROUserCallsigns table.
+    Repository for the AROUserCallsigns table.
     """
 
     model = AROUserCallsigns
@@ -142,9 +142,9 @@ class AROUserCallsignWrapper(AbstractWrapper[AROUserCallsigns, UUID]):
             return (await session.exec(select(AROUserCallsigns).where(AROUserCallsigns.call_sign == user_cs))).first()
 
 
-class AROUserLoginWrapper(AbstractWrapper[AROUserLogin, UUID]):
+class AROUserLoginRepository(AbstractRepository[AROUserLogin, UUID]):
     """
-    Data wrapper for AROUserLogin table.
+    Repository for AROUserLogin table.
     """
 
     model = AROUserLogin
@@ -162,9 +162,9 @@ class AROUserLoginWrapper(AbstractWrapper[AROUserLogin, UUID]):
             return r.rowcount
 
 
-class ARORequestWrapper(AbstractWrapper[ARORequest, UUID]):
+class ARORequestRepository(AbstractRepository[ARORequest, UUID]):
     """
-    Data wrapper for ARORequest table.
+    Repository for ARORequest table.
     """
 
     model = ARORequest
@@ -192,25 +192,25 @@ class ARORequestWrapper(AbstractWrapper[ARORequest, UUID]):
             )
 
 
-class MainCommandWrapper(AbstractWrapper[MainCommand, int]):
+class MainCommandRepository(AbstractRepository[MainCommand, int]):
     """
-    Data wrapper for MainCommand table.
+    Repository for MainCommand table.
     """
 
     model = MainCommand
 
 
-class MainTelemetryWrapper(AbstractWrapper[MainTelemetry, int]):
+class MainTelemetryRepository(AbstractRepository[MainTelemetry, int]):
     """
-    Data wrapper for MainTelemetry table.
+    Repository for MainTelemetry table.
     """
 
     model = MainTelemetry
 
 
-class CommsSessionWrapper(AbstractWrapper[CommsSession, UUID]):
+class CommsSessionRepository(AbstractRepository[CommsSession, UUID]):
     """
-    Data wrapper for CommsSession table.
+    Repository for CommsSession table.
     """
 
     model = CommsSession
@@ -255,17 +255,17 @@ class CommsSessionWrapper(AbstractWrapper[CommsSession, UUID]):
         return datetime.now(UTC) >= lockout_start
 
 
-class PacketWrapper(AbstractWrapper[Packet, UUID]):
+class PacketRepository(AbstractRepository[Packet, UUID]):
     """
-    Data wrapper for Packet table.
+    Repository for Packet table.
     """
 
     model = Packet
 
 
-class CommandsWrapper(AbstractWrapper[Command, UUID]):
+class CommandsRepository(AbstractRepository[Command, UUID]):
     """
-    Data wrapper for Command table.
+    Repository for Command table.
     """
 
     model = Command
@@ -291,9 +291,9 @@ class CommandsWrapper(AbstractWrapper[Command, UUID]):
         return floating_commands
 
 
-class TelemetryWrapper(AbstractWrapper[Telemetry, UUID]):
+class TelemetryRepository(AbstractRepository[Telemetry, UUID]):
     """
-    Data wrapper for Telemetry table.
+    Repository for Telemetry table.
     """
 
     model = Telemetry
@@ -357,9 +357,9 @@ class TelemetryWrapper(AbstractWrapper[Telemetry, UUID]):
             ]
 
 
-class ImageWrapper(AbstractWrapper[Image, UUID]):
+class ImageRepository(AbstractRepository[Image, UUID]):
     """
-    Data wrapper for Image table.
+    Repository for Image table.
     """
 
     model = Image

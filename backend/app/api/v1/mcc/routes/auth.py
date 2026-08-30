@@ -1,14 +1,19 @@
-from fastapi import APIRouter, Request
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Request
 from fastapi.concurrency import run_in_threadpool
 from fastapi.exceptions import HTTPException
 from fastapi.responses import RedirectResponse, Response
 from keycloak.exceptions import KeycloakError
 from sqlalchemy.exc import IntegrityError
 
-from app.data.data_wrappers.wrappers import MCCUsersWrapper
+from app.data.repositories.dal import DAL
+from app.data.repositories.repositories import MCCUsersRepository
 from app.mcc_keycloak.client import keycloak
 
 mcc_auth_router = APIRouter(tags=["MCC", "Authentication"])
+
+MCCUsersRepo = Annotated[MCCUsersRepository, Depends(DAL.get_repo(DAL.mcc_users))]
 
 
 @mcc_auth_router.get("/ping", dependencies=[keycloak.require_auth])
@@ -31,9 +36,16 @@ async def login() -> RedirectResponse:
 
 
 @mcc_auth_router.get("/callback")
-async def auth_token_callback(code: str) -> Response:
+async def auth_token_callback(
+    code: str,
+    mcc_users: MCCUsersRepo,
+) -> Response:
     """
     Callback endpoint redirected to by keycloak for tokens
+
+    :param code: the authorization code returned by keycloak's login redirect.
+    :param mcc_users: injected MCCUsers repository.
+    :return: a response that sets the id/access token cookies.
     """
     try:
         tokens = await keycloak.get_tokens(code)
@@ -41,7 +53,7 @@ async def auth_token_callback(code: str) -> Response:
         raise HTTPException(status_code=401, detail="Token exchange failed") from e
     user_info = await keycloak.decode_token(tokens["id_token"])
     try:
-        await MCCUsersWrapper().create(
+        await mcc_users.create(
             {
                 "id": user_info["sub"],
                 "email": user_info["email"],
