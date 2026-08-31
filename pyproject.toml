@@ -22,21 +22,9 @@ dependencies = [
     # security
     "itsdangerous==2.2.0",
     "python-keycloak==7.1.1",
-    "pyjwt==2.13.0",
     "fastapi-users==15.0.5",
-    # hardware/protocol
-    "pyserial==3.5",
-    "pyham_ax25==1.0.3",
-    "pyStuffing==0.0.4",
-    "tinyaes==1.1.2",
-    # terminal UI
-    "textual>=8.2.7,<9.0.0",
     # utilities
-    "requests>=2.32.0",
-    "python-dotenv>=1.1.0",
     "loguru>=0.7.3",
-    "tqdm>=4.67.0",
-    "pyyaml>=6.0.3",
     "pydantic-extra-types>=2.11.0",
     "phonenumbers>=9.0.0",
     "fastapi-mail>=1.6.5",
@@ -49,16 +37,9 @@ dev = [
     "pytest-asyncio>=1.4.0",
     "pytest-cov==7.1.0",
     "testcontainers>=4.14.2",
-    "httpx2>=0.28.0",
-    "hypothesis>=6.100.0,<7.0.0",
     # static checking
     "mypy==2.1.0",
     "ruff==0.15.15",
-    # type stubs
-    "types-requests>=2.31.0",
-    "types-pyserial>=3.5.0",
-    "types-python-jose>=3.5.0",
-    "types-tqdm>=4.67.0",
     # tooling
     "pre-commit==4.6.0",
 ]
@@ -84,16 +65,4 @@ plugins = "pydantic.mypy"
 
 [[tool.mypy.overrides]]
 module = ["jwcrypto.*"]
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = "ax25.*"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = "tinyaes.*"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = "pyStuffing.*"
 ignore_missing_imports = true

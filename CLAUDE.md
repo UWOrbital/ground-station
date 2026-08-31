@@ -114,7 +114,7 @@ Sample data can be found in `backend/references/`.
 - pytest is verbose by default (`-v` in `pyproject.toml`).
 - `backend/tests/conftest.py` autouses a fixture that swaps `get_db_session` to point at a per-test Postgres DB, so wrappers under test must call `get_db_session()` (not hold a cached engine).
 - The dummy env vars in `conftest.py` are set with `setdefault` *before* importing the engine module, so test-only env never leaks into dev. Don't reorder those imports.
-- mypy runs in `strict` mode and excludes `tests/*`. ax25, tinyaes, authlib, and pyStuffing have `ignore_missing_imports`.
+- mypy runs in `strict` mode and excludes `tests/*`.
 - Ruff is scoped to `backend/` only (frontend, `tests`, and `migrations` are excluded) and enforces docstrings on classes/functions/methods (rules `D101 D102 D103 D105` plus `D213`).
 
 ## Pre-commit
