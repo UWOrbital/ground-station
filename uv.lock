@@ -207,14 +207,8 @@ dependencies = [
     { name = "phonenumbers" },
     { name = "pydantic-extra-types" },
     { name = "pydantic-settings" },
-    { name = "pyham-ax25" },
-    { name = "pyserial" },
-    { name = "pystuffing" },
-    { name = "python-dotenv" },
     { name = "python-keycloak" },
-    { name = "pyyaml" },
     { name = "sqlmodel" },
-    { name = "tinyaes" },
 ]
 
 [package.optional-dependencies]
@@ -226,10 +220,6 @@ dev = [
     { name = "pytest-cov" },
     { name = "ruff" },
     { name = "testcontainers" },
-    { name = "types-pyserial" },
-    { name = "types-python-jose" },
-    { name = "types-requests" },
-    { name = "types-tqdm" },
 ]
 
 [package.metadata]
@@ -248,23 +238,13 @@ requires-dist = [
     { name = "pre-commit", marker = "extra == 'dev'", specifier = "==4.6.0" },
     { name = "pydantic-extra-types", specifier = ">=2.11.0" },
     { name = "pydantic-settings", specifier = "==2.14.1" },
-    { name = "pyham-ax25", specifier = "==1.0.3" },
-    { name = "pyserial", specifier = "==3.5" },
-    { name = "pystuffing", specifier = "==0.0.4" },
     { name = "pytest", marker = "extra == 'dev'", specifier = "==9.0.3" },
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=1.4.0" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = "==7.1.0" },
-    { name = "python-dotenv", specifier = ">=1.1.0" },
     { name = "python-keycloak", specifier = "==7.1.1" },
-    { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "ruff", marker = "extra == 'dev'", specifier = "==0.15.15" },
     { name = "sqlmodel", specifier = "==0.0.38" },
     { name = "testcontainers", marker = "extra == 'dev'", specifier = ">=4.14.2" },
-    { name = "tinyaes", specifier = "==1.1.2" },
-    { name = "types-pyserial", marker = "extra == 'dev'", specifier = ">=3.5.0" },
-    { name = "types-python-jose", marker = "extra == 'dev'", specifier = ">=3.5.0" },
-    { name = "types-requests", marker = "extra == 'dev'", specifier = ">=2.31.0" },
-    { name = "types-tqdm", marker = "extra == 'dev'", specifier = ">=4.67.0" },
 ]
 provides-extras = ["dev"]
 
@@ -1591,15 +1571,6 @@ wheels = [
 ]
 
 [[package]]
-name = "pyham-ax25"
-version = "1.0.3"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/51/75/3e206fb1583499137f36709f4aed440ebfa41866b495d1206c173c13fc3f/pyham_ax25-1.0.3.tar.gz", hash = "sha256:55111ebcbbe5c1a5c57681e02aacb28ab072598c2f1690e70d0864b67e1fd3ac", size = 141486, upload-time = "2025-08-04T21:12:05.444Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/3b/05/f27232b3cee4d527270f94bd6c86646417b897cf19c3d9aac09d7ad8229c/pyham_ax25-1.0.3-py3-none-any.whl", hash = "sha256:5eed7c2fccab2024e83bcd6fa5be8220de22f3e64a269eac7bc697569655c30f", size = 17758, upload-time = "2025-08-04T21:12:04.084Z" },
-]
-
-[[package]]
 name = "pyjwt"
 version = "2.13.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1611,27 +1582,6 @@ wheels = [
 [package.optional-dependencies]
 crypto = [
     { name = "cryptography" },
-]
-
-[[package]]
-name = "pyserial"
-version = "3.5"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/1e/7d/ae3f0a63f41e4d2f6cb66a5b57197850f919f59e558159a4dd3a818f5082/pyserial-3.5.tar.gz", hash = "sha256:3c77e014170dfffbd816e6ffc205e9842efb10be9f58ec16d3e8675b4925cddb", size = 159125, upload-time = "2020-11-23T03:59:15.045Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/07/bc/587a445451b253b285629263eb51c2d8e9bcea4fc97826266d186f96f558/pyserial-3.5-py2.py3-none-any.whl", hash = "sha256:c4451db6ba391ca6ca299fb3ec7bae67a5c55dde170964c7a14ceefec02f2cf0", size = 90585, upload-time = "2020-11-23T03:59:13.41Z" },
-]
-
-[[package]]
-name = "pystuffing"
-version = "0.0.4"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "colorama" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/85/c5/3b5a23b24c6c488d856a92929f7ea26094efa0f3aeb64d430dbed2fc900e/pyStuffing-0.0.4.tar.gz", hash = "sha256:f70b8430d7299bc5c6bc17e74c50393eeca7e044ea93201f286c02cb9f9a5695", size = 4130, upload-time = "2021-05-13T09:17:38.046Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/0f/01/db572e37a75efaa690238d31ce77990247b3e630fdb5615fdc0e11cabf4c/pyStuffing-0.0.4-py3-none-any.whl", hash = "sha256:01263ec30d98216000706df77042950a6d77d0d61a24a2a1c1d491883bc43fc8", size = 4743, upload-time = "2021-05-13T09:17:36.89Z" },
 ]
 
 [[package]]
@@ -2153,32 +2103,6 @@ wheels = [
 ]
 
 [[package]]
-name = "tinyaes"
-version = "1.1.2"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/0b/ba/6d058d0bee1e06ee61c8226c127c10d942e4fbacc2819f05afae67835ae1/tinyaes-1.1.2.tar.gz", hash = "sha256:ac045558486ba1832183a41e807d7d8389439d6cfea237dbd70205d6fc6c63ce", size = 83466, upload-time = "2025-12-01T08:47:18.552Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/62/51/4f01fa803d8bdd784f29b107d8339aad7dca0850f900486f9297b893eb07/tinyaes-1.1.2-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:02b4562c2e264807d99292fc1ee27161496d40c01fe3cfccedd76aad8c449b61", size = 57516, upload-time = "2025-12-01T08:46:53.102Z" },
-    { url = "https://files.pythonhosted.org/packages/a9/3d/8982ecc54cf89a39de725b8936ea6f7151518d422e74b63028df0aaf2cbc/tinyaes-1.1.2-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:e14122b4a6e1b8c74a38e03eb1e0ca45ef3a4b879509c5163035ee987ee53f03", size = 31038, upload-time = "2025-12-01T08:46:53.843Z" },
-    { url = "https://files.pythonhosted.org/packages/b9/e7/736d1d2c8ca2969c2f905fabfb5b6e4e208e30eb62e079309889d25a397f/tinyaes-1.1.2-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:32a1b9f495e75142cba1d5fbdf4fb1aaa8fc04e4bc656990a9cc37cbb85d3cdc", size = 31002, upload-time = "2025-12-01T08:46:54.83Z" },
-    { url = "https://files.pythonhosted.org/packages/a2/73/fec7137d90eade631fa66a86dd8b20d502cdd57050f13ecd268c439145f4/tinyaes-1.1.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:d6efcf7b1a1a6fd276134edf2917a6964c74eefeb84e0edc7e4a2ae89f86a181", size = 165569, upload-time = "2025-12-01T08:46:55.543Z" },
-    { url = "https://files.pythonhosted.org/packages/cf/b6/2d09afaeea5a4ba3583c44ffe86b9fa0679c8ba212202866501ec74cc552/tinyaes-1.1.2-cp312-cp312-win32.whl", hash = "sha256:e8402f5df5b43381ecdc336b892fb0b5f768e873f9d1d4868e4e0a16a1581ff7", size = 27501, upload-time = "2025-12-01T08:46:56.555Z" },
-    { url = "https://files.pythonhosted.org/packages/c7/64/b8ffbfb30c762b8b3e9c2fc10725b2388cab64a59c75e46eecfa01bbc85c/tinyaes-1.1.2-cp312-cp312-win_amd64.whl", hash = "sha256:d627d2e62c9ee7dc843e2d03d33dc5734d34e7ba6d7268d7a1ae803e560b392c", size = 30839, upload-time = "2025-12-01T08:46:57.53Z" },
-    { url = "https://files.pythonhosted.org/packages/26/e8/401158531ebefbbe2ffa21b9ff187ed6ca5c47ff616d2708d936b54e3f93/tinyaes-1.1.2-cp313-cp313-macosx_10_13_universal2.whl", hash = "sha256:6e484bbb90883b1f14e8bd3b3df34d2aec15692ee9dcf16e4fc03a17a10f3f48", size = 56246, upload-time = "2025-12-01T08:46:58.243Z" },
-    { url = "https://files.pythonhosted.org/packages/55/29/394bb430b85cc41164ba0f236c711a623c5b72894dbb3beafde9a75d8aec/tinyaes-1.1.2-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:55197cd5cb61d47c64800c91241b89e280f55243b928504a72ecc7dc98139a3e", size = 30427, upload-time = "2025-12-01T08:46:59.06Z" },
-    { url = "https://files.pythonhosted.org/packages/76/a0/0b4dedd7a68a9dcee8974a07181cb7fee812643aa4a918418d2fc861f2c5/tinyaes-1.1.2-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:c03d9ad81369dd229a0cc4c344f901f97aec41d92f79c7d050b3ba4b82bdd551", size = 30364, upload-time = "2025-12-01T08:47:00.04Z" },
-    { url = "https://files.pythonhosted.org/packages/6f/8e/8ebde6ab10c235008f64bb3018a60f8e0bb3b28868c9edcfdd2546b1b7a5/tinyaes-1.1.2-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:7a8ab226ecde59c3910f8738d931636ca6b2d84bb1efa5d988d8289c3c71a483", size = 161520, upload-time = "2025-12-01T08:47:00.765Z" },
-    { url = "https://files.pythonhosted.org/packages/47/26/1e1da3ff2456d5653756030d76b1838f3f83850165944b999af8506ded86/tinyaes-1.1.2-cp313-cp313-win32.whl", hash = "sha256:889c4392a9e419d751f8c85ba565f420111fe410497e5ed24dbfc6de8c10cfff", size = 27116, upload-time = "2025-12-01T08:47:01.613Z" },
-    { url = "https://files.pythonhosted.org/packages/25/10/ea3d49608a806190e6f16ded0b090c8be1ce9527b53ebf5bd9a033db309e/tinyaes-1.1.2-cp313-cp313-win_amd64.whl", hash = "sha256:147aa7db01d621c300b80a0a41c2dc8fe9e8ad42838973da14c92fc7b5c8d651", size = 30168, upload-time = "2025-12-01T08:47:02.62Z" },
-    { url = "https://files.pythonhosted.org/packages/b8/34/5512881c6b0775396d775acd252d7396c928b1ecf5a213222c2859b18318/tinyaes-1.1.2-cp314-cp314-macosx_10_15_universal2.whl", hash = "sha256:c9cf58dcb8911640d9dc9a909142f1d0fd4d1372de189f0e5cb2a795a18c0fe4", size = 56671, upload-time = "2025-12-01T08:47:03.685Z" },
-    { url = "https://files.pythonhosted.org/packages/19/7f/bd7f49b65dcc0380709bcedea10bc72de991883dbe0a6b711e5870893b7b/tinyaes-1.1.2-cp314-cp314-macosx_10_15_x86_64.whl", hash = "sha256:e2d176778b4a1c9b7697e90156e576c4bdbdb9d39a2fcce195de270057d897ca", size = 30676, upload-time = "2025-12-01T08:47:04.735Z" },
-    { url = "https://files.pythonhosted.org/packages/e1/07/7421e34f812eb7808dcebc79909fb655b21f2fd63ddcc6cc83c9c19dbcf3/tinyaes-1.1.2-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:514c8b932b2c07928b4224d2edc2ea8a993b5e01565dca3605a1e85a83c360d2", size = 30529, upload-time = "2025-12-01T08:47:05.826Z" },
-    { url = "https://files.pythonhosted.org/packages/d4/e5/70e3af90cee39d2fcfb9b6f03ac08b33c2e804ef29b1dcd0fa9587e5e4b1/tinyaes-1.1.2-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:01fd14ce1b3bdd8610d69596973f9251ba6805298511b20ddf0a9580aab8f750", size = 160095, upload-time = "2025-12-01T08:47:06.513Z" },
-    { url = "https://files.pythonhosted.org/packages/c6/11/206937b6556c480295c04760b27354e67af910d38c2ce106dec45dd1ad35/tinyaes-1.1.2-cp314-cp314-win32.whl", hash = "sha256:5c634f31c7362c82984e14ca5c4289df1e0c8794c3cb123d58e0ba47809757c0", size = 28006, upload-time = "2025-12-01T08:47:07.347Z" },
-    { url = "https://files.pythonhosted.org/packages/e5/6e/f746ef835baae6aa932a46d5fc46e1122579e55599647d72df6c8e18aa2f/tinyaes-1.1.2-cp314-cp314-win_amd64.whl", hash = "sha256:f5ced098d2e7bcd97baaecdb236a3d86fe937a577f79b1f0301df7bfdf002d2a", size = 30949, upload-time = "2025-12-01T08:47:08.009Z" },
-]
-
-[[package]]
 name = "typer"
 version = "0.26.6"
 source = { registry = "https://pypi.org/simple" }
@@ -2191,60 +2115,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/f4/8a/8dc5733b8939e7f1a71173091a6e27a1658345edbff548a0bf3f5bb26173/typer-0.26.6.tar.gz", hash = "sha256:cdbc160fe7e795b835fb6016419494a521a67bfb86b9476a1ccd0e7727d3ae5b", size = 201595, upload-time = "2026-06-02T13:47:50.536Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/30/c7/519138260db5e2fe03a509bf9e8ef6af9a514d3565c8fa74fc4fededbae1/typer-0.26.6-py3-none-any.whl", hash = "sha256:49f96d9ee5730cef607bbe155042f40b41fa4c0d0dec04990d580837493805be", size = 122464, upload-time = "2026-06-02T13:47:51.768Z" },
-]
-
-[[package]]
-name = "types-pyasn1"
-version = "0.6.0.20260408"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/58/c0/02f897fc8543f64fa6b1ca6a30d388e37c4ec2f761f469a2d9a29b89cdef/types_pyasn1-0.6.0.20260408.tar.gz", hash = "sha256:32dc90927adbe504fd2eee83ae30cf5ef934e5db0d1d94886071fed47eb50c8c", size = 17312, upload-time = "2026-04-08T04:27:16.874Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/e1/a5/473e06d5aaec3730aab5a9d40c2044e673c927412c24bd7f3fa0df7e95d3/types_pyasn1-0.6.0.20260408-py3-none-any.whl", hash = "sha256:ee7fbd98bce61193c5d4f8f7812fa53cddc5b8cc5ceb9fcda6eea539947c6d6b", size = 24044, upload-time = "2026-04-08T04:27:16.002Z" },
-]
-
-[[package]]
-name = "types-pyserial"
-version = "3.5.0.20260519"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/a2/b2/0d74759b5b40827b38f144be6e188fe117d592c218c98347d7aa4966193c/types_pyserial-3.5.0.20260519.tar.gz", hash = "sha256:0d6452781871f9af7b8598e24faa5f75d4ad50848a6fb301b4ae30b0e6ec3765", size = 20507, upload-time = "2026-05-19T05:56:16.839Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/8a/02/53eb53c5ec22c6b81591f1a19c60cd24ac06dafae14c1580231b208749ae/types_pyserial-3.5.0.20260519-py3-none-any.whl", hash = "sha256:cfec8dbc3a60f81afad9223dff7772391ddc5067aca469a1c9d3e72f2caccfa2", size = 25321, upload-time = "2026-05-19T05:56:15.871Z" },
-]
-
-[[package]]
-name = "types-python-jose"
-version = "3.5.0.20260408"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "types-pyasn1" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/a1/b1/87cdb410d22913df39d7aad8864f94a4f5ad8d507ee07556888fdbe55e19/types_python_jose-3.5.0.20260408.tar.gz", hash = "sha256:3f8dccdc327bfffea7a81084ea1cea722fa499f13c1d04f7978b491dd36e0cf1", size = 11989, upload-time = "2026-04-08T04:34:10.577Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/d3/83/df2b34e64f0a674935d718471cf10fb392a7e5bdb0e9e7c739885b62d274/types_python_jose-3.5.0.20260408-py3-none-any.whl", hash = "sha256:968d8a8eac1ff9da249d6335a2bb9f82288d59ba23afe91fcc2662eb9f485e2a", size = 14694, upload-time = "2026-04-08T04:34:09.747Z" },
-]
-
-[[package]]
-name = "types-requests"
-version = "2.33.0.20260518"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "urllib3" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/e0/01/c5a19253fe1ac159159ddf9a3a07cec8bb5e486ec4d9002ad2821da0e5d2/types_requests-2.33.0.20260518.tar.gz", hash = "sha256:df7bd3bfe0ca8402dfb841e7d9be714bb5578203283d66d7dc4ef69343449a5e", size = 24752, upload-time = "2026-05-18T06:07:37.966Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/1c/bc/b139710a3b6018f7fb2b9508b35c8af564e61bf2bf4fa619d088f3e16f85/types_requests-2.33.0.20260518-py3-none-any.whl", hash = "sha256:626d697d1adaaff76e2044dc8c5c051d8f21abc157bdfe204a75558076fe0bf0", size = 21391, upload-time = "2026-05-18T06:07:37.044Z" },
-]
-
-[[package]]
-name = "types-tqdm"
-version = "4.67.3.20260518"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "types-requests" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/72/8c/8216f9030027dc96c776b0307cb06da9f3c3756ef00e98f1eb332e04a33c/types_tqdm-4.67.3.20260518.tar.gz", hash = "sha256:1f0cf61de56a76a454fbe2c6cc48d05e483470a38f8a9071893b923e7be47190", size = 18208, upload-time = "2026-05-18T06:08:04.417Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/56/59/dbe84f71186645b821cf63f71fc746e1455fbce074594a86f486bee8dc89/types_tqdm-4.67.3.20260518-py3-none-any.whl", hash = "sha256:4969f5b97257c6d082c163d7a0715fffe7a83cb6863e108eac45c3fb82305a68", size = 24586, upload-time = "2026-05-18T06:08:03.568Z" },
 ]
 
 [[package]]
