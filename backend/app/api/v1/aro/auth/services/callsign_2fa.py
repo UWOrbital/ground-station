@@ -1,8 +1,8 @@
 from fastapi import HTTPException, status
 
 from app.api.v1.aro.schemas.auth.requests import CallsignRequest
-from app.data.data_wrappers.wrappers import AROUserCallsignWrapper, AROUsersWrapper
 from app.data.models.aro_user_models import AROUsers
+from app.data.repositories.dal import DAL
 
 
 async def callsign_verified(qual_levels: tuple[bool, ...], user_call_sign: str) -> bool:
@@ -12,7 +12,7 @@ async def callsign_verified(qual_levels: tuple[bool, ...], user_call_sign: str) 
     :qual_levels: tuple[bool, ...]: user qualification levels
     :user_call_sign: str: a user's provided call sign
     """
-    callsigns = AROUserCallsignWrapper()
+    callsigns = DAL.aro_user_callsigns()
     record = await callsigns.get_row_by_callsign(user_call_sign)
 
     if not record:
@@ -54,7 +54,7 @@ async def verify_user_callsign(request: CallsignRequest, user: AROUsers) -> AROU
     if not await callsign_verified(qual_levels=qual_levels, user_call_sign=request.call_sign):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Callsign unable to be verified.")
 
-    users = AROUsersWrapper()
+    users = DAL.aro_users()
     updated_user = await users.update(
         user.id,
         {

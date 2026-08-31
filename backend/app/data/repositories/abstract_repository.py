@@ -11,9 +11,9 @@ T = TypeVar("T", bound=BaseSQLModel)
 PK = TypeVar("PK", int, UUID)
 
 
-class AbstractWrapper[T, PK](ABC):
+class AbstractRepository[T, PK](ABC):
     """
-    An Abstract Base Class for all data wrappers.
+    An Abstract Base Class for all data repositories.
     """
 
     model: type[T]

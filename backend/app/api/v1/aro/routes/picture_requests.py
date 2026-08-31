@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request, Response
@@ -14,13 +15,17 @@ from app.api.v1.aro.schemas.picture_requests.responses import (
     PictureRequestsResponse,
 )
 from app.config.data_values import PICTURE_REQUEST_DELETE_WINDOW
-from app.data.data_wrappers.wrappers import ARORequestWrapper, PacketWrapper
 from app.data.enums.aro_requests import ARORequestStatus
 from app.data.models.aro_user_models import AROUsers
 from app.data.models.transactional_models import ARORequest
+from app.data.repositories.dal import DAL
+from app.data.repositories.repositories import ARORequestRepository, PacketRepository
 from app.exceptions.exceptions import InvalidStateError, NotFoundError
 
 picture_requests_router = APIRouter(tags=["ARO", "Picture Requests"])
+
+ARORequestsRepo = Annotated[ARORequestRepository, Depends(DAL.get_repo(DAL.aro_requests))]
+PacketsRepo = Annotated[PacketRepository, Depends(DAL.get_repo(DAL.packets))]
 
 
 def _is_deletable(req: ARORequest) -> bool:
@@ -78,7 +83,7 @@ def _to_item(request: Request, req: ARORequest) -> PictureRequestItem:
     return item
 
 
-async def _get_owned_request(request_id: UUID, user: AROUsers) -> ARORequest:
+async def _get_owned_request(request_id: UUID, user: AROUsers, aro_requests: ARORequestRepository) -> ARORequest:
     """
     Fetch a picture request owned by the given user, or raise 404.
 
@@ -87,11 +92,12 @@ async def _get_owned_request(request_id: UUID, user: AROUsers) -> ARORequest:
 
     :param request_id: id of the picture request to fetch.
     :param user: the authenticated ARO user that must own the request.
+    :param aro_requests: the ARORequest repository to read from.
     :return: the owned picture request.
     :raises NotFoundError: if no such request exists for this user.
     """
     try:
-        req = await ARORequestWrapper().get_by_id(request_id)
+        req = await aro_requests.get_by_id(request_id)
     except ValueError:
         raise NotFoundError("Picture request not found.") from None
 
@@ -104,6 +110,7 @@ async def _get_owned_request(request_id: UUID, user: AROUsers) -> ARORequest:
 @picture_requests_router.get("/", name="aro_list_picture_requests")
 async def list_picture_requests(
     request: Request,
+    aro_requests: ARORequestsRepo,
     count: int = Query(default=100, ge=1),
     offset: int = Query(default=0, ge=0),
     user: AROUsers = Depends(get_user_by_token),
@@ -112,12 +119,13 @@ async def list_picture_requests(
     List the current ARO user's most recent picture requests.
 
     :param request: the incoming request, used to resolve route URLs.
+    :param aro_requests: injected ARORequest repository.
     :param count: maximum number of most recent requests to return.
     :param offset: number of most recent requests to skip, for paging.
     :param user: the authenticated ARO user (injected).
     :return: a page of the user's requests plus pagination operations.
     """
-    requests = await ARORequestWrapper().get_recent_by_aro(user.id, count, offset)
+    requests = await aro_requests.get_recent_by_aro(user.id, count, offset)
     items = [_to_item(request, req) for req in requests]
 
     operations: dict[str, PageLink] = {}
@@ -136,6 +144,7 @@ async def list_picture_requests(
 async def create_picture_request(
     request: Request,
     payload: CreatePictureRequest,
+    aro_requests: ARORequestsRepo,
     user: AROUsers = Depends(get_user_by_token),
 ) -> PictureRequestResponse:
     """
@@ -143,10 +152,11 @@ async def create_picture_request(
 
     :param request: the incoming request, used to resolve route URLs.
     :param payload: the coordinates for the requested picture.
+    :param aro_requests: injected ARORequest repository.
     :param user: the authenticated ARO user (injected).
     :return: the created request with its id and operations.
     """
-    created = await ARORequestWrapper().create(
+    created = await aro_requests.create(
         {
             "aro_id": user.id,
             "latitude": payload.latitude,
@@ -160,22 +170,26 @@ async def create_picture_request(
 @picture_requests_router.get("/{request_id}/packet", name="aro_download_packet")
 async def download_packet(
     request_id: UUID,
+    aro_requests: ARORequestsRepo,
+    packets: PacketsRepo,
     user: AROUsers = Depends(get_user_by_token),
 ) -> Response:
     """
     Download the uplink packet the ARO transmits to confirm a picture request.
 
     :param request_id: id of the picture request whose packet to download.
+    :param aro_requests: injected ARORequest repository.
+    :param packets: injected Packet repository.
     :param user: the authenticated ARO user (injected).
     :return: the raw packet bytes as an octet-stream attachment.
     :raises NotFoundError: if the request (or its packet) does not exist.
     """
-    req = await _get_owned_request(request_id, user)
+    req = await _get_owned_request(request_id, user, aro_requests)
 
     if req.packet_id is None:
         raise NotFoundError("No packet is available for this request.")
 
-    packet = await PacketWrapper().get_by_id(req.packet_id)
+    packet = await packets.get_by_id(req.packet_id)
     return Response(
         content=packet.raw_data,
         media_type="application/octet-stream",
@@ -187,6 +201,7 @@ async def download_packet(
 async def delete_picture_request(
     request: Request,
     request_id: UUID,
+    aro_requests: ARORequestsRepo,
     user: AROUsers = Depends(get_user_by_token),
 ) -> PictureRequestResponse:
     """
@@ -194,15 +209,16 @@ async def delete_picture_request(
 
     :param request: the incoming request, used to resolve route URLs.
     :param request_id: id of the picture request to delete.
+    :param aro_requests: injected ARORequest repository.
     :param user: the authenticated ARO user (injected).
     :return: the deleted request.
     :raises NotFoundError: if the request does not exist for this user.
     :raises InvalidStateError: if the request is no longer in a deletable state.
     """
-    req = await _get_owned_request(request_id, user)
+    req = await _get_owned_request(request_id, user, aro_requests)
 
     if not _is_deletable(req):
         raise InvalidStateError("This picture request can no longer be deleted.")
 
-    deleted = await ARORequestWrapper().delete_by_id(request_id)
+    deleted = await aro_requests.delete_by_id(request_id)
     return PictureRequestResponse(data=_to_item(request, deleted))
