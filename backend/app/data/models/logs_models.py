@@ -24,10 +24,11 @@ class APILog(BaseSQLModel, table=True):
     own logs instead of scraping a file.
     """
 
-    id: UUID = Field(default_factory=uuid4, primary_key=True, index=True)
+    id: UUID = Field(default_factory=uuid4, primary_key=True)  # primary key is already uniquely indexed
     time: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
-        sa_column=Column(DateTime(timezone=True), nullable=False),
+        # Indexed because the monitoring surface queries logs newest-first (see APILogRepository.get_recent).
+        sa_column=Column(DateTime(timezone=True), nullable=False, index=True),
     )
     priority: str = Field(max_length=DEFAULT_MAX_LENGTH)  # loguru level name, e.g. INFO/ERROR/CRITICAL
     message: str  # the rendered log message

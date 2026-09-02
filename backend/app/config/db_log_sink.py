@@ -10,10 +10,16 @@ rows in batches.
 Two hazards this module is built to avoid:
 
 - **Recursion / log floods.** Writing a row emits ``sqlalchemy.engine`` logs,
-  which ``setup_logging`` routes back into loguru at the custom ``VERBOSE``
-  level. If those re-entered this sink they would trigger more writes forever.
-  The sink filter drops ``VERBOSE`` records (and anything below the configured
-  minimum level), breaking the loop.
+  which ``setup_logging`` re-emits through loguru at the custom ``VERBOSE``
+  level (15). If those re-entered this sink they would trigger more writes
+  forever. The primary guard is the sink's registered level: it is added at
+  ``db_sink_min_level`` (default ``INFO`` = 20), so ``VERBOSE`` records are
+  dropped by loguru before the filter even runs. ``_db_sink_filter`` then drops
+  ``VERBOSE`` again as belt-and-suspenders (in case the min level is ever
+  lowered below 15). Note the re-emitted SQLAlchemy records carry the *name* of
+  ``setup_logging``'s module, not ``sqlalchemy.*`` — so the name check in the
+  filter is only defense against libraries that log directly under a
+  sqlalchemy-prefixed logger, not the main recursion path.
 - **Losing logs or crashing the app.** A DB failure is caught and reported to
   stderr; it never propagates into request handling, and the console sink keeps
   working regardless.
@@ -49,8 +55,14 @@ def _db_sink_filter(record: "Record") -> bool:
     """
     Decide whether a loguru record should be persisted to the database.
 
-    Drops the sink's own SQLAlchemy query logs (emitted at the custom ``VERBOSE``
-    level) so writing a log row can't recursively trigger more log rows.
+    Recursion prevention: writing a log row emits SQLAlchemy engine logs, which
+    ``setup_logging`` re-emits at the custom ``VERBOSE`` level (15). Those are
+    already excluded by the sink's registered level (``db_sink_min_level``,
+    default INFO=20); the ``VERBOSE`` check here is a redundant safety net should
+    that minimum ever drop below 15. The ``sqlalchemy`` name check is extra
+    defense against anything logging directly under a sqlalchemy-prefixed logger
+    (the re-emitted engine logs themselves are named after ``setup_logging``'s
+    module, so this branch does not catch the main recursion path).
 
     :param record: the loguru record dict for the message being logged.
     :return: True if the record should be written to the database, False otherwise.
@@ -220,6 +232,11 @@ async def stop_db_log_sink() -> None:
 
     Removes the loguru handler first so no new records arrive, then signals the
     consumer to drain what remains and awaits it.
+
+    Best-effort: a record whose ``_enqueue`` was already scheduled via
+    ``call_soon_threadsafe`` but has not run yet can land behind the sentinel and
+    be dropped. That only affects the final handful of rows at shutdown, which is
+    an acceptable trade for a bounded, non-blocking flush.
     """
     global _queue, _consumer_task, _loop, _sink_id
 
