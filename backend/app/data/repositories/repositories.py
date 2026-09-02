@@ -332,7 +332,7 @@ class TelemetryRepository(AbstractRepository[Telemetry, UUID]):
         """
         async with get_db_session() as session:
             results = (
-                await session.execute(
+                await session.exec(
                     select(Telemetry, MainTelemetry.name, Packet.session_id, CommsSession.status)
                     .join(MainTelemetry, Telemetry.type_ == MainTelemetry.id)  # type: ignore[arg-type]
                     .join(Packet, Telemetry.packet_id == Packet.id, isouter=True)  # type: ignore[arg-type]
