@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 
-from app.api.v1.aro.schemas.auth.requests import CallsignRequest
+from app.api.aro.schemas.auth.requests import CallsignRequest
 from app.data.models.aro_user_models import AROUsers
 from app.data.repositories.dal import DAL
 

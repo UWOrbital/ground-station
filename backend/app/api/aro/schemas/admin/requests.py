@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from app.api.v1.aro.schemas.types import AROEmailField, CallSign, FirstName, LastName, PhoneNumber
+from app.api.aro.schemas.types import AROEmailField, CallSign, FirstName, LastName, PhoneNumber
 
 # -----------------------------------------------------------------
 # Admin Requests

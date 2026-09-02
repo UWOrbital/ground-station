@@ -1,5 +1,5 @@
 import pytest
-import app.api.v1.mcc.routes.users as mcc_users
+import app.api.mcc.routes.users as mcc_users
 from uuid import UUID
 from unittest.mock import AsyncMock, MagicMock, patch
 from fastapi.testclient import TestClient
@@ -7,7 +7,7 @@ from app.data.models.mcc_user_models import MCCUsers
 from app.data.repositories.dal import DAL
 from main import app
 
-from app.api.v1.mcc.schemas.responses import UserInformationResponse
+from app.api.mcc.schemas.responses import UserInformationResponse
 
 MOCK_USER = MCCUsers(
     id=UUID("E621E1F8-C36C-495A-93FC-0C247A3E6E5F"),
@@ -25,7 +25,7 @@ MOCK_USER_EXPECTED_RESPONSE = UserInformationResponse(
     phone_number=""
 )
 
-USERS_PREFIX = "/api/v1/mcc/users"
+USERS_PREFIX = "/api/mcc/users"
 
 # The DI provider the users routes depend on; overriding this key swaps the repo.
 MCC_USERS_PROVIDER = DAL.get_repo(DAL.mcc_users)

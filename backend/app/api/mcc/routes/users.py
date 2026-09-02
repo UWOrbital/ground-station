@@ -3,8 +3,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
 
-from app.api.v1.mcc.schemas.requests import UpdateUserRequest
-from app.api.v1.mcc.schemas.responses import UserInformationResponse
+from app.api.mcc.schemas.requests import UpdateUserRequest
+from app.api.mcc.schemas.responses import UserInformationResponse
 from app.data.models.mcc_user_models import MCCUsers
 from app.data.repositories.dal import DAL
 from app.data.repositories.repositories import MCCUsersRepository

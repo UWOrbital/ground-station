@@ -12,7 +12,7 @@ from uuid import UUID
 from fastapi import Depends, Request
 from fastapi_users import BaseUserManager, UUIDIDMixin
 
-from app.api.v1.aro.auth.adapter import AROUserDatabaseAdapter, AROUserRecord
+from app.api.aro.auth.adapter import AROUserDatabaseAdapter, AROUserRecord
 from app.config.env_settings.backend_config import settings
 
 

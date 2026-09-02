@@ -80,7 +80,7 @@ async def test_get_telemetry_duplicate_types(client: AsyncClient, db_session) ->
     db_session.add(t2)
     await db_session.commit()
 
-    response = await client.get("/api/v1/mcc/telemetry/")
+    response = await client.get("/api/mcc/telemetry/")
 
     assert response.status_code == 200
     data = response.json()["data"]
@@ -100,7 +100,7 @@ async def test_get_telemetry_value_none(client: AsyncClient, db_session) -> None
     db_session.add(telemetry)
     await db_session.commit()
 
-    response = await client.get("/api/v1/mcc/telemetry/")
+    response = await client.get("/api/mcc/telemetry/")
 
     assert response.status_code == 200
     data = response.json()["data"]
@@ -119,7 +119,7 @@ async def test_get_telemetry_success(client: AsyncClient, db_session) -> None:
     db_session.add(telemetry)
     await db_session.commit()
 
-    response = await client.get("/api/v1/mcc/telemetry/")
+    response = await client.get("/api/mcc/telemetry/")
 
     assert response.status_code == 200
     data = response.json()["data"]
@@ -130,7 +130,7 @@ async def test_get_telemetry_success(client: AsyncClient, db_session) -> None:
 
 async def test_get_telemetry_empty(client: AsyncClient) -> None:
     """Test that an empty telemetry table returns an empty list."""
-    response = await client.get("/api/v1/mcc/telemetry/")
+    response = await client.get("/api/mcc/telemetry/")
 
     assert response.status_code == 200
     assert response.json()["data"] == []
@@ -154,7 +154,7 @@ async def test_get_telemetry_multiple_types(client: AsyncClient, db_session) -> 
     db_session.add(t2)
     await db_session.commit()
 
-    response = await client.get("/api/v1/mcc/telemetry/")
+    response = await client.get("/api/mcc/telemetry/")
 
     assert response.status_code == 200
     data = response.json()["data"]
@@ -177,7 +177,7 @@ async def test_get_telemetry_with_packet_and_session(
     db_session.add(telemetry)
     await db_session.commit()
 
-    response = await client.get("/api/v1/mcc/telemetry/")
+    response = await client.get("/api/mcc/telemetry/")
 
     assert response.status_code == 200
     data = response.json()["data"]
@@ -207,7 +207,7 @@ async def test_get_telemetry_without_packet(client: AsyncClient, db_session) -> 
     db_session.add(telemetry)
     await db_session.commit()
 
-    response = await client.get("/api/v1/mcc/telemetry/")
+    response = await client.get("/api/mcc/telemetry/")
 
     assert response.status_code == 200
     data = response.json()["data"]
@@ -235,7 +235,7 @@ async def test_get_telemetry_response_shape(client: AsyncClient, db_session) -> 
     db_session.add(telemetry)
     await db_session.commit()
 
-    response = await client.get("/api/v1/mcc/telemetry/")
+    response = await client.get("/api/mcc/telemetry/")
     assert response.status_code == 200
     data = response.json()["data"]
     assert len(data) == 1

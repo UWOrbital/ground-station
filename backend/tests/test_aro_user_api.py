@@ -2,7 +2,7 @@ import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
-from app.api.v1.aro.auth.aro_session import create_access_token
+from app.api.aro.auth.aro_session import create_access_token
 from app.data.repositories.dal import DAL
 from main import app
 
@@ -54,7 +54,7 @@ def user2_data():
 # Test creating user1
 @pytest_asyncio.fixture
 async def test_user1_creation(client, user1_data, auth_headers):
-    response = await client.post("/api/v1/aro/user/create_user", json=user1_data, headers=auth_headers)
+    response = await client.post("/api/aro/user/create_user", json=user1_data, headers=auth_headers)
 
     assert response.status_code == 200
     user = response.json()["data"]
@@ -71,7 +71,7 @@ async def test_user1_creation(client, user1_data, auth_headers):
 # Test creating user2
 @pytest_asyncio.fixture
 async def test_user2_creation(client, user2_data, auth_headers):
-    response = await client.post("/api/v1/aro/user/create_user", json=user2_data, headers=auth_headers)
+    response = await client.post("/api/aro/user/create_user", json=user2_data, headers=auth_headers)
 
     assert response.status_code == 200
     user = response.json()["data"]
@@ -87,7 +87,7 @@ async def test_user2_creation(client, user2_data, auth_headers):
 # Test getting user1 by ID
 async def test_get_user1_by_id(client, test_user1_creation, auth_headers):
     user_id = test_user1_creation["id"]
-    res = await client.get(f"/api/v1/aro/user/get_user/{user_id}", headers=auth_headers)
+    res = await client.get(f"/api/aro/user/get_user/{user_id}", headers=auth_headers)
     assert res.status_code == 200
     assert res.json()["data"]["id"] == user_id
 
@@ -95,14 +95,14 @@ async def test_get_user1_by_id(client, test_user1_creation, auth_headers):
 # Test getting user2 by ID
 async def test_get_user2_by_id(client, test_user2_creation, auth_headers):
     user_id = test_user2_creation["id"]
-    res = await client.get(f"/api/v1/aro/user/get_user/{user_id}", headers=auth_headers)
+    res = await client.get(f"/api/aro/user/get_user/{user_id}", headers=auth_headers)
     assert res.status_code == 200
     assert res.json()["data"]["id"] == user_id
 
 
 # Test getting all users
 async def test_get_all_users(client, test_user1_creation, test_user2_creation, auth_headers):
-    res = await client.get("/api/v1/aro/user/get_all_users", headers=auth_headers)
+    res = await client.get("/api/aro/user/get_all_users", headers=auth_headers)
     assert res.status_code == 200
     all_users = res.json()["data"]
     assert len(all_users) == 3  # test_user1, test_user2, and the auth_headers superuser
@@ -129,7 +129,7 @@ async def test_get_all_users(client, test_user1_creation, test_user2_creation, a
 # Test deleting user1
 async def test_user1_deletion(client, test_user1_creation, test_user2_creation, auth_headers):
     user_id = test_user1_creation["id"]
-    res = await client.delete(f"/api/v1/aro/user/delete_user/{user_id}", headers=auth_headers)
+    res = await client.delete(f"/api/aro/user/delete_user/{user_id}", headers=auth_headers)
 
     assert res.status_code == 200
     deleted_user = res.json()["data"]
@@ -143,7 +143,7 @@ async def test_user1_deletion(client, test_user1_creation, test_user2_creation, 
 
 # Test that unauthenticated requests are rejected
 async def test_get_all_users_requires_auth(client):
-    res = await client.get("/api/v1/aro/user/get_all_users")
+    res = await client.get("/api/aro/user/get_all_users")
     assert res.status_code == 401
 
 
@@ -151,5 +151,5 @@ async def test_get_all_users_requires_auth(client):
 async def test_get_all_users_requires_superuser(client):
     regular_user = await DAL.aro_users().create({"email": "regular@test.com", "first_name": "Regular"})
     token, _ = create_access_token(regular_user)
-    res = await client.get("/api/v1/aro/user/get_all_users", headers={"Authorization": f"Bearer {token}"})
+    res = await client.get("/api/aro/user/get_all_users", headers={"Authorization": f"Bearer {token}"})
     assert res.status_code == 403

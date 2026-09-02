@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
-from app.api.v1.mcc.schemas.responses import ImageResponse
+from app.api.mcc.schemas.responses import ImageResponse
 from app.data.repositories.dal import DAL
 from app.data.repositories.repositories import ImageRepository
 
