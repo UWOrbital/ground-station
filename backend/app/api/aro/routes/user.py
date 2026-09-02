@@ -3,9 +3,9 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends
 
-from app.api.v1.aro.auth.aro_session import require_superuser
-from app.api.v1.aro.schemas.admin.requests import UserRequest
-from app.api.v1.aro.schemas.admin.responses import AllUsersResponse, UserResponse
+from app.api.aro.auth.aro_session import require_superuser
+from app.api.aro.schemas.admin.requests import UserRequest
+from app.api.aro.schemas.admin.responses import AllUsersResponse, UserResponse
 from app.data.models.aro_user_models import AROUsers
 from app.data.repositories.dal import DAL
 from app.data.repositories.repositories import (

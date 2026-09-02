@@ -7,8 +7,8 @@ from httpx import ASGITransport, AsyncClient
 from main import app
 from app.mcc_keycloak.client import keycloak
 
-COMMANDS_PREFIX = "/api/v1/mcc/main-commands"
-TELEMETRIES_PREFIX = "/api/v1/mcc/main-telemetry"
+COMMANDS_PREFIX = "/api/mcc/main-commands"
+TELEMETRIES_PREFIX = "/api/mcc/main-telemetry"
 
 
 @pytest_asyncio.fixture

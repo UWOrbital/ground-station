@@ -3,7 +3,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
-from app.api.v1.mcc.schemas.responses import SatelliteStatusResponse, TelemetryDataResponse
+from app.api.mcc.schemas.responses import SatelliteStatusResponse, TelemetryDataResponse
 from app.data.enums.transactional import SessionStatus
 from app.data.repositories.dal import DAL
 from app.data.repositories.repositories import CommsSessionRepository, TelemetryRepository

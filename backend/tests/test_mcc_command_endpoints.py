@@ -86,7 +86,7 @@ async def test_create_command_success(client: AsyncClient, comms_session: CommsS
         "session_id": str(comms_session.id)
     }
 
-    response = await client.post("/api/v1/mcc/commands/", json=payload)
+    response = await client.post("/api/mcc/commands/", json=payload)
 
     assert response.status_code == 200
     data = response.json()["data"]
@@ -105,11 +105,11 @@ async def test_create_command_duplicate(client: AsyncClient, comms_session: Comm
         "session_id": str(comms_session.id)
     }
 
-    response1 = await client.post("/api/v1/mcc/commands/", json=payload)
+    response1 = await client.post("/api/mcc/commands/", json=payload)
     assert response1.status_code == 200
     command1_id = response1.json()["data"]["id"]
 
-    response2 = await client.post("/api/v1/mcc/commands/", json=payload)
+    response2 = await client.post("/api/mcc/commands/", json=payload)
     assert response2.status_code == 200
     command2_id = response2.json()["data"]["id"]
 
@@ -127,7 +127,7 @@ async def test_create_command_with_null_params(client: AsyncClient, comms_sessio
         "session_id": str(comms_session.id),
     }
 
-    response = await client.post("/api/v1/mcc/commands/", json=payload)
+    response = await client.post("/api/mcc/commands/", json=payload)
 
     assert response.status_code == 200
     data = response.json()["data"]
@@ -142,7 +142,7 @@ async def test_create_command_missing_type(client: AsyncClient, comms_session: C
         "session_id": str(comms_session.id),
     }
 
-    response = await client.post("/api/v1/mcc/commands/", json=payload)
+    response = await client.post("/api/mcc/commands/", json=payload)
 
     assert response.status_code == 422
 
@@ -154,7 +154,7 @@ async def test_create_command_missing_session(client: AsyncClient) -> None:
         "params": "some_params",
     }
 
-    response = await client.post("/api/v1/mcc/commands/", json=payload)
+    response = await client.post("/api/mcc/commands/", json=payload)
 
     assert response.status_code == 422
 
@@ -167,7 +167,7 @@ async def test_create_command_session_locked_out(client: AsyncClient, locked_com
         "session_id": str(locked_comms_session.id),
     }
 
-    response = await client.post("/api/v1/mcc/commands/", json=payload)
+    response = await client.post("/api/mcc/commands/", json=payload)
 
     assert response.status_code == 409
 
@@ -180,7 +180,7 @@ async def test_create_command_session_not_found(client: AsyncClient) -> None:
         "session_id": str(uuid4()),
     }
 
-    response = await client.post("/api/v1/mcc/commands/", json=payload)
+    response = await client.post("/api/mcc/commands/", json=payload)
 
     assert response.status_code == 404
 
@@ -190,7 +190,7 @@ async def test_create_command_session_not_found(client: AsyncClient) -> None:
 
 async def test_update_command_session_locked_out(client: AsyncClient, comms_session: CommsSession, db_session) -> None:
     """Test that updating a command whose session has since entered lockout fails."""
-    create_response = await client.post("/api/v1/mcc/commands/", json={"type_": 4, "session_id": str(comms_session.id)})
+    create_response = await client.post("/api/mcc/commands/", json={"type_": 4, "session_id": str(comms_session.id)})
     assert create_response.status_code == 200
     command_id = create_response.json()["data"]["id"]
 
@@ -198,14 +198,14 @@ async def test_update_command_session_locked_out(client: AsyncClient, comms_sess
     db_session.add(comms_session)
     await db_session.commit()
 
-    response = await client.patch(f"/api/v1/mcc/commands/{command_id}", json={"params": "updated"})
+    response = await client.patch(f"/api/mcc/commands/{command_id}", json={"params": "updated"})
 
     assert response.status_code == 409
 
 
 async def test_update_command_not_found(client: AsyncClient) -> None:
     """Test that updating a nonexistent command returns 404."""
-    response = await client.patch(f"/api/v1/mcc/commands/{uuid4()}", json={"params": "updated"})
+    response = await client.patch(f"/api/mcc/commands/{uuid4()}", json={"params": "updated"})
 
     assert response.status_code == 404
 
@@ -215,11 +215,11 @@ async def test_update_command_not_found(client: AsyncClient) -> None:
 
 async def test_delete_command_success(client: AsyncClient, comms_session: CommsSession) -> None:
     """Test successful deletion of an existing command."""
-    create_response = await client.post("/api/v1/mcc/commands/", json={"type_": 10, "session_id": str(comms_session.id)})
+    create_response = await client.post("/api/mcc/commands/", json={"type_": 10, "session_id": str(comms_session.id)})
     assert create_response.status_code == 200
     command_id = create_response.json()["data"]["id"]
 
-    delete_response = await client.delete(f"/api/v1/mcc/commands/{command_id}")
+    delete_response = await client.delete(f"/api/mcc/commands/{command_id}")
 
     assert delete_response.status_code == 200
     data = delete_response.json()
@@ -230,34 +230,34 @@ async def test_delete_command_not_found(client: AsyncClient) -> None:
     """Test deleting a non-existent command returns 404."""
     non_existent_id = str(uuid4())
 
-    response = await client.delete(f"/api/v1/mcc/commands/{non_existent_id}")
+    response = await client.delete(f"/api/mcc/commands/{non_existent_id}")
 
     assert response.status_code == 404
 
 
 async def test_delete_command_invalid_uuid(client: AsyncClient) -> None:
     """Test deleting with an invalid UUID format returns 422."""
-    response = await client.delete("/api/v1/mcc/commands/not-a-valid-uuid")
+    response = await client.delete("/api/mcc/commands/not-a-valid-uuid")
 
     assert response.status_code == 422
 
 
 async def test_delete_command_twice(client: AsyncClient, comms_session: CommsSession) -> None:
     """Test that deleting the same command twice fails on the second attempt."""
-    create_response = await client.post("/api/v1/mcc/commands/", json={"type_": 11, "session_id": str(comms_session.id)})
+    create_response = await client.post("/api/mcc/commands/", json={"type_": 11, "session_id": str(comms_session.id)})
     assert create_response.status_code == 200
     command_id = create_response.json()["data"]["id"]
 
-    delete_response1 = await client.delete(f"/api/v1/mcc/commands/{command_id}")
+    delete_response1 = await client.delete(f"/api/mcc/commands/{command_id}")
     assert delete_response1.status_code == 200
 
-    delete_response2 = await client.delete(f"/api/v1/mcc/commands/{command_id}")
+    delete_response2 = await client.delete(f"/api/mcc/commands/{command_id}")
     assert delete_response2.status_code == 404
 
 
 async def test_delete_command_session_locked_out(client: AsyncClient, comms_session: CommsSession, db_session) -> None:
     """Test that deleting a command whose session has since entered lockout fails."""
-    create_response = await client.post("/api/v1/mcc/commands/", json={"type_": 5, "session_id": str(comms_session.id)})
+    create_response = await client.post("/api/mcc/commands/", json={"type_": 5, "session_id": str(comms_session.id)})
     assert create_response.status_code == 200
     command_id = create_response.json()["data"]["id"]
 
@@ -265,7 +265,7 @@ async def test_delete_command_session_locked_out(client: AsyncClient, comms_sess
     db_session.add(comms_session)
     await db_session.commit()
 
-    response = await client.delete(f"/api/v1/mcc/commands/{command_id}")
+    response = await client.delete(f"/api/mcc/commands/{command_id}")
 
     assert response.status_code == 409
 
@@ -275,10 +275,10 @@ async def test_delete_command_session_locked_out(client: AsyncClient, comms_sess
 
 async def test_get_commands_by_session(client: AsyncClient, comms_session: CommsSession) -> None:
     """Test retrieving all commands for a given session."""
-    await client.post("/api/v1/mcc/commands/", json={"type_": 1, "session_id": str(comms_session.id)})
-    await client.post("/api/v1/mcc/commands/", json={"type_": 2, "session_id": str(comms_session.id)})
+    await client.post("/api/mcc/commands/", json={"type_": 1, "session_id": str(comms_session.id)})
+    await client.post("/api/mcc/commands/", json={"type_": 2, "session_id": str(comms_session.id)})
 
-    response = await client.get(f"/api/v1/mcc/commands/session/{comms_session.id}")
+    response = await client.get(f"/api/mcc/commands/session/{comms_session.id}")
 
     assert response.status_code == 200
     data = response.json()["data"]
@@ -288,7 +288,7 @@ async def test_get_commands_by_session(client: AsyncClient, comms_session: Comms
 
 async def test_get_commands_by_session_empty(client: AsyncClient, comms_session: CommsSession) -> None:
     """Test that a session with no commands returns an empty list."""
-    response = await client.get(f"/api/v1/mcc/commands/session/{comms_session.id}")
+    response = await client.get(f"/api/mcc/commands/session/{comms_session.id}")
 
     assert response.status_code == 200
     assert response.json()["data"] == []

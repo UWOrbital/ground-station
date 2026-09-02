@@ -3,7 +3,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
 
-from app.api.v1.mcc.schemas.responses import CommsSessionsResponse
+from app.api.mcc.schemas.responses import CommsSessionsResponse
 from app.data.repositories.dal import DAL
 from app.data.repositories.repositories import CommsSessionRepository
 from app.mcc_keycloak.client import keycloak

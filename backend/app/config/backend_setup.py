@@ -4,19 +4,19 @@ from fastapi import FastAPI
 from loguru import logger
 from starlette.middleware.sessions import SessionMiddleware
 
-from app.api.v1.aro.routes.auth import router as aro_auth_router
-from app.api.v1.aro.routes.picture_requests import picture_requests_router
-from app.api.v1.aro.routes.user import aro_user_router
-from app.api.v1.mcc.routes.aro_requests import aro_requests_router
-from app.api.v1.mcc.routes.auth import mcc_auth_router
-from app.api.v1.mcc.routes.commands import commands_router
-from app.api.v1.mcc.routes.images import images_router
-from app.api.v1.mcc.routes.main_commands import main_commands_router
-from app.api.v1.mcc.routes.main_telemetry import main_telemetry_router
-from app.api.v1.mcc.routes.sessions import comms_sessions_router
-from app.api.v1.mcc.routes.status import status_router
-from app.api.v1.mcc.routes.telemetry import telemetry_router
-from app.api.v1.mcc.routes.users import mcc_users_router
+from app.api.aro.routes.auth import router as aro_auth_router
+from app.api.aro.routes.picture_requests import picture_requests_router
+from app.api.aro.routes.user import aro_user_router
+from app.api.mcc.routes.aro_requests import aro_requests_router
+from app.api.mcc.routes.auth import mcc_auth_router
+from app.api.mcc.routes.commands import commands_router
+from app.api.mcc.routes.images import images_router
+from app.api.mcc.routes.main_commands import main_commands_router
+from app.api.mcc.routes.main_telemetry import main_telemetry_router
+from app.api.mcc.routes.sessions import comms_sessions_router
+from app.api.mcc.routes.status import status_router
+from app.api.mcc.routes.telemetry import telemetry_router
+from app.api.mcc.routes.users import mcc_users_router
 from app.config.env_settings.backend_config import settings
 from app.config.env_settings.cors_config import add_cors_middleware
 from app.config.logger_middleware import LoggerMiddleware
@@ -24,7 +24,7 @@ from app.config.logger_middleware import LoggerMiddleware
 
 def setup_routes(app: FastAPI) -> None:
     """Adds the routes to the app"""
-    version_1 = "/api/v1"
+    version_1 = "/api"
 
     # ARO routes
     aro_prefix = f"{version_1}/aro"

@@ -5,7 +5,7 @@ from uuid import UUID
 from fastapi_users import schemas
 from pydantic import BaseModel
 
-from app.api.v1.aro.schemas.types import AccessToken
+from app.api.aro.schemas.types import AccessToken
 
 # -----------------------------------------------------------------
 # Auth Responses

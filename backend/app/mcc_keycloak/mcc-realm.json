@@ -618,7 +618,7 @@
       "clientAuthenticatorType": "client-secret",
       "secret": "**********",
       "redirectUris": [
-        "http://localhost:8000/api/v1/mcc/auth/callback"
+        "http://localhost:8000/api/mcc/auth/callback"
       ],
       "webOrigins": [
         "http://localhost:8000",

@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 from fastapi.exceptions import HTTPException
 
-from app.api.v1.mcc.schemas.responses import MainCommandResponse, MainCommandsResponse
+from app.api.mcc.schemas.responses import MainCommandResponse, MainCommandsResponse
 from app.data.repositories.dal import DAL
 from app.data.repositories.repositories import MainCommandRepository
 from app.mcc_keycloak.client import keycloak

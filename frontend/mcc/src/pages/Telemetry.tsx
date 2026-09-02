@@ -20,7 +20,7 @@ interface TelemetrySubrow {
   obc_state: string;
 }
 
-/** Backend shape of a single telemetry entry from GET /api/v1/mcc/telemetry/. */
+/** Backend shape of a single telemetry entry from GET /api/mcc/telemetry/. */
 interface TelemetryEntry {
   id: string;
   type: string;

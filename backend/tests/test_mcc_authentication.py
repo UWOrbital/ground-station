@@ -1,6 +1,6 @@
 import pytest
 import json
-import app.api.v1.mcc.routes.auth as mcc_auth
+import app.api.mcc.routes.auth as mcc_auth
 from unittest.mock import AsyncMock, MagicMock, patch, PropertyMock
 from app.mcc_keycloak.client import KeycloakClient
 from app.config.env_settings.keycloak_config import KeycloakConfig
@@ -26,7 +26,7 @@ MOCK_BAD_USER_INFO = {
     "email": "bad_email",
 }
 
-AUTH_PREFIX = "/api/v1/mcc/auth"
+AUTH_PREFIX = "/api/mcc/auth"
 
 @pytest.fixture
 def client():

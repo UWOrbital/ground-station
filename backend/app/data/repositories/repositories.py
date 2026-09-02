@@ -5,7 +5,7 @@ from pydantic import EmailStr
 from sqlalchemy import delete, update
 from sqlmodel import col, select
 
-from app.api.v1.mcc.schemas.responses import TelemetryEntry, TelemetrySubrow
+from app.api.mcc.schemas.responses import TelemetryEntry, TelemetrySubrow
 from app.config.data_values import SESSION_LOCKOUT_SECONDS
 from app.data.database.engine import get_db_session
 from app.data.models.aro_user_models import AROUserAuthToken, AROUserCallsigns, AROUserLogin, AROUsers

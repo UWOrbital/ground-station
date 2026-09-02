@@ -4,9 +4,9 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request, Response
 
-from app.api.v1.aro.auth.aro_session import get_user_by_token
-from app.api.v1.aro.schemas.picture_requests.requests import CreatePictureRequest
-from app.api.v1.aro.schemas.picture_requests.responses import (
+from app.api.aro.auth.aro_session import get_user_by_token
+from app.api.aro.schemas.picture_requests.requests import CreatePictureRequest
+from app.api.aro.schemas.picture_requests.responses import (
     DeleteOperation,
     DownloadOperation,
     PageLink,

@@ -5,14 +5,14 @@ import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
-from app.api.v1.aro.auth.aro_session import create_access_token
+from app.api.aro.auth.aro_session import create_access_token
 from app.data.repositories.dal import DAL
 from app.data.enums.aro_requests import ARORequestStatus
 from app.data.enums.transactional import MainPacketType
 from app.data.models.aro_user_models import AROUsers
 from main import app
 
-REQUESTS_URL = "/api/v1/aro/requests/"
+REQUESTS_URL = "/api/aro/requests/"
 
 
 @pytest_asyncio.fixture
@@ -63,7 +63,7 @@ async def test_create_returns_data_and_delete_operation(client, user_a, payload)
 
     operations = body["operations"]
     assert "delete" in operations
-    assert operations["delete"]["url"].endswith(f"/api/v1/aro/requests/{body['id']}")
+    assert operations["delete"]["url"].endswith(f"/api/aro/requests/{body['id']}")
     assert operations["delete"]["deletable_until"] is not None
     # No packet yet -> no download operation.
     assert "download" not in operations
@@ -148,7 +148,7 @@ async def _seed_request_with_packet(aro_id) -> tuple[str, bytes]:
 async def test_download_packet_returns_bytes(client, user_a):
     request_id, raw = await _seed_request_with_packet(user_a.id)
 
-    response = await client.get(f"/api/v1/aro/requests/{request_id}/packet", headers=_headers(user_a))
+    response = await client.get(f"/api/aro/requests/{request_id}/packet", headers=_headers(user_a))
 
     assert response.status_code == 200
     assert response.headers["content-type"] == "application/octet-stream"
@@ -163,7 +163,7 @@ async def test_download_packet_returns_bytes(client, user_a):
 async def test_download_packet_404_when_no_packet(client, user_a, payload):
     created = (await client.post(REQUESTS_URL, json=payload, headers=_headers(user_a))).json()["data"]
 
-    response = await client.get(f"/api/v1/aro/requests/{created['id']}/packet", headers=_headers(user_a))
+    response = await client.get(f"/api/aro/requests/{created['id']}/packet", headers=_headers(user_a))
     assert response.status_code == 404
 
 
@@ -171,7 +171,7 @@ async def test_download_packet_404_when_no_packet(client, user_a, payload):
 async def test_download_packet_404_for_other_user(client, user_a, user_b):
     request_id, _ = await _seed_request_with_packet(user_a.id)
 
-    response = await client.get(f"/api/v1/aro/requests/{request_id}/packet", headers=_headers(user_b))
+    response = await client.get(f"/api/aro/requests/{request_id}/packet", headers=_headers(user_b))
     assert response.status_code == 404
 
 
@@ -184,7 +184,7 @@ async def test_download_packet_404_for_other_user(client, user_a, user_b):
 async def test_delete_pending_request(client, user_a, payload):
     created = (await client.post(REQUESTS_URL, json=payload, headers=_headers(user_a))).json()["data"]
 
-    response = await client.delete(f"/api/v1/aro/requests/{created['id']}", headers=_headers(user_a))
+    response = await client.delete(f"/api/aro/requests/{created['id']}", headers=_headers(user_a))
     assert response.status_code == 200
     assert response.json()["data"]["id"] == created["id"]
 
@@ -201,14 +201,14 @@ async def test_delete_non_deletable_request_conflicts(client, user_a, payload):
 
     await DAL.aro_requests().update(UUID(created["id"]), {"status": ARORequestStatus.SCHEDULED})
 
-    response = await client.delete(f"/api/v1/aro/requests/{created['id']}", headers=_headers(user_a))
+    response = await client.delete(f"/api/aro/requests/{created['id']}", headers=_headers(user_a))
     assert response.status_code == 409
 
 
 @pytest.mark.asyncio
 async def test_delete_unknown_request_404(client, user_a):
     unknown = "00000000-0000-0000-0000-000000000000"
-    response = await client.delete(f"/api/v1/aro/requests/{unknown}", headers=_headers(user_a))
+    response = await client.delete(f"/api/aro/requests/{unknown}", headers=_headers(user_a))
     assert response.status_code == 404
 
 
@@ -216,5 +216,5 @@ async def test_delete_unknown_request_404(client, user_a):
 async def test_delete_other_users_request_404(client, user_a, user_b, payload):
     created = (await client.post(REQUESTS_URL, json=payload, headers=_headers(user_a))).json()["data"]
 
-    response = await client.delete(f"/api/v1/aro/requests/{created['id']}", headers=_headers(user_b))
+    response = await client.delete(f"/api/aro/requests/{created['id']}", headers=_headers(user_b))
     assert response.status_code == 404
