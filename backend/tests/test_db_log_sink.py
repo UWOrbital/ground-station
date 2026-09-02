@@ -55,16 +55,6 @@ def test_filter_drops_verbose_records():
     assert _db_sink_filter(_record(level_name="VERBOSE")) is False
 
 
-def test_filter_drops_sqlalchemy_named_records():
-    """Defense-in-depth: anything logging under a sqlalchemy-prefixed logger is dropped.
-
-    This is not the main recursion path (re-emitted engine logs are named after
-    setup_logging's module and caught by the VERBOSE/level guard instead), but the
-    name check still shields against a library logging directly as ``sqlalchemy.*``.
-    """
-    assert _db_sink_filter(_record(name="sqlalchemy.engine.Engine")) is False
-
-
 def test_filter_keeps_normal_records():
     """Ordinary application records pass the filter."""
     assert _db_sink_filter(_record(level_name="ERROR")) is True

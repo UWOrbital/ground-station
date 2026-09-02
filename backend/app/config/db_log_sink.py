@@ -15,11 +15,8 @@ Two hazards this module is built to avoid:
   forever. The primary guard is the sink's registered level: it is added at
   ``db_sink_min_level`` (default ``INFO`` = 20), so ``VERBOSE`` records are
   dropped by loguru before the filter even runs. ``_db_sink_filter`` then drops
-  ``VERBOSE`` again as belt-and-suspenders (in case the min level is ever
-  lowered below 15). Note the re-emitted SQLAlchemy records carry the *name* of
-  ``setup_logging``'s module, not ``sqlalchemy.*`` — so the name check in the
-  filter is only defense against libraries that log directly under a
-  sqlalchemy-prefixed logger, not the main recursion path.
+  ``VERBOSE`` again as belt-and-suspenders in case the min level is ever lowered
+  below 15.
 - **Losing logs or crashing the app.** A DB failure is caught and reported to
   stderr; it never propagates into request handling, and the console sink keeps
   working regardless.
@@ -59,18 +56,12 @@ def _db_sink_filter(record: "Record") -> bool:
     ``setup_logging`` re-emits at the custom ``VERBOSE`` level (15). Those are
     already excluded by the sink's registered level (``db_sink_min_level``,
     default INFO=20); the ``VERBOSE`` check here is a redundant safety net should
-    that minimum ever drop below 15. The ``sqlalchemy`` name check is extra
-    defense against anything logging directly under a sqlalchemy-prefixed logger
-    (the re-emitted engine logs themselves are named after ``setup_logging``'s
-    module, so this branch does not catch the main recursion path).
+    that minimum ever drop below 15.
 
     :param record: the loguru record dict for the message being logged.
     :return: True if the record should be written to the database, False otherwise.
     """
-    if record["level"].name == "VERBOSE":
-        return False
-    name = record["name"]
-    return not (name and name.startswith("sqlalchemy"))
+    return record["level"].name != "VERBOSE"
 
 
 def _record_to_row(record: "Record") -> dict[str, Any]:
