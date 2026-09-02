@@ -98,6 +98,29 @@ async def test_log_line_persists_end_to_end(sink_on_container, db_engine: AsyncE
         await _delete_logs_matching(db_engine, marker)
 
 
+async def test_message_with_nul_bytes_persists_sanitized(sink_on_container, db_engine: AsyncEngine):
+    """A message carrying NUL bytes (as a decoded binary body would) still lands in Postgres.
+
+    This is the concrete regression: Postgres text columns reject the NUL byte, and a
+    binary response body decoded with errors="ignore" keeps NUL. Without sanitizing, the
+    real asyncpg INSERT would fail and the row would be dropped — so a persisted, NUL-free
+    row proves the fix against a real database.
+    """
+    marker = uuid4().hex
+    start_db_log_sink(asyncio.get_running_loop(), LoggerConfig(db_sink_enabled=True))
+    try:
+        logger.info(f"RESPONSE body {marker} \x00\x00 binary\x00tail")
+        await asyncio.sleep(0)
+        await stop_db_log_sink()
+
+        rows = await _logs_matching(db_engine, marker)
+        assert len(rows) == 1
+        assert "\x00" not in rows[0].message
+        assert marker in rows[0].message
+    finally:
+        await _delete_logs_matching(db_engine, marker)
+
+
 async def test_request_logs_persist_through_middleware(sink_on_container, db_engine: AsyncEngine):
     """An HTTP request through the real middleware stack persists REQUEST + RESPONSE logs."""
     marker = uuid4().hex

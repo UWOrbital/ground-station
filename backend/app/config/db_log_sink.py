@@ -19,7 +19,9 @@ Two hazards this module is built to avoid:
   below 15.
 - **Losing logs or crashing the app.** A DB failure is caught and reported to
   stderr; it never propagates into request handling, and the console sink keeps
-  working regardless.
+  working regardless. To keep one bad record from taking down a whole batch,
+  ``_record_to_row`` sanitizes the known hazards (NUL bytes, over-length values)
+  and ``_write_batch`` falls back to row-by-row inserts if a batch commit fails.
 """
 
 import asyncio
@@ -29,6 +31,7 @@ from typing import TYPE_CHECKING, Any
 
 from loguru import logger
 
+from app.config.data_values import DEFAULT_MAX_LENGTH
 from app.config.env_settings.logger_config import LoggerConfig
 from app.data.database.engine import get_db_session
 from app.data.models.logs_models import APILog
@@ -64,9 +67,43 @@ def _db_sink_filter(record: "Record") -> bool:
     return record["level"].name != "VERBOSE"
 
 
+def _sanitize_text(value: str | None) -> str | None:
+    """
+    Strip NUL bytes so a log value can never poison its insert batch.
+
+    Postgres ``text``/``varchar``/``json`` columns reject the NUL byte (``\\x00``),
+    and loguru messages can carry them — e.g. when a binary response body is
+    decoded with ``errors="ignore"`` (valid UTF-8 for U+0000, so it survives the
+    decode). One such value would otherwise fail the whole batch INSERT.
+
+    :param value: the raw string (or None) headed for a text column.
+    :return: the string with NUL bytes removed, or None if the input was None.
+    """
+    if value is None:
+        return None
+    return value.replace("\x00", "")
+
+
+def _clamp(value: str | None, max_length: int) -> str | None:
+    """
+    Truncate a value to a column's max length so an over-long value can't be rejected.
+
+    :param value: the string (or None) headed for a length-capped column.
+    :param max_length: the column's maximum length.
+    :return: the value truncated to ``max_length``, or None if the input was None.
+    """
+    if value is None:
+        return None
+    return value[:max_length]
+
+
 def _record_to_row(record: "Record") -> dict[str, Any]:
     """
     Map a loguru record onto the ``APILog`` column keyword arguments.
+
+    Text fields are NUL-stripped, and the length-capped columns
+    (priority/module/function) are clamped, so no single record can produce a row
+    Postgres refuses and thereby drop its whole batch (see ``_write_batch``).
 
     :param record: the loguru record dict for the message being logged.
     :return: a dict of keyword arguments suitable for ``APILog(**row)``.
@@ -74,10 +111,10 @@ def _record_to_row(record: "Record") -> dict[str, Any]:
     extra = dict(record["extra"]) if record["extra"] else None
     return {
         "time": record["time"],  # timezone-aware datetime supplied by loguru
-        "priority": record["level"].name,
-        "message": record["message"],
-        "module": record["name"],
-        "function": record["function"],
+        "priority": _clamp(_sanitize_text(record["level"].name), DEFAULT_MAX_LENGTH),
+        "message": _sanitize_text(record["message"]),  # TEXT column: NUL-strip only, no length cap
+        "module": _clamp(_sanitize_text(record["name"]), DEFAULT_MAX_LENGTH),
+        "function": _clamp(_sanitize_text(record["function"]), DEFAULT_MAX_LENGTH),
         "line": record["line"],
         "extra": _json_safe(extra),
     }
@@ -87,8 +124,10 @@ def _json_safe(extra: dict[str, Any] | None) -> dict[str, Any] | None:
     """
     Coerce an ``extra`` mapping into JSON-serializable values.
 
-    Values that aren't natively JSON-serializable are stringified so a single odd
-    value can never make an entire batch fail to insert.
+    Values that aren't natively JSON-serializable are stringified, and every key
+    and string value is NUL-stripped, so a single odd value can never make an
+    entire batch fail to insert (the ``json`` column rejects NUL just like the
+    text columns do).
 
     :param extra: the loguru ``extra`` mapping, or None.
     :return: a JSON-safe copy of the mapping, or None if there was nothing to store.
@@ -97,16 +136,24 @@ def _json_safe(extra: dict[str, Any] | None) -> dict[str, Any] | None:
         return None
     safe: dict[str, Any] = {}
     for key, value in extra.items():
-        if isinstance(value, (str, int, float, bool)) or value is None:
-            safe[key] = value
+        safe_key = str(key).replace("\x00", "")  # keys are always present; keep this a str for mypy
+        if isinstance(value, str):
+            safe[safe_key] = _sanitize_text(value)
+        elif isinstance(value, (int, float, bool)) or value is None:
+            safe[safe_key] = value
         else:
-            safe[key] = str(value)
+            safe[safe_key] = _sanitize_text(str(value))
     return safe
 
 
 async def _write_batch(rows: list[dict[str, Any]]) -> None:
     """
     Insert a batch of log rows, swallowing (and reporting) any DB failure.
+
+    Rows are inserted in one transaction on the happy path. If that commit fails
+    (rolling back all of them), retry row-by-row so at most the single offending
+    row is lost instead of the whole batch — ``_record_to_row`` already sanitizes
+    the known hazards, so this only catches something unforeseen.
 
     :param rows: ``APILog`` keyword-argument dicts to persist.
     """
@@ -117,7 +164,29 @@ async def _write_batch(rows: list[dict[str, Any]]) -> None:
             session.add_all([APILog(**row) for row in rows])
             await session.commit()
     except Exception as exc:  # noqa: BLE001 - logging must never crash the app
-        print(f"[db_log_sink] failed to write {len(rows)} log row(s): {exc!r}", file=sys.stderr)
+        print(
+            f"[db_log_sink] batch insert of {len(rows)} log row(s) failed ({exc!r}); retrying individually",
+            file=sys.stderr,
+        )
+        await _write_rows_individually(rows)
+
+
+async def _write_rows_individually(rows: list[dict[str, Any]]) -> None:
+    """
+    Insert log rows one per transaction so one unwritable row can't drop the rest.
+
+    Nothing was committed by the failed batch (it rolled back), so re-inserting
+    every row here creates no duplicates.
+
+    :param rows: ``APILog`` keyword-argument dicts to persist.
+    """
+    for row in rows:
+        try:
+            async with get_db_session() as session:
+                session.add(APILog(**row))
+                await session.commit()
+        except Exception as exc:  # noqa: BLE001 - logging must never crash the app
+            print(f"[db_log_sink] dropping 1 unwritable log row: {exc!r}", file=sys.stderr)
 
 
 async def _consumer(queue: asyncio.Queue[Any], batch_size: int) -> None:

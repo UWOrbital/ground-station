@@ -8,6 +8,7 @@ import pytest
 from loguru import logger
 
 from app.config import db_log_sink
+from app.config.data_values import DEFAULT_MAX_LENGTH
 from app.config.db_log_sink import (
     _SENTINEL,
     _consumer,
@@ -37,14 +38,20 @@ def _reset_sink_globals():
     db_log_sink._loop = None
 
 
-def _record(level_name: str = "INFO", name: str = "app.api.middleware", extra: dict | None = None) -> dict:
+def _record(
+    level_name: str = "INFO",
+    name: str = "app.api.middleware",
+    extra: dict | None = None,
+    message: str = "a message",
+    function: str = "handler",
+) -> dict:
     """Build a minimal loguru-style record dict for the sink helpers."""
     return {
         "time": datetime(2026, 1, 1, 12, 0, tzinfo=UTC),
         "level": SimpleNamespace(name=level_name),
-        "message": "a message",
+        "message": message,
         "name": name,
-        "function": "handler",
+        "function": function,
         "line": 7,
         "extra": extra or {},
     }
@@ -80,6 +87,42 @@ def test_json_safe_stringifies_non_serializable_values():
     assert isinstance(result["obj"], str)
 
 
+def test_record_to_row_strips_nul_bytes():
+    """NUL bytes (which Postgres text columns reject) are removed from every text field."""
+    row = _record_to_row(
+        _record(
+            level_name="IN\x00FO",
+            name="mod\x00ule",
+            function="fn\x00",
+            message="binary\x00body\x00here",
+        )
+    )
+
+    assert "\x00" not in row["priority"]
+    assert "\x00" not in row["message"]
+    assert "\x00" not in row["module"]
+    assert "\x00" not in row["function"]
+    assert row["message"] == "binarybodyhere"
+
+
+def test_record_to_row_clamps_capped_columns():
+    """priority/module/function are clamped to the column length; message (TEXT) is not."""
+    long_value = "x" * (DEFAULT_MAX_LENGTH + 50)
+    row = _record_to_row(_record(level_name=long_value, name=long_value, function=long_value, message=long_value))
+
+    assert len(row["priority"]) == DEFAULT_MAX_LENGTH
+    assert len(row["module"]) == DEFAULT_MAX_LENGTH
+    assert len(row["function"]) == DEFAULT_MAX_LENGTH
+    assert len(row["message"]) == DEFAULT_MAX_LENGTH + 50  # TEXT column is uncapped
+
+
+def test_json_safe_strips_nul_from_keys_and_values():
+    """The json column also rejects NUL, so keys and string values are sanitized too."""
+    result = _json_safe({"ke\x00y": "va\x00lue", "n": 5})
+
+    assert result == {"key": "value", "n": 5}
+
+
 def test_json_safe_empty_returns_none():
     """An empty or missing extra bag maps to NULL, not an empty object."""
     assert _json_safe(None) is None
@@ -111,6 +154,65 @@ async def test_write_batch_empty_is_noop(monkeypatch):
 
     monkeypatch.setattr(db_log_sink, "get_db_session", _boom, raising=True)
     await _write_batch([])  # must not raise
+
+
+class _FakeSession:
+    """Minimal stand-in for AsyncSession that rejects any batch containing a POISON row."""
+
+    def __init__(self, committed: list[str]) -> None:
+        self._committed = committed
+        self._pending: list = []
+
+    def add(self, obj) -> None:
+        self._pending.append(obj)
+
+    def add_all(self, objs) -> None:
+        self._pending.extend(objs)
+
+    async def commit(self) -> None:
+        if any(obj.message == "POISON" for obj in self._pending):
+            raise RuntimeError("simulated NUL/constraint rejection")
+        self._committed.extend(obj.message for obj in self._pending)
+
+
+async def test_write_batch_commits_once_when_all_rows_ok(monkeypatch):
+    """With no bad row, the batch is written in a single transaction (no per-row fallback)."""
+    committed: list[str] = []
+    sessions_opened = 0
+
+    @asynccontextmanager
+    async def _fake_session():
+        nonlocal sessions_opened
+        sessions_opened += 1
+        yield _FakeSession(committed)
+
+    monkeypatch.setattr(db_log_sink, "get_db_session", _fake_session, raising=True)
+
+    await _write_batch([_record_to_row(_record(message=f"m{i}")) for i in range(3)])
+
+    assert sessions_opened == 1  # one batch transaction, fallback never engaged
+    assert committed == ["m0", "m1", "m2"]
+
+
+async def test_write_batch_falls_back_to_row_by_row_on_failure(monkeypatch):
+    """A poison row fails the batch commit; the good rows are retried and only it is dropped."""
+    committed: list[str] = []
+
+    @asynccontextmanager
+    async def _fake_session():
+        yield _FakeSession(committed)
+
+    monkeypatch.setattr(db_log_sink, "get_db_session", _fake_session, raising=True)
+
+    rows = [
+        _record_to_row(_record(message="good-1")),
+        _record_to_row(_record(message="POISON")),
+        _record_to_row(_record(message="good-2")),
+    ]
+    await _write_batch(rows)
+
+    # Batch rolled back on POISON; the two good rows still land, only the poison row is lost.
+    assert committed == ["good-1", "good-2"]
 
 
 # --- consumer batching -------------------------------------------------------
