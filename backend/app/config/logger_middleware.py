@@ -28,12 +28,6 @@ class LoggerMiddleware(BaseHTTPMiddleware):
     """
     Middleware that logs request/response metadata.
 
-    Request and response bodies and query-parameter *values* are deliberately
-    never logged: they routinely carry PII and secrets (passwords in the ARO
-    login form, bearer tokens in auth responses, Keycloak OAuth ``code`` values,
-    emails). Only non-sensitive metadata is recorded — method, path, status,
-    timing, size, the query-parameter *names*, and a correlation id.
-
     :param excluded_endpoints: endpoints whose response won't be logged
     :type excluded_endpoints: Sequence[str]
     """
