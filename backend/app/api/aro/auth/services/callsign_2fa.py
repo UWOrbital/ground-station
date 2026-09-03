@@ -1,4 +1,5 @@
 from fastapi import HTTPException, status
+from loguru import logger
 
 from app.api.aro.schemas.auth.requests import CallsignRequest
 from app.data.models.aro_user_models import AROUsers
@@ -28,8 +29,8 @@ async def callsign_verified(qual_levels: tuple[bool, ...], user_call_sign: str) 
 
     for i, expected in enumerate(expected_levels):
         if qual_levels[i] != expected:
-            print("\033[1;31mWARNING!\033[0m")
-            print(f"Mismatch at qual_level_{chr(ord('a') + i)} for callsign {record.call_sign}.")
+            # Log the mismatched level only; the callsign itself is omitted as PII.
+            logger.warning(f"Callsign qualification mismatch at qual_level_{chr(ord('a') + i)}")
 
     return True
 
