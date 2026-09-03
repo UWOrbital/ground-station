@@ -121,30 +121,51 @@ async def test_message_with_nul_bytes_persists_sanitized(sink_on_container, db_e
         await _delete_logs_matching(db_engine, marker)
 
 
+def _request_id_of(message: str) -> str:
+    """Pull the ``Request ID`` correlation value out of a LoggerMiddleware line."""
+    for part in message.split(" | "):
+        if part.startswith("Request ID: "):
+            return part.removeprefix("Request ID: ")
+    raise AssertionError(f"no request id in {message!r}")
+
+
 async def test_request_logs_persist_through_middleware(sink_on_container, db_engine: AsyncEngine):
-    """An HTTP request through the real middleware stack persists REQUEST + RESPONSE logs."""
+    """An HTTP request through the real middleware stack persists correlated REQUEST + RESPONSE rows.
+
+    The middleware logs metadata only (no bodies or query-param values), so the marker is
+    carried in the URL path — which is logged — and the REQUEST/RESPONSE pair is correlated
+    through the shared ``Request ID``.
+    """
     marker = uuid4().hex
+    path = f"/e2e-ping-{marker}"
     app = FastAPI()
 
-    @app.get("/e2e-ping")
+    @app.get(path)
     async def _ping() -> dict[str, str]:
-        return {"probe": marker}
+        return {"ok": "true"}
 
     setup_middlewares(app)  # real CORS + Session + LoggerMiddleware
     start_db_log_sink(asyncio.get_running_loop(), LoggerConfig(db_sink_enabled=True))
+    request_id = ""
     try:
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-            resp = await client.get("/e2e-ping", params={"probe": marker})
+            resp = await client.get(path)
             assert resp.status_code == 200
         await asyncio.sleep(0)  # let the queued enqueues land before the flush sentinel
         await stop_db_log_sink()  # flush
 
-        rows = await _logs_matching(db_engine, marker)
-        messages = [row.message for row in rows]
-        # LoggerMiddleware logs the request (marker is in the query params) and the
-        # response (marker is in the JSON body); both should be persisted at INFO.
-        assert any(msg.startswith("REQUEST") for msg in messages), messages
-        assert any(msg.startswith("RESPONSE") for msg in messages), messages
-        assert all(row.priority == "INFO" for row in rows)
+        # The path is metadata, so exactly one REQUEST row carries the marker.
+        request_rows = await _logs_matching(db_engine, marker)
+        assert len(request_rows) == 1
+        assert request_rows[0].message.startswith("REQUEST")
+
+        # Its RESPONSE counterpart shares the Request ID (the response line has no path).
+        request_id = _request_id_of(request_rows[0].message)
+        correlated = await _logs_matching(db_engine, request_id)
+        assert any(row.message.startswith("REQUEST") for row in correlated)
+        assert any(row.message.startswith("RESPONSE") for row in correlated)
+        assert all(row.priority == "INFO" for row in correlated)
     finally:
         await _delete_logs_matching(db_engine, marker)
+        if request_id:
+            await _delete_logs_matching(db_engine, request_id)
