@@ -1,21 +1,34 @@
-from collections.abc import AsyncIterator, Awaitable, Callable, Sequence
+from collections.abc import Awaitable, Callable, Sequence
 from datetime import datetime
-from sys import getsizeof
 from time import perf_counter
 from uuid import uuid4
 
 from fastapi import Request, Response
 from loguru import logger
+from starlette.datastructures import Headers
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR
 from starlette.types import ASGIApp
 
 
+def _content_length(headers: Headers) -> str:
+    """
+    Read the ``Content-Length`` header, or ``"unknown"`` when it is absent.
+
+    Used instead of buffering the body so request/response sizes can be logged
+    without ever reading (potentially sensitive) body bytes.
+
+    :param headers: the request or response headers.
+    :return: the content length as a string, or ``"unknown"`` if not provided.
+    """
+    return headers.get("content-length", "unknown")
+
+
 class LoggerMiddleware(BaseHTTPMiddleware):
     """
-    Middleware that logs the request and response
+    Middleware that logs request/response metadata.
 
-    :param excluded_endpoints: endpoints that won't be logged
+    :param excluded_endpoints: endpoints whose response won't be logged
     :type excluded_endpoints: Sequence[str]
     """
 
@@ -24,20 +37,21 @@ class LoggerMiddleware(BaseHTTPMiddleware):
         self.excluded_endpoints = excluded_endpoints
 
     async def dispatch(self, request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
-        """Logs the request and response"""
+        """
+        Log request/response metadata around the wrapped handler.
+
+        :param request: the incoming request.
+        :param call_next: callable that runs the rest of the stack and returns the response.
+        :return: the response produced by the wrapped handler, untouched.
+        """
         request_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-        request_body = await request.body()
-        body_text = request_body.decode()
-        if not body_text:
-            body_text = "None"
-
-        request_size = getsizeof(request_body)
-
+        request_id = str(uuid4())
+        # Names only — a value can be a secret (e.g. the Keycloak OAuth `code`).
+        param_keys = sorted(request.query_params.keys())
+        # Size from the header so the (possibly sensitive) body is never read.
+        request_size = _content_length(request.headers)
         # TODO: update this based on userID header name
         request_user_id = request.headers.get("user_id", "Anonymous")
-        request_params = dict(request.query_params)
-        request_id = str(uuid4())
 
         logger.info(
             " | ".join(
@@ -46,8 +60,7 @@ class LoggerMiddleware(BaseHTTPMiddleware):
                     f"Request ID: {request_id}",
                     f"URL: {request.url.path}",
                     f"User id: {request_user_id}",
-                    f"Request Body: {body_text}",
-                    f"Params: {request_params}",
+                    f"Param keys: {param_keys}",
                     f"Time: {request_time}",
                     f"Bytes: {request_size}.",
                 ]
@@ -68,34 +81,15 @@ class LoggerMiddleware(BaseHTTPMiddleware):
         else:
             logger_severity = logger.info
 
-        # not all responses have a body_iterator attribute
-        has_body_iterator = hasattr(response, "body_iterator")
-
-        if has_body_iterator:
-            response_body_bytes = b"".join([chunk async for chunk in response.body_iterator])  # type: ignore[attr-defined]
-            response_size = str(getsizeof(response_body_bytes))
-            response_body = response_body_bytes.decode(errors="ignore")
-        else:
-            response_body = "Error logging response body"
-            response_size = "Error logging response size"
-
         logger_severity(
             " | ".join(
                 [
                     f"RESPONSE | Status: {response.status_code}",
                     f"Request ID: {request_id}",
-                    f"Response: {response_body}",
-                    f"Bytes: {response_size}",
+                    f"Bytes: {_content_length(response.headers)}",
                     f"ms Elapsed: {process_time * 1000:.2f}.",
                 ]
             )
         )
-
-        if has_body_iterator:
-
-            async def body_iterator() -> AsyncIterator[bytes]:
-                yield response_body_bytes
-
-            response.body_iterator = body_iterator()  # type: ignore[attr-defined]
 
         return response

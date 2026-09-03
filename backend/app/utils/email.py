@@ -186,7 +186,7 @@ async def send_many(emails: list[Email]) -> None:
                 [
                     "EMAIL SEND START",
                     f"Type: {email.type}",
-                    f"Recipients: {[str(m) for m in email.recipients]}",
+                    f"Recipients: {len(email.recipients)}",  # count only; addresses are PII
                     f"Time: {t()}",
                 ]
             )
@@ -200,7 +200,7 @@ async def send_many(emails: list[Email]) -> None:
                     [
                         "EMAIL SEND FAIL",
                         f"Type: {email.type}",
-                        f"Recipients: {[str(m) for m in email.recipients]}",
+                        f"Recipients: {len(email.recipients)}",  # count only; addresses are PII
                         f"Time: {t()}",
                     ]
                 )
@@ -211,7 +211,7 @@ async def send_many(emails: list[Email]) -> None:
                     [
                         "EMAIL SEND SUCCESS",
                         f"Type: {email.type}",
-                        f"Recipients: {[str(m) for m in email.recipients]}",
+                        f"Recipients: {len(email.recipients)}",  # count only; addresses are PII
                         f"Time: {t()}",
                     ]
                 )
