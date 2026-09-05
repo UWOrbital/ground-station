@@ -80,6 +80,15 @@
         "clientRole": false,
         "containerId": "aaf3f0d1-514c-46ec-a040-bbb36a95d7e8",
         "attributes": {}
+      },
+      {
+        "id": "e19c469f-9b57-4e7c-9c12-4a8109939c86",
+        "name": "mcc-admin",
+        "description": "Grants manual MCC admin access, granted via the mcc-admins group",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "aaf3f0d1-514c-46ec-a040-bbb36a95d7e8",
+        "attributes": {}
       }
     ],
     "client": {
@@ -322,7 +331,19 @@
       ]
     }
   },
-  "groups": [],
+  "groups": [
+    {
+      "id": "bca5a26a-9f04-4920-a26e-88cf69b2cdb1",
+      "name": "mcc-admins",
+      "path": "/mcc-admins",
+      "attributes": {},
+      "realmRoles": [
+        "mcc-admin"
+      ],
+      "clientRoles": {},
+      "subGroups": []
+    }
+  ],
   "defaultRole": {
     "id": "1ec3dd8c-5baa-40ae-b4af-1fe41e701010",
     "name": "default-roles-mcc",

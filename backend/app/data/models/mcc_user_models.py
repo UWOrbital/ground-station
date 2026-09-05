@@ -5,6 +5,7 @@ from pydantic import EmailStr
 from sqlmodel import Field
 
 from app.config.data_values import DEFAULT_MAX_LENGTH
+from app.data.enums.mcc_users import MCCAdminRequestStatus
 from app.data.models.base_model import BaseSQLModel
 
 MCC_USER_SCHEMA_NAME: Final[str] = "mcc_users"
@@ -25,6 +26,8 @@ class MCCUsers(BaseSQLModel, table=True):
     :type last_name: str, None
     :param phone_number: Valid phone number
     :type phone_number: str, None
+    :param admin_request_status: Status of the user's request for MCC admin access
+    :type admin_request_status: MCCAdminRequestStatus
     """
 
     id: UUID = Field(primary_key=True, index=True, description="UUID sub given from decoded Keycloak ID Token.")
@@ -32,6 +35,7 @@ class MCCUsers(BaseSQLModel, table=True):
     first_name: str | None = Field(max_length=DEFAULT_MAX_LENGTH, nullable=True, default=None)
     last_name: str | None = Field(max_length=DEFAULT_MAX_LENGTH, nullable=True, default=None)
     phone_number: str | None
+    admin_request_status: MCCAdminRequestStatus = Field(default=MCCAdminRequestStatus.NOT_REQUESTED)
 
     # table information
     __tablename__ = MCC_USER_TABLE_NAME

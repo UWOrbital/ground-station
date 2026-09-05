@@ -4,6 +4,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from app.data.enums.mcc_users import MCCAdminRequestStatus
 from app.data.enums.transactional import CommandStatus
 from app.data.models.main_models import MainCommand, MainTelemetry
 from app.data.models.transactional_models import CommsSession
@@ -108,6 +109,13 @@ class UserInformationResponse(BaseModel):
     first_name: str | None = None
     last_name: str | None = None
     phone_number: str | None = None
+    admin_request_status: MCCAdminRequestStatus = MCCAdminRequestStatus.NOT_REQUESTED
+
+
+class PendingAdminRequestsResponse(BaseModel):
+    """Response model wrapping a list of users with a pending MCC admin access request."""
+
+    data: Annotated[list[UserInformationResponse], Field(description="Users with a pending admin access request")]
 
 
 class ImageResponse(BaseModel):

@@ -1,5 +1,5 @@
 src = ["backend"]
-extend-exclude = ["tests", "migrations"]
+extend-exclude = ["tests", "migrations", "dev.py"]
 target-version = "py312"
 line-length = 120
 indent-width = 4

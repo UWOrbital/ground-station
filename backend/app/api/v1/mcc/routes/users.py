@@ -21,6 +21,7 @@ async def get_me(user: MCCUsers = Depends(keycloak.get_current_user)) -> UserInf
         first_name=user.first_name,
         last_name=user.last_name,
         phone_number=user.phone_number,
+        admin_request_status=user.admin_request_status,
     )
 
 

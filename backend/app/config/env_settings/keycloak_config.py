@@ -15,6 +15,7 @@ class KeycloakConfig(BaseSettings):
     callback_url: str = "http://localhost:8000/api/v1/mcc/auth/callback"
     redirect_uri: str = "http://localhost:8000/docs"
     secure_cookies: bool = False
+    admin_group_path: str = "/mcc-admins"
 
     model_config = SettingsConfigDict(
         env_prefix="KEYCLOAK_",

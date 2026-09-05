@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Final
 from urllib.parse import urlencode
 from uuid import UUID
 
@@ -12,6 +12,8 @@ from app.config.env_settings.backend_config import settings
 from app.config.env_settings.keycloak_config import KeycloakConfig
 from app.data.data_wrappers.wrappers import MCCUsersWrapper
 from app.data.models.mcc_user_models import MCCUsers
+
+MCC_ADMIN_ROLE_NAME: Final[str] = "mcc-admin"
 
 
 class KeycloakClient:
@@ -35,6 +37,7 @@ class KeycloakClient:
             )
         )
         self.require_auth = Depends(self.authenticate)
+        self.require_admin = Depends(self.get_current_admin)
 
     @property
     def login_url(self) -> str:
@@ -109,13 +112,48 @@ class KeycloakClient:
         except KeycloakError as e:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token") from e
 
-    async def get_current_user(self, request: Request) -> MCCUsers:
-        """Authenticates user tokens and yields their corresponding MCCUsers objects."""
-        user_info = await self.authenticate(request)
+    async def _lookup_user(self, user_info: dict[str, Any]) -> MCCUsers:
+        """
+        Looks up the local MCCUsers row for a decoded token's subject claim.
+
+        :param user_info: decoded token claims from authenticate().
+        :return: the corresponding MCCUsers row.
+        """
         try:
             return await MCCUsersWrapper().get_by_id(UUID(user_info["sub"]))
         except ValueError as e:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found") from e
+
+    async def get_current_user(self, request: Request) -> MCCUsers:
+        """Authenticates user tokens and yields their corresponding MCCUsers objects."""
+        user_info = await self.authenticate(request)
+        return await self._lookup_user(user_info)
+
+    async def get_current_admin(self, request: Request) -> MCCUsers:
+        """
+        Authenticates user tokens and ensures the caller holds the mcc-admin realm role.
+
+        :param request: the incoming request carrying the access_token cookie.
+        :return: the corresponding MCCUsers object.
+        """
+        user_info = await self.authenticate(request)
+        if MCC_ADMIN_ROLE_NAME not in user_info.get("realm_access", {}).get("roles", []):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+        return await self._lookup_user(user_info)
+
+    async def grant_mcc_admin(self, user_id: UUID) -> None:
+        """
+        Adds a user to the MCC admin Keycloak group, granting the mcc-admin realm role.
+
+        :param user_id: the keycloak/MCC user id to grant admin access to.
+        """
+        try:
+            group = await run_in_threadpool(self.admin_client.get_group_by_path, self.config.admin_group_path)
+            await run_in_threadpool(self.admin_client.group_user_add, user_id=str(user_id), group_id=group["id"])
+        except KeycloakError as e:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY, detail="MCC admin group not configured in Keycloak"
+            ) from e
 
     async def sync_user_changes(self, user_id: UUID, data: dict[str, Any]) -> None:
         """
