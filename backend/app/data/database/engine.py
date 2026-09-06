@@ -6,6 +6,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.config.env_settings.backend_config import settings
 from app.data.models.aro_user_models import ARO_USER_SCHEMA_NAME
+from app.data.models.logs_models import LOGS_SCHEMA_NAME
 from app.data.models.main_models import MAIN_SCHEMA_NAME
 from app.data.models.transactional_models import TRANSACTIONAL_SCHEMA_NAME
 
@@ -46,7 +47,7 @@ async def _create_schemas(session: AsyncSession) -> None:
     :param session: The session for which to create the schemas
     """
     connection = await session.connection()
-    schemas = [MAIN_SCHEMA_NAME, TRANSACTIONAL_SCHEMA_NAME, ARO_USER_SCHEMA_NAME]
+    schemas = [MAIN_SCHEMA_NAME, TRANSACTIONAL_SCHEMA_NAME, ARO_USER_SCHEMA_NAME, LOGS_SCHEMA_NAME]
     for schema in schemas:
         # sqlalchemy doesn't check if the schema exists before attempting to create one
         await connection.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema}"))

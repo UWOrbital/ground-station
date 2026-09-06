@@ -9,6 +9,7 @@ from app.api.mcc.schemas.responses import TelemetryEntry, TelemetrySubrow
 from app.config.data_values import SESSION_LOCKOUT_SECONDS
 from app.data.database.engine import get_db_session
 from app.data.models.aro_user_models import AROUserAuthToken, AROUserCallsigns, AROUserLogin, AROUsers
+from app.data.models.logs_models import APILog
 from app.data.models.main_models import MainCommand, MainTelemetry
 from app.data.models.mcc_user_models import MCCUsers
 from app.data.models.transactional_models import (
@@ -355,6 +356,27 @@ class TelemetryRepository(AbstractRepository[Telemetry, UUID]):
                 )
                 for t, name, session_id, status in results
             ]
+
+
+class APILogRepository(AbstractRepository[APILog, UUID]):
+    """
+    Repository for the APILog table (logs.api).
+    """
+
+    model = APILog
+
+    async def get_recent(self, limit: int = 100) -> list[APILog]:
+        """
+        Retrieve the most recent log rows, newest first.
+
+        Intended for a future monitoring surface or ad-hoc inspection; the loguru
+        sink writes rows via a batched consumer, not through this repository.
+
+        :param limit: maximum number of rows to return.
+        :return: the newest APILog rows, ordered by time descending.
+        """
+        async with get_db_session() as session:
+            return list((await session.exec(select(APILog).order_by(col(APILog.time).desc()).limit(limit))).all())
 
 
 class ImageRepository(AbstractRepository[Image, UUID]):

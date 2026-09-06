@@ -17,7 +17,7 @@ When summarizing work to the user, frame what changed in terms of the team missi
 
 Three-part monorepo for UW Orbital's CubeSat ground station:
 
-- `backend/` — FastAPI service (Python 3.12, packaged as `backend` via setuptools). Imports inside the backend are written as if `backend/` is on `sys.path` (e.g. `from app.api.lifespan import lifespan`, `from app.config.config import settings`). The backend package is installed editable via `uv sync --extra dev`, so the `pyproject.toml` at the repo root configure tooling for the backend only.
+- `backend/` — FastAPI service (Python 3.12, packaged as `backend` via setuptools). Imports inside the backend are written as if `backend/` is on `sys.path` (e.g. `from app.config.lifespan import lifespan`, `from app.config.env_settings.backend_config import settings`). The backend package is installed editable via `uv sync --extra dev`, so the `pyproject.toml` at the repo root configure tooling for the backend only.
 - `frontend/aro/` and `frontend/mcc/` — two independent Vite + React 19 + TS apps. ARO (Amateur Radio Operator) is the public-facing app; MCC (Mission Control Center) is the operator app behind Keycloak.
 
 ## Common commands
@@ -38,13 +38,13 @@ uv run python backend/migrate.py callsigns  # one of: callsigns | commands | tel
 uv run alembic upgrade head
 uv run alembic revision --autogenerate -m "msg"
 
-# Tests — pytest is configured with testpaths = ["tests"] in pyproject.toml.
-# tests/conftest.py spins up a Postgres instance via pytest-postgresql per test
-# and runs `alembic upgrade head` inside that DB, so the system needs Postgres + initdb
-# on PATH but the dev DB is NOT touched.
+# Tests — pytest is configured with testpaths = ["backend/tests"] in pyproject.toml.
+# backend/tests/conftest.py spins up a throwaway Postgres via testcontainers (per session)
+# and runs `alembic upgrade head` inside it, so Docker must be running but the dev DB is NOT
+# touched. Each test runs in an outer transaction that is rolled back on teardown.
 uv run pytest                                              # full suite
-uv run pytest backend/tests/test_ephemeris.py        # one file
-uv run pytest backend/tests/test_ephemeris.py::test_name  # one test
+uv run pytest backend/tests/test_abstract_wrapper.py      # one file
+uv run pytest backend/tests/test_abstract_wrapper.py::test_create  # one test
 uv run pytest -k "expression"                              # by name
 
 # Type checking and lint (CI runs `mypy .` from the repo root in strict mode)
@@ -79,31 +79,37 @@ Keycloak is decoupled into its own `docker-compose.keycloak.yml` (mirrors an ext
 
 ### FastAPI app composition
 
-`backend/main.py` is intentionally tiny — it instantiates `FastAPI(lifespan=lifespan)` and delegates to `backend/app/api/backend_setup.py`, which wires routers and middleware. To add an endpoint, create a router under `backend/app/api/{aro,mcc}/endpoints/` and register it in `setup_routes` with the correct prefix; the two product surfaces are mounted at `backend/app/api/aro/*` and `backend/app/api/mcc/*`.
+`backend/main.py` is intentionally tiny — it instantiates `FastAPI(lifespan=lifespan)` and delegates to `backend/app/config/backend_setup.py`, which wires routers and middleware. To add an endpoint, create a router under `backend/app/api/{aro,mcc}/routes/` and register it in `setup_routes` with the correct prefix; the two product surfaces are mounted at `backend/app/api/aro/*` and `backend/app/api/mcc/*`.
 
-Middleware order matters and is enforced in `setup_middlewares`: CORS first, then `SessionMiddleware` (needed for OAuth state), then `AuthMiddleware`, then `LoggerMiddleware`. Don't reorder casually.
+Middleware order matters and is enforced in `setup_middlewares`: CORS first, then `SessionMiddleware` (needed for OAuth state), then `LoggerMiddleware`. Don't reorder casually. (Route-level auth is enforced via FastAPI dependencies, not a middleware.)
 
-The `lifespan` context initializes `fastapi-cache` with an in-memory backend and calls `setup_database(get_db_session())` to create the three Postgres schemas (`main`, `transactional`, `aro_user`). Table DDL is owned by **Alembic** — `setup_database` only creates schemas; the old `_create_tables` path is left as a deprecated comment.
+The `lifespan` context initializes `fastapi-cache` with an in-memory backend and calls `setup_database(session)` to create the base Postgres schemas (`main`, `transactional`, `aro_user`, `logs`; the `mcc_users` schema is created by its Alembic migration). It also starts the DB log sink (see Logging below). Table DDL is owned by **Alembic** — `setup_database` only creates schemas; the old `_create_tables` path is left as a deprecated comment.
 
 ### Configuration
 
-`backend/app/config/config.py` builds a single `settings` object by composing `CORSConfig`, `LoggerConfig`, `DatabaseConfig`, `KeycloakConfig`, `AROAuthConfig`, and `EmailConfig`. Each pulls from env vars via pydantic-settings. `python-dotenv`'s `load_dotenv()` runs at import time — when running from the repo root it finds `backend/.env` via the working dir; the docker compose backend service injects env from the repo-root `.env` plus an override (`GS_DATABASE_LOCATION=host.docker.internal`).
+`backend/app/config/env_settings/backend_config.py` builds a single `settings` object (class `BackendConfiguration`) by composing `CORSConfig`, `LoggerConfig`, `DatabaseConfig`, `KeycloakConfig`, `AROAuthConfig`, and `EmailConfig`. Each pulls from env vars via pydantic-settings. `python-dotenv`'s `load_dotenv()` runs at import time — when running from the repo root it finds `backend/.env` via the working dir; the docker compose backend service injects env from the repo-root `.env` plus an override (`GS_DATABASE_LOCATION=host.docker.internal`).
 
 `template.env` documents every variable the backend needs. `KEYCLOAK_CLIENT_SECRET`, ARO Google OAuth, and SMTP secrets are not in the template and must be filled in locally; the Keycloak client secret lives inside `backend/mcc_keycloak/mcc-realm.json`.
 
 ### Data layer
 
-- `backend/app/data/tables/` — SQLModel table classes split across three Postgres schemas: `main_tables.py` (reference data), `transactional_tables.py` (e.g. `CommsSession`), `aro_user_tables.py`, `mcc_user_tables.py`. Schema names are module-level constants (e.g. `MAIN_SCHEMA_NAME`) and are referenced by both `engine.py` and Alembic.
-- `backend/app/data/data_wrappers/` — repository-style wrappers around SQLModel. New table accessors should extend `abstract_wrapper.py`; tests monkeypatch `data.data_wrappers.abstract_wrapper.get_db_session` (see `conftest.py`).
-- `backend/migrations/` — Alembic migrations. `tests/conftest.py` runs `alembic upgrade head` inside the per-test Postgres instance, so any new table needs both a SQLModel class and a migration or the tests will fail.
+- `backend/app/data/models/` — SQLModel table classes split across Postgres schemas: `main_models.py` (reference data), `transactional_models.py` (e.g. `CommsSession`), `aro_user_models.py`, `mcc_user_models.py`, `logs_models.py` (the `logs.api` sink table). Schema names are module-level constants (e.g. `MAIN_SCHEMA_NAME`) and are referenced by both `engine.py` and Alembic.
+- `backend/app/data/repositories/` — repository-style wrappers around SQLModel. New table accessors extend `abstract_repository.py` and register in the `DAL` registry (`dal.py`); tests monkeypatch `app.data.repositories.abstract_repository.get_db_session` and `app.data.repositories.repositories.get_db_session` (see `conftest.py`).
+- `backend/migrations/` — Alembic migrations. `backend/tests/conftest.py` runs `alembic upgrade head` inside the testcontainers Postgres, so any new table needs both a SQLModel class and a migration or the tests will fail.
 
 ### Auth
 
 Two distinct flows:
 - **MCC**: Keycloak (OIDC). Realm definition is checked in at `backend/app/mcc_keycloak/mcc-realm.json` and auto-imported by the keycloak compose service.
-- **ARO**: Google OAuth via Authlib, JWT-signed sessions. Config in `backend/app/config/aro_auth_config.py`.
+- **ARO**: Google OAuth via Authlib, JWT-signed sessions. Config in `backend/app/config/env_settings/aro_auth_config.py`; the flow lives under `backend/app/api/aro/auth/`.
 
-`backend/app/api/middleware/auth_middleware.py` enforces both. Session cookies are protected by `SessionMiddleware` keyed on `settings.auth.jwt_secret_key`.
+Both flows are enforced per-route via FastAPI dependencies (`Depends`), not a middleware. Session cookies are protected by `SessionMiddleware` keyed on `settings.auth.session_secret`.
+
+### Logging
+
+Logging is **loguru** (`from loguru import logger`). `LoggerMiddleware` (`app/config/logger_middleware.py`) logs each request/response; `setup_logging` routes SQLAlchemy's stdlib logs into loguru at a custom `VERBOSE` level (15).
+
+Logs are also persisted to the DB. `app/config/db_log_sink.py` adds a loguru sink that enqueues records onto an `asyncio.Queue`; a background task (started/stopped in `lifespan`) batch-inserts them into `logs.api`. The sink filters out `VERBOSE`/`sqlalchemy` records so a write can't recursively trigger more writes, and DB failures fall back to stderr. Tune via `LOGGER_DB_SINK_*` env vars (see `logger_config.py` / `template.env`). Note: loguru's `Message`/`Record` types are stub-only — import them under `TYPE_CHECKING`, not at runtime.
 
 ### Sample data
 
@@ -112,7 +118,7 @@ Sample data can be found in `backend/references/`.
 ## Testing conventions
 
 - pytest is verbose by default (`-v` in `pyproject.toml`).
-- `backend/tests/conftest.py` autouses a fixture that swaps `get_db_session` to point at a per-test Postgres DB, so wrappers under test must call `get_db_session()` (not hold a cached engine).
+- `backend/tests/conftest.py` autouses a fixture that swaps `get_db_session` to point at the testcontainers Postgres DB, so repositories under test must call `get_db_session()` (not hold a cached engine).
 - The dummy env vars in `conftest.py` are set with `setdefault` *before* importing the engine module, so test-only env never leaks into dev. Don't reorder those imports.
 - mypy runs in `strict` mode and excludes `tests/*`.
 - Ruff is scoped to `backend/` only (frontend, `tests`, and `migrations` are excluded) and enforces docstrings on classes/functions/methods (rules `D101 D102 D103 D105` plus `D213`).
