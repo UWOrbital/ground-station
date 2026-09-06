@@ -8,8 +8,8 @@ UW Orbital is a student CubeSat team. The software sub-team splits into **firmwa
 
 Ground station has three product surfaces:
 - **Backend** (`backend/`) — FastAPI service that ingests downlink data, persists it, and serves both frontends. This is the primary surface in this repo.
-- **MCC** — Mission Control Center. An invite-only tool behind Keycloak; experts use it to monitor and command the satellite. Backend lives at `backend/app/api/v1/mcc/*`; the MCC frontend is the operator-facing client.
-- **ARO** — Amateur Radio Operator. Public-facing surface for amateur radio operators who want to request actions of the satellite. Backend lives at `backend/app/api/v1/aro/*`.
+- **MCC** — Mission Control Center. An invite-only tool behind Keycloak; experts use it to monitor and command the satellite. Backend lives at `backend/app/api/mcc/*`; the MCC frontend is the operator-facing client.
+- **ARO** — Amateur Radio Operator. Public-facing surface for amateur radio operators who want to request actions of the satellite. Backend lives at `backend/app/api/aro/*`.
 
 When summarizing work to the user, frame what changed in terms of the team mission: which surface it affects (MCC operators, ARO amateurs, firmware-integration plumbing) and where it sits in the satellite-to-human pipeline. Don't just list code edits — connect them to who on the team benefits.
 
@@ -79,7 +79,7 @@ Keycloak is decoupled into its own `docker-compose.keycloak.yml` (mirrors an ext
 
 ### FastAPI app composition
 
-`backend/main.py` is intentionally tiny — it instantiates `FastAPI(lifespan=lifespan)` and delegates to `backend/app/api/backend_setup.py`, which wires routers and middleware. To add an endpoint, create a router under `backend/app/api/v1/{aro,mcc}/endpoints/` and register it in `setup_routes` with the correct prefix; the two product surfaces are mounted at `backend/app/api/v1/aro/*` and `backend/app/api/v1/mcc/*`.
+`backend/main.py` is intentionally tiny — it instantiates `FastAPI(lifespan=lifespan)` and delegates to `backend/app/api/backend_setup.py`, which wires routers and middleware. To add an endpoint, create a router under `backend/app/api/{aro,mcc}/endpoints/` and register it in `setup_routes` with the correct prefix; the two product surfaces are mounted at `backend/app/api/aro/*` and `backend/app/api/mcc/*`.
 
 Middleware order matters and is enforced in `setup_middlewares`: CORS first, then `SessionMiddleware` (needed for OAuth state), then `AuthMiddleware`, then `LoggerMiddleware`. Don't reorder casually.
 
@@ -114,7 +114,7 @@ Sample data can be found in `backend/references/`.
 - pytest is verbose by default (`-v` in `pyproject.toml`).
 - `backend/tests/conftest.py` autouses a fixture that swaps `get_db_session` to point at a per-test Postgres DB, so wrappers under test must call `get_db_session()` (not hold a cached engine).
 - The dummy env vars in `conftest.py` are set with `setdefault` *before* importing the engine module, so test-only env never leaks into dev. Don't reorder those imports.
-- mypy runs in `strict` mode and excludes `tests/*`. ax25, tinyaes, authlib, and pyStuffing have `ignore_missing_imports`.
+- mypy runs in `strict` mode and excludes `tests/*`.
 - Ruff is scoped to `backend/` only (frontend, `tests`, and `migrations` are excluded) and enforces docstrings on classes/functions/methods (rules `D101 D102 D103 D105` plus `D213`).
 
 ## Pre-commit
