@@ -145,3 +145,4 @@ Sample data can be found in `backend/references/`.
 
 - Branch naming: `<developer_name>/<feature_description>` (e.g. `danielg/implement-random-device-driver`).
 - A PR template enforces required details; PRs expect ≥3 reviewers including a software lead.
+
