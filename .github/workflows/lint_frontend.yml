@@ -1,5 +1,9 @@
 name: Lint Frontend
-on: [push, pull_request]
+on:
+  push:
+    paths:
+      - "frontend/**"
+  pull_request:
 
 jobs:
   lint-frontend:
