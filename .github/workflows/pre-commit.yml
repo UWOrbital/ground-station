@@ -1,5 +1,9 @@
 name: pre-commit-ci-lite
-on: [push, pull_request]
+on:
+  push:
+    paths:
+      - "backend/**"
+  pull_request:
 
 jobs:
   pre-commit:

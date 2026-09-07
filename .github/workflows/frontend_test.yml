@@ -1,5 +1,9 @@
 name: Frontend Test
-on: [push, pull_request]
+on:
+  push:
+    paths:
+      - "frontend/**"
+  pull_request:
 
 jobs:
   build-and-test:
