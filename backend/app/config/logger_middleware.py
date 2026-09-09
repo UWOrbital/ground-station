@@ -45,7 +45,9 @@ class LoggerMiddleware(BaseHTTPMiddleware):
         :return: the response produced by the wrapped handler, untouched.
         """
         request_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        request_id = str(uuid4())
+        # RequestIDMiddleware binds this upstream; fall back to a fresh id so the
+        # logger still works if it is ever mounted without that middleware.
+        request_id = getattr(request.state, "request_id", None) or str(uuid4())
         # Names only — a value can be a secret (e.g. the Keycloak OAuth `code`).
         param_keys = sorted(request.query_params.keys())
         # Size from the header so the (possibly sensitive) body is never read.

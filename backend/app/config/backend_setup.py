@@ -21,6 +21,7 @@ from app.api.mcc.routes.users import mcc_users_router
 from app.config.env_settings.backend_config import settings
 from app.config.env_settings.cors_config import add_cors_middleware
 from app.config.logger_middleware import LoggerMiddleware
+from app.config.request_id_middleware import RequestIDMiddleware
 
 
 def setup_routes(app: FastAPI) -> None:
@@ -50,12 +51,17 @@ def setup_routes(app: FastAPI) -> None:
 
 def setup_middlewares(app: FastAPI) -> None:
     """Adds the middlewares to the app"""
+    # Starlette runs middleware in reverse of registration order (last added runs
+    # first). CORS is registered first so it stays innermost; RequestIDMiddleware
+    # is registered last so it runs first and binds request.state.request_id
+    # before LoggerMiddleware (and everything else) reads it.
     add_cors_middleware(app)  # Cors middleware should be added first
     app.add_middleware(SessionMiddleware, secret_key=settings.auth.session_secret)
     app.add_middleware(
         LoggerMiddleware,
         excluded_endpoints=settings.logger.excluded_endpoints,
     )
+    app.add_middleware(RequestIDMiddleware)
 
 
 def setup_logging() -> None:
