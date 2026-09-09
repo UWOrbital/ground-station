@@ -23,4 +23,4 @@ done
 echo "Keycloak is ready."
 
 echo "Starting the main ground-station stack..."
-docker compose up --build
+docker compose up --
