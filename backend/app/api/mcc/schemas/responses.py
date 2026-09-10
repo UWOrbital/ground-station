@@ -113,7 +113,9 @@ class UserInformationResponse(BaseModel):
 
 
 class AdminApplicantsResponse(BaseModel):
-    data: list[UserInformationResponse]
+    """Response model wrapping the users awaiting a decision on their MCC admin access request."""
+
+    data: Annotated[list[UserInformationResponse], Field(description="Users with a pending admin access request")]
 
 
 class ImageResponse(BaseModel):
