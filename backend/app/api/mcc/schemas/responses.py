@@ -112,10 +112,8 @@ class UserInformationResponse(BaseModel):
     admin_request_status: MCCAdminRequestStatus = MCCAdminRequestStatus.NOT_REQUESTED
 
 
-class PendingAdminRequestsResponse(BaseModel):
-    """Response model wrapping a list of users with a pending MCC admin access request."""
-
-    data: Annotated[list[UserInformationResponse], Field(description="Users with a pending admin access request")]
+class AdminApplicantsResponse(BaseModel):
+    data: list[UserInformationResponse]
 
 
 class ImageResponse(BaseModel):
