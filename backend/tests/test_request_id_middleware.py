@@ -5,7 +5,7 @@ from fastapi import FastAPI, Request
 from httpx import ASGITransport, AsyncClient
 from loguru import logger
 
-from app.config.request_id_middleware import REQUEST_ID_HEADER, RequestIDMiddleware
+from app.config.request_id_middleware import REQUEST_ID_HEADER, RESPONSE_ID_HEADER, RequestIDMiddleware
 
 
 def _app_echoing_request_id() -> FastAPI:
@@ -39,6 +39,19 @@ async def test_request_id_on_state_header_and_valid_uuid():
     header_id = resp.headers[REQUEST_ID_HEADER]
     _assert_is_uuid(body_id)
     assert body_id == header_id
+
+
+async def test_response_id_is_distinct_valid_uuid():
+    """The response carries its own valid-UUID id, separate from the request id."""
+    app = _app_echoing_request_id()
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        resp = await client.get("/whoami")
+
+    request_id = resp.headers[REQUEST_ID_HEADER]
+    response_id = resp.headers[RESPONSE_ID_HEADER]
+    _assert_is_uuid(response_id)
+    assert response_id != request_id
 
 
 async def test_each_request_gets_a_distinct_id():

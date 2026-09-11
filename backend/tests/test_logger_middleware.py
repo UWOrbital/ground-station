@@ -92,18 +92,6 @@ async def test_response_body_passes_through_intact(captured_logs):
     assert resp.json() == {"value": "X" * 1000}
 
 
-async def test_logger_falls_back_to_own_id_when_mounted_alone(captured_logs):
-    """Without RequestIDMiddleware upstream, LoggerMiddleware still logs a valid Request ID."""
-    app = _app_with_marker_response()
-
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-        resp = await client.post("/thing")
-
-    assert resp.status_code == 200
-    ids = _REQUEST_ID_RE.findall("\n".join(captured_logs))
-    assert ids, "expected the logger to emit a Request ID"
-
-
 async def test_logger_uses_shared_request_id_when_chained(captured_logs):
     """Chained with RequestIDMiddleware, the REQUEST and RESPONSE lines share the state id."""
     app = FastAPI()

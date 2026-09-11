@@ -1,7 +1,6 @@
 from collections.abc import Awaitable, Callable, Sequence
 from datetime import datetime
 from time import perf_counter
-from uuid import uuid4
 
 from fastapi import Request, Response
 from loguru import logger
@@ -45,9 +44,12 @@ class LoggerMiddleware(BaseHTTPMiddleware):
         :return: the response produced by the wrapped handler, untouched.
         """
         request_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        # RequestIDMiddleware binds this upstream; fall back to a fresh id so the
-        # logger still works if it is ever mounted without that middleware.
-        request_id = getattr(request.state, "request_id", None) or str(uuid4())
+        # RequestIDMiddleware is expected to bind this upstream; degrade safely
+        # (rather than crash) if it is ever missing.
+        request_id = getattr(request.state, "request_id", None)
+        if request_id is None:
+            logger.warning("request_id missing from request.state; RequestIDMiddleware not installed upstream")
+            request_id = "not-available"
         # Names only — a value can be a secret (e.g. the Keycloak OAuth `code`).
         param_keys = sorted(request.query_params.keys())
         # Size from the header so the (possibly sensitive) body is never read.
