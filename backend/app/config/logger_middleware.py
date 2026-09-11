@@ -44,8 +44,6 @@ class LoggerMiddleware(BaseHTTPMiddleware):
         :return: the response produced by the wrapped handler, untouched.
         """
         request_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        # RequestIDMiddleware is expected to bind this upstream; degrade safely
-        # (rather than crash) if it is ever missing.
         request_id = getattr(request.state, "request_id", None)
         if request_id is None:
             logger.warning("request_id missing from request.state; RequestIDMiddleware not installed upstream")

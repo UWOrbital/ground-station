@@ -63,7 +63,7 @@ def setup_middlewares(app: FastAPI) -> None:
         LoggerMiddleware,
         excluded_endpoints=settings.logger.excluded_endpoints,
     )
-    app.add_middleware(RequestIDMiddleware)  # added last -> runs first
+    app.add_middleware(RequestIDMiddleware)
 
 
 def setup_logging() -> None:
