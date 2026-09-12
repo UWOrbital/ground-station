@@ -53,9 +53,8 @@ def setup_middlewares(app: FastAPI) -> None:
     """
     Add the middlewares to the app.
 
-    Starlette runs middleware in reverse of registration order (last added runs
-    first), so CORS is added first (innermost) and RequestIDMiddleware last, so it
-    runs first and binds request.state.request_id before the others read it.
+    Middleware added last runs first, so RequestIDMiddleware is added last to bind
+    request.state before the others read it.
     """
     add_cors_middleware(app)
     app.add_middleware(SessionMiddleware, secret_key=settings.auth.session_secret)

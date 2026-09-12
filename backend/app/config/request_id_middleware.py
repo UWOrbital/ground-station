@@ -13,17 +13,7 @@ RESPONSE_ID_HEADER = "X-Response-ID"
 
 class RequestIDMiddleware(BaseHTTPMiddleware):
     """
-    Middleware that binds unique correlation ids to each request and response.
-
-    The request id is minted server-side, stored on ``request.state.request_id``
-    (backed by the shared ASGI ``scope["state"]`` dict, so it is visible to inner
-    middleware and the route handler), exposed on the response via the
-    ``X-Request-ID`` header, and bound into the loguru context so every log
-    emitted while handling the request carries it. A separate response id is
-    minted per response, stored on ``request.state.response_id``, and exposed via
-    the ``X-Response-ID`` header. An inbound ``X-Request-ID`` is deliberately
-    ignored to avoid log-injection/spoofing; validated propagation can be added
-    here later if cross-service tracing is needed.
+    Bind a unique correlation id to each request and a separate one to each response for log tracing.
     """
 
     async def dispatch(self, request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
@@ -34,6 +24,7 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
         :param call_next: callable that runs the rest of the stack and returns the response.
         :return: the response produced by the wrapped handler, with the id headers set.
         """
+        # Minted server-side; an inbound X-Request-ID is ignored to avoid spoofing/log-injection.
         request_id = str(uuid4())
         request.state.request_id = request_id
 
