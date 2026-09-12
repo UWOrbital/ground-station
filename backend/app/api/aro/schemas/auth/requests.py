@@ -19,19 +19,9 @@ class CallsignRequest(BaseModel):
     """
     CallsignRequest
 
-    Request containing callsign data of a user.
+    Request containing the callsign a user wants verified.
 
     :call_sign str
-    :qual_level_a bool
-    :qual_level_b bool
-    :qual_level_c bool
-    :qual_level_d bool
-    :qual_level_e bool
     """
 
     call_sign: CallSign
-    qual_level_a: bool
-    qual_level_b: bool
-    qual_level_c: bool
-    qual_level_d: bool
-    qual_level_e: bool

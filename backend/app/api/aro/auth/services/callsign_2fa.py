@@ -1,38 +1,21 @@
 from fastapi import HTTPException, status
-from loguru import logger
 
 from app.api.aro.schemas.auth.requests import CallsignRequest
 from app.data.models.aro_user_models import AROUsers
 from app.data.repositories.dal import DAL
 
 
-async def callsign_verified(qual_levels: tuple[bool, ...], user_call_sign: str) -> bool:
+async def callsign_verified(user_call_sign: str) -> bool:
     """
-    Checks call_sign against the government CSV file.
+    Check a call sign against AROUserCallsigns.
 
-    :qual_levels: tuple[bool, ...]: user qualification levels
+    Exact match only, per issue this becomes % matching later.
+
     :user_call_sign: str: a user's provided call sign
     """
     callsigns = DAL.aro_user_callsigns()
     record = await callsigns.get_row_by_callsign(user_call_sign)
-
-    if not record:
-        return False
-
-    expected_levels = [
-        record.qual_level_a,
-        record.qual_level_b,
-        record.qual_level_c,
-        record.qual_level_d,
-        record.qual_level_e,
-    ]
-
-    for i, expected in enumerate(expected_levels):
-        if qual_levels[i] != expected:
-            # Log the mismatched level only; the callsign itself is omitted as PII.
-            logger.warning(f"Callsign qualification mismatch at qual_level_{chr(ord('a') + i)}")
-
-    return True
+    return record is not None
 
 
 async def verify_user_callsign(request: CallsignRequest, user: AROUsers) -> AROUsers:
@@ -43,23 +26,14 @@ async def verify_user_callsign(request: CallsignRequest, user: AROUsers) -> AROU
     :user AROUsers
     :returns AROUsers
     """
-
-    qual_levels = (
-        request.qual_level_a,
-        request.qual_level_b,
-        request.qual_level_c,
-        request.qual_level_d,
-        request.qual_level_e,
-    )
-
-    if not await callsign_verified(qual_levels=qual_levels, user_call_sign=request.call_sign):
+    if not await callsign_verified(request.call_sign):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Callsign unable to be verified.")
 
     users = DAL.aro_users()
     updated_user = await users.update(
         user.id,
         {
-            "callsign": request.call_sign,
+            "call_sign": request.call_sign,
             "is_callsign_verified": True,
         },
     )

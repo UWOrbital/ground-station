@@ -135,13 +135,14 @@ async def get_current_user(user: AROUsers = Depends(get_user_by_token)) -> AROUs
     return user
 
 
-@router.post("/callsign_callback", response_model=UserRead)
-async def callsign_callback(request: CallsignRequest, user: AROUsers = Depends(get_user_by_token)) -> AROUsers:
+@router.post("/certify_callsign", response_model=UserRead)
+async def certify_callsign(request: CallsignRequest, user: AROUsers = Depends(get_user_by_token)) -> AROUsers:
     """
-    POST /api/aro/auth/callsign_callback
+    POST /api/aro/auth/certify_callsign
 
     Validates a user's callsign against the AROUserCallsigns table.
 
+    :param request: CallsignRequest
     :param user: AROUsers
     :returns: AROUsers
     """
