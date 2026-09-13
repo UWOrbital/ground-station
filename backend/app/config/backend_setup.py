@@ -21,6 +21,7 @@ from app.api.mcc.routes.users import mcc_users_router
 from app.config.env_settings.backend_config import settings
 from app.config.env_settings.cors_config import add_cors_middleware
 from app.config.logger_middleware import LoggerMiddleware
+from app.config.request_id_middleware import RequestIDMiddleware
 
 
 def setup_routes(app: FastAPI) -> None:
@@ -49,13 +50,19 @@ def setup_routes(app: FastAPI) -> None:
 
 
 def setup_middlewares(app: FastAPI) -> None:
-    """Adds the middlewares to the app"""
-    add_cors_middleware(app)  # Cors middleware should be added first
+    """
+    Add the middlewares to the app.
+
+    Middleware added last runs first, so RequestIDMiddleware is added last to bind
+    request.state before the others read it.
+    """
+    add_cors_middleware(app)
     app.add_middleware(SessionMiddleware, secret_key=settings.auth.session_secret)
     app.add_middleware(
         LoggerMiddleware,
         excluded_endpoints=settings.logger.excluded_endpoints,
     )
+    app.add_middleware(RequestIDMiddleware)
 
 
 def setup_logging() -> None:
