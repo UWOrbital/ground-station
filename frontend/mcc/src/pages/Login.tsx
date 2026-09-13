@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "../utils/api/config";
+import { API_BASE_URL } from "@/lib/apiClient";
 
 /**
  * @brief Login component displaying the login page
