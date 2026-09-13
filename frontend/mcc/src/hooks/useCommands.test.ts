@@ -71,12 +71,12 @@ describe("useCreateCommand", () => {
 
     const { result } = renderHook(() => useCreateCommand(), { wrapper: createQueryWrapper() });
 
-    await expect(
-      result.current.mutateAsync({ type_: 2, session_id: "s1" }),
-    ).rejects.toMatchObject({ status: 409 });
-    await expect(
-      result.current.mutateAsync({ type_: 2, session_id: "s1" }),
-    ).rejects.toBeInstanceOf(ApiError);
+    await expect(result.current.mutateAsync({ type_: 2, session_id: "s1" })).rejects.toMatchObject({
+      status: 409,
+    });
+    await expect(result.current.mutateAsync({ type_: 2, session_id: "s1" })).rejects.toBeInstanceOf(
+      ApiError,
+    );
   });
 });
 

@@ -39,10 +39,9 @@ describe("useSessionsInRange", () => {
       json: async () => ({ detail: "boom" }),
     } as Response);
 
-    const { result } = renderHook(
-      () => useSessionsInRange(new Date(), new Date()),
-      { wrapper: createQueryWrapper() },
-    );
+    const { result } = renderHook(() => useSessionsInRange(new Date(), new Date()), {
+      wrapper: createQueryWrapper(),
+    });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.error).toBeInstanceOf(ApiError);
