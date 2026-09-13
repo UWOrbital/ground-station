@@ -4,21 +4,37 @@ import MapView from "./map-view";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useEffect } from "react";
 
-export function isInvalidCoordinate(lat: number, lng: number) {
+// define an interface for DA coordinates once more, to make readable code
+export interface Coordinates {
+  latitude: number;
+  longitude: number;
+  usedDefault?: boolean;
+}
+
+// Keep the request form usable when browser geolocation is unavailable for coords to our BEAUTIFUL columbia lake!!.
+export const UW_DEFAULT_LOCATION: Coordinates = {
+  latitude: 43.4723,
+  longitude: -80.5449,
+};
+
+export function isInvalidCoordinate(lat: number, lng: number): boolean {
   if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
     return true;
   } else {
     return false;
   }
 }
-
-export async function getUserLocation(): Promise<{ latitude: number; longitude: number }> {
+// Request the device's current coordinates through the browser Geolocation API and if not, then fallback to DEFAULT!!
+export async function getUserLocation(
+  geolocation: Geolocation | undefined = navigator.geolocation,
+): Promise<Coordinates> {
   return new Promise((resolve, reject) => {
-    if (!navigator.geolocation) {
+    if (!geolocation) {
       reject(new Error("Geolocation not supported"));
+      return;
     }
 
-    navigator.geolocation.getCurrentPosition(
+    geolocation.getCurrentPosition(
       (position) => {
         resolve({
           latitude: position.coords.latitude,
@@ -29,11 +45,30 @@ export async function getUserLocation(): Promise<{ latitude: number; longitude: 
         console.error("Geolocation error:", error);
         reject(error);
       },
+      {
+        enableHighAccuracy: false,
+        timeout: 10_000,
+        maximumAge: 300_000,
+      },
     );
   });
 }
 
-const NewRequestForm = () => {
+// Try to resolve the map's starting point issue and fall back to the one and only COLUMBIA LAKE if geolocation fails!!
+export async function getStartingLocation(
+  geolocation: Geolocation | undefined = navigator.geolocation,
+): Promise<Coordinates> {
+  try {
+    return await getUserLocation(geolocation);
+  } catch {
+    return {
+      ...UW_DEFAULT_LOCATION,
+      usedDefault: true,
+    };
+  }
+}
+
+const NewRequestForm = (): React.JSX.Element => {
   useEffect(() => {
     alert(
       "Welcome to the new request form! Enter your coordinates on the left or select them on the map by holding Shift and clicking your desired location.",
@@ -41,21 +76,19 @@ const NewRequestForm = () => {
   }, []);
 
   const queryClient = useQueryClient();
-  const {
-    data: location,
-    isLoading,
-    isError,
-  } = useQuery({
+  const { data: location, isLoading } = useQuery({
     queryKey: ["coords"],
-    queryFn: getUserLocation,
-    staleTime: Infinity,
+    // TODO(#69): Prefer saved user coordinates once ARO user settings expose them.
+    queryFn: () => getStartingLocation(),
+    staleTime: 300_000,
+    refetchOnMount: "always",
     retry: false,
   });
 
   const latitude = location?.latitude ?? null;
   const longitude = location?.longitude ?? null;
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
 
     const formData = new FormData(e.currentTarget);
@@ -73,9 +106,10 @@ const NewRequestForm = () => {
       return;
     }
 
-    queryClient.setQueryData(["coords"], {
+    queryClient.setQueryData<Coordinates>(["coords"], {
       latitude: newLatitude,
       longitude: newLongitude,
+      usedDefault: false,
     });
 
     if (action === "Validate") {
@@ -89,21 +123,25 @@ const NewRequestForm = () => {
     return <div className="p-4 text-gray-600">Fetching your location...</div>;
   }
 
-  if (isError) {
-    return <div className="p-4 text-red-600">Failed to get your location.</div>;
-  }
-
   return (
-    <div className="form-container flex mt-25">
-      <div className="w-1/4 max-h-500 overflow-auto">
-        <InputForm handleSubmit={handleSubmit} />
-      </div>
-      {latitude !== null && longitude !== null && (
-        <div className="flex-1">
-          <MapView />
-        </div>
+    <>
+      {location?.usedDefault && (
+        <p role="status" className="absolute top-24 text-sm text-white">
+          Your location could not be determined. Showing the default map location.
+        </p>
       )}
-    </div>
+
+      <div className="form-container flex mt-25">
+        <div className="w-1/4 max-h-500 overflow-auto">
+          <InputForm handleSubmit={handleSubmit} />
+        </div>
+        {latitude !== null && longitude !== null && (
+          <div className="flex-1">
+            <MapView />
+          </div>
+        )}
+      </div>
+    </>
   );
 };
 

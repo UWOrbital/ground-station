@@ -44,10 +44,16 @@ const InputForm: React.FC<MapViewProps> = ({ handleSubmit }) => {
         <h1 className="text-3xl text-center -mt-11 mb-10">New Request Form</h1>
         <form onSubmit={handleSubmit} className="flex flex-col space-y-6 w-full">
           <div className="flex flex-col w-full">
-            <label className="text-base font-medium text-gray-700 mb-2">Latitude</label>
+            <label htmlFor="latitude" className="text-base font-medium text-gray-700 mb-2">
+              Latitude
+            </label>
             <input
+              id="latitude"
               type="number"
               name="latitude"
+              min={-90}
+              max={90}
+              step="any"
               placeholder="Enter latitude"
               value={localLat}
               onChange={handleLatitudeChange}
@@ -57,10 +63,16 @@ const InputForm: React.FC<MapViewProps> = ({ handleSubmit }) => {
           </div>
 
           <div className="flex flex-col w-full">
-            <label className="text-base font-medium text-gray-700 mb-4">Longitude</label>
+            <label htmlFor="longitude" className="text-base font-medium text-gray-700 mb-4">
+              Longitude
+            </label>
             <input
+              id="longitude"
               type="number"
               name="longitude"
+              min={-180}
+              max={180}
+              step="any"
               placeholder="Enter longitude"
               value={localLng}
               onChange={handleLongitudeChange}
