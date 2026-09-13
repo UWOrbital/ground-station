@@ -1,5 +1,31 @@
 import { useQuery } from "@tanstack/react-query";
-import { useImagesApi } from "../api/images";
+import { API_BASE_URL } from "@/lib/apiClient";
+
+/**
+ * A satellite image record returned by the backend.
+ */
+export interface ImageResponse {
+  id: string;
+  data: string;
+}
+
+/**
+ * @brief Fetch the latest satellite image from the MCC backend.
+ * @return the latest image record.
+ */
+async function fetchLatestImage(): Promise<ImageResponse> {
+  const res = await fetch(`${API_BASE_URL}/images/latest`, {
+    credentials: "include",
+  });
+  if (!res.ok) {
+    throw new Error(`API error: ${res.status} ${res.statusText}`);
+  }
+  const json: ImageResponse | { message: string } = await res.json();
+  if ("message" in json) {
+    throw new Error(json.message);
+  }
+  return json;
+}
 
 /**
  * @brief React Query hook that fetches the latest satellite image.
@@ -9,11 +35,9 @@ import { useImagesApi } from "../api/images";
  * @return useQuery result object with image data.
  */
 export const useLatestImage = () => {
-  const { getLatestImage } = useImagesApi();
-
   return useQuery({
     queryKey: ["latest-image"],
-    queryFn: getLatestImage,
+    queryFn: fetchLatestImage,
     refetchInterval: 30_000,
   });
 };

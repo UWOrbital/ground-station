@@ -11,24 +11,9 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { useTelemetry } from "../hooks/useTelemetry";
+import { useTelemetry, type TelemetryEntry, type TelemetrySubrow } from "../hooks/useTelemetry";
 
 /** Backend shape of a subrow inside a telemetry entry. */
-interface TelemetrySubrow {
-  packet: string;
-  session: string;
-  obc_state: string;
-}
-
-/** Backend shape of a single telemetry entry from GET /api/mcc/telemetry/. */
-interface TelemetryEntry {
-  id: string;
-  type: string;
-  value: string | null;
-  timestamp: string;
-  subrows: TelemetrySubrow[] | null;
-}
-
 /** Frontend row shape after transforming the backend response. */
 type TelemetryRow = {
   type?: string;

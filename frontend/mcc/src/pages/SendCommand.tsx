@@ -21,8 +21,8 @@ import {
 import CustomAlert from "@/components/Alert";
 import type { MainCommand } from "../utils/types";
 import { parseCommandParameters, type CommandParameter } from "../utils/commandParams";
-import { createCommand } from "../utils/api/commands";
-import { ApiError } from "../utils/api/auth";
+import { useCreateCommand } from "../hooks/useCommands";
+import { ApiError } from "@/lib/apiClient";
 import { isSessionLockedOut } from "../utils/lockout";
 
 interface ParameterValues {
@@ -91,6 +91,7 @@ function SendCommand({
   const [sequenceIndex, setSequenceIndex] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [currentSubmitStatus, setCurrentSubmitStatus] = useState<SubmitStatus>(SubmitStatus.None);
+  const createCommandMutation = useCreateCommand();
 
   const parameters: CommandParameter[] = mainCommand ? parseCommandParameters(mainCommand) : [];
   const lockedOut = sessionStartTime ? isSessionLockedOut(sessionStartTime) : false;
@@ -140,7 +141,7 @@ function SendCommand({
         ? parameters.map((p) => parameterValues[p.name]).join(",")
         : undefined;
 
-      await createCommand({
+      await createCommandMutation.mutateAsync({
         type_: mainCommand.id,
         params: paramsString,
         session_id: selectedSessionId,
