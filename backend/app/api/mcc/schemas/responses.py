@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 from app.data.enums.mcc_users import MCCAdminRequestStatus
 from app.data.enums.transactional import CommandStatus
 from app.data.models.main_models import MainCommand, MainTelemetry
-from app.data.models.transactional_models import CommsSession
+from app.data.models.transactional_models import ARORequest, CommsSession
 
 
 class CommandItem(BaseModel):
@@ -116,6 +116,12 @@ class AdminApplicantsResponse(BaseModel):
     """Response model wrapping the users awaiting a decision on their MCC admin access request."""
 
     data: Annotated[list[UserInformationResponse], Field(description="Users with a pending admin access request")]
+
+
+class ARORequestsResponse(BaseModel):
+    """Response model wrapping a page of ARO picture requests across all users."""
+
+    data: Annotated[list[ARORequest], Field(description="A page of ARO requests, newest first")]
 
 
 class ImageResponse(BaseModel):
