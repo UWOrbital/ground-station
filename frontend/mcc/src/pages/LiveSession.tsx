@@ -48,7 +48,11 @@ function LiveCard({ session }: { session: Session | null }) {
 
   const duration = Math.max(
     0,
-    Math.floor(((session.end_time ? new Date(session.end_time) : new Date()).getTime() - new Date(session.start_time).getTime()) / 60000),
+    Math.floor(
+      ((session.end_time ? new Date(session.end_time) : new Date()).getTime() -
+        new Date(session.start_time).getTime()) /
+        60000,
+    ),
   );
 
   return (
@@ -83,7 +87,12 @@ function LiveSession() {
   const past7Days = new Date(now.current.getTime() - 7 * 24 * 60 * 60 * 1000);
   const in24Hours = new Date(now.current.getTime() + 24 * 60 * 60 * 1000);
 
-  const { data: sessions, isLoading, isError, error } = useSessionsInRange(past7Days, in24Hours, 500);
+  const {
+    data: sessions,
+    isLoading,
+    isError,
+    error,
+  } = useSessionsInRange(past7Days, in24Hours, 500);
 
   const [, setTick] = useState(0); // ticks each minute so the live duration counts up between polls
   useEffect(() => {
