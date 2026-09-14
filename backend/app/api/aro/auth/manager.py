@@ -7,6 +7,7 @@ router.py and aro_session.py never import from here directly.
 """
 
 from collections.abc import AsyncGenerator
+from typing import override
 from uuid import UUID
 
 from fastapi import Depends, Request
@@ -28,6 +29,10 @@ class AROUserManager(UUIDIDMixin, BaseUserManager[AROUserRecord, UUID]):
         """Called after a new user row is committed."""
         # TODO: Wire up an after-registeration hook the day we need one
         pass
+
+    @override
+    async def on_after_forgot_password(self, user: AROUserRecord, token: str, request: Request | None = None) -> None:
+        pass  # TODO: send the "Reset password" email with this token (app.utils.email.send_many)
 
 
 async def get_user_db() -> AsyncGenerator[AROUserDatabaseAdapter, None]:
