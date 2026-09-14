@@ -1,5 +1,5 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { checkAuth } from "../utils/api/auth";
+import { createContext, useContext, type ReactNode } from "react";
+import { useAuthStatus } from "../hooks/useAuthStatus";
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -9,28 +9,29 @@ interface AuthState {
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
 
+/**
+ * @brief Provides authentication state to the tree via the auth-status query.
+ * @param children the subtree that can consume auth state.
+ * @return the AuthContext provider wrapping the children.
+ */
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data, isLoading, refetch } = useAuthStatus();
 
-  const recheck = () => {
-    setIsLoading(true);
-    checkAuth()
-      .then(setIsAuthenticated)
-      .finally(() => setIsLoading(false));
+  const value: AuthState = {
+    isAuthenticated: data ?? false,
+    isLoading,
+    recheck: () => {
+      void refetch();
+    },
   };
 
-  useEffect(() => {
-    recheck();
-  }, []);
-
-  return (
-    <AuthContext.Provider value={{ isAuthenticated, isLoading, recheck }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
+/**
+ * @brief Access the authentication state from the nearest AuthProvider.
+ * @return the current authentication state.
+ */
 export function useAuth(): AuthState {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth must be used within AuthProvider");

@@ -1,13 +1,13 @@
 import { createColumnHelper } from "@tanstack/react-table";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import Table from "../components/Table";
 import type { Command } from "../utils/types";
 import SelectCommand from "./SelectCommand";
 import SendCommand from "./SendCommand";
 import { useState, useEffect, useMemo } from "react";
-import { getSessionsInRange } from "../utils/api/sessions";
-import { getMainCommands } from "../utils/api/mainCommands";
-import { getCommandsBySession } from "@/utils/api/commands";
+import { useSessionsInRange } from "../hooks/useSessions";
+import { useMainCommands } from "../hooks/useMainCommands";
+import { useCommandsBySession } from "../hooks/useCommands";
 
 type CommandRow = {
   id: string;
@@ -60,9 +60,6 @@ const columns = [
   }),
 ];
 
-const SESSIONS_POLL_INTERVAL_MS = 10_000;
-const COMMANDS_POLL_INTERVAL_MS = 2_000;
-
 /**
  * @brief Commands component displaying the commands table
  * @return tsx element of Commands component
@@ -72,28 +69,14 @@ function Commands() {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [selectedCommandId, setSelectedCommandId] = useState<number | null>(null);
 
-  const sessionsQuery = useQuery({
-    queryKey: ["sessions", "upcoming-and-recent"],
-    queryFn: () => {
-      const now = new Date();
-      const past30Min = new Date(now.getTime() - 30 * 60 * 1000);
-      const in72Hours = new Date(now.getTime() + 72 * 60 * 60 * 1000);
-      return getSessionsInRange(past30Min, in72Hours, 100);
-    },
-    refetchInterval: SESSIONS_POLL_INTERVAL_MS,
-  });
+  const now = new Date();
+  const past30Min = new Date(now.getTime() - 30 * 60 * 1000);
+  const in72Hours = new Date(now.getTime() + 72 * 60 * 60 * 1000);
+  const sessionsQuery = useSessionsInRange(past30Min, in72Hours, 100);
 
-  const mainCommandsQuery = useQuery({
-    queryKey: ["mainCommands"],
-    queryFn: getMainCommands,
-  });
+  const mainCommandsQuery = useMainCommands();
 
-  const commandsQuery = useQuery({
-    queryKey: ["commands", selectedSessionId],
-    queryFn: () => getCommandsBySession(selectedSessionId as string),
-    enabled: !!selectedSessionId,
-    refetchInterval: COMMANDS_POLL_INTERVAL_MS,
-  });
+  const commandsQuery = useCommandsBySession(selectedSessionId);
 
   const sessions = useMemo(() => sessionsQuery.data ?? [], [sessionsQuery.data]);
   const mainCommands = useMemo(() => mainCommandsQuery.data ?? [], [mainCommandsQuery.data]);
