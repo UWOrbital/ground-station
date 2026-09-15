@@ -42,7 +42,7 @@ const SESSIONS_POLL_INTERVAL_MS = 10_000;
  */
 export const useSessionsInRange = (startAfter: Date, startBefore: Date, limit: number = 100) => {
   return useQuery({
-    queryKey: ["sessions", "upcoming-and-recent"],
+    queryKey: ["sessions", startAfter.toISOString(), startBefore.toISOString(), limit],
     queryFn: () => fetchSessionsInRange(startAfter, startBefore, limit),
     refetchInterval: SESSIONS_POLL_INTERVAL_MS,
   });
