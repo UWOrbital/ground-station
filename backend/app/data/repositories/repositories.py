@@ -192,6 +192,23 @@ class ARORequestRepository(AbstractRepository[ARORequest, UUID]):
                 ).all()
             )
 
+    async def get_recent(self, count: int, offset: int) -> list[ARORequest]:
+        """
+        Retrieves a most-recent-first page of every ARO's picture requests.
+
+        :param count: maximum number of requests to return.
+        :param offset: number of most-recent requests to skip (for paging).
+        :return: the requested page of ARORequest rows, newest first.
+        """
+        async with get_db_session() as session:
+            return list(
+                (
+                    await session.exec(
+                        select(ARORequest).order_by(col(ARORequest.created_on).desc()).limit(count).offset(offset)
+                    )
+                ).all()
+            )
+
 
 class MainCommandRepository(AbstractRepository[MainCommand, int]):
     """
