@@ -2,12 +2,7 @@
 
 // Enums matching database schema
 export type CommandStatus =
-  | "pending"
-  | "scheduled"
-  | "ongoing"
-  | "cancelled"
-  | "failed"
-  | "completed";
+  "pending" | "scheduled" | "ongoing" | "cancelled" | "failed" | "completed";
 
 export type SessionStatus = "pending" | "scheduled" | "ongoing" | "completed";
 
