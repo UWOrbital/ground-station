@@ -43,8 +43,8 @@ describe("useSessionsInRange", () => {
       wrapper: createQueryWrapper(),
     });
 
-    await waitFor(() => expect(result.current.isError).toBe(true), { timeout: 5000 }); 
+    await waitFor(() => expect(result.current.isError).toBe(true), { timeout: 5000 });
     expect(result.current.error).toBeInstanceOf(ApiError);
     expect((result.current.error as ApiError).status).toBe(500);
-  }, 15000); 
+  }, 15000);
 });
