@@ -1,5 +1,5 @@
 import { createColumnHelper } from "@tanstack/react-table";
-import { useRef, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Table from "../components/Table";
 import type { Session, SessionStatus } from "../utils/types";
 import { useSessionsInRange } from "../hooks/useSessions";
@@ -83,9 +83,14 @@ function LiveCard({ session }: { session: Session | null }) {
 }
 
 function LiveSession() {
-  const now = useRef(new Date()); // pinned per mount; a fresh query key each render would refetch endlessly
-  const past7Days = new Date(now.current.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const in24Hours = new Date(now.current.getTime() + 24 * 60 * 60 * 1000);
+  // Pin the query window per mount so renders do not trigger new requests.
+  const [{ past7Days, in24Hours }] = useState(() => {
+    const now = Date.now();
+    return {
+      past7Days: new Date(now - 7 * 24 * 60 * 60 * 1000),
+      in24Hours: new Date(now + 24 * 60 * 60 * 1000),
+    };
+  });
 
   const {
     data: sessions,

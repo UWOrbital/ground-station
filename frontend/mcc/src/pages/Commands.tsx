@@ -4,7 +4,7 @@ import Table from "../components/Table";
 import type { Command } from "../utils/types";
 import SelectCommand from "./SelectCommand";
 import SendCommand from "./SendCommand";
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useMemo } from "react";
 import { useSessionsInRange } from "../hooks/useSessions";
 import { useMainCommands } from "../hooks/useMainCommands";
 import { useCommandsBySession } from "../hooks/useCommands";
@@ -69,9 +69,14 @@ function Commands() {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [selectedCommandId, setSelectedCommandId] = useState<number | null>(null);
 
-  const now = useRef(new Date()); // pinned per mount; a fresh query key each render would refetch endlessly
-  const past30Min = new Date(now.current.getTime() - 30 * 60 * 1000);
-  const in72Hours = new Date(now.current.getTime() + 72 * 60 * 60 * 1000);
+  // Pin the query window per mount so renders do not trigger new requests.
+  const [{ past30Min, in72Hours }] = useState(() => {
+    const now = Date.now();
+    return {
+      past30Min: new Date(now - 30 * 60 * 1000),
+      in72Hours: new Date(now + 72 * 60 * 60 * 1000),
+    };
+  });
   const sessionsQuery = useSessionsInRange(past30Min, in72Hours, 100);
 
   const mainCommandsQuery = useMainCommands();
@@ -82,11 +87,9 @@ function Commands() {
   const mainCommands = useMemo(() => mainCommandsQuery.data ?? [], [mainCommandsQuery.data]);
   const commands = useMemo(() => commandsQuery.data ?? [], [commandsQuery.data]);
 
-  useEffect(() => {
-    if (!selectedSessionId && sessions.length > 0) {
-      setSelectedSessionId(sessions[0].id);
-    }
-  }, [sessions, selectedSessionId]);
+  if (!selectedSessionId && sessions.length > 0) {
+    setSelectedSessionId(sessions[0].id);
+  }
 
   const error =
     (sessionsQuery.error as Error | undefined)?.message ??

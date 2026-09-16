@@ -1,5 +1,4 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus } from "@fortawesome/free-solid-svg-icons";
+import { Plus } from "lucide-react";
 import type { MainCommand } from "../utils/types.ts";
 
 import { Button } from "@/components/ui/button";
@@ -28,7 +27,7 @@ function SelectCommand({
           variant="outline"
           className="fixed bottom-10 left-10 z-10 rounded-full w-15 h-15 flex items-center justify-center hover:border-ring hover:ring-ring/50 hover:ring-[2px]"
         >
-          <FontAwesomeIcon icon={faPlus} size="xl" />
+          <Plus aria-hidden="true" className="size-5" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56">

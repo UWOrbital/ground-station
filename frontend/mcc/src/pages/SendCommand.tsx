@@ -1,6 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSpinner } from "@fortawesome/free-solid-svg-icons";
+import { LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -277,7 +276,7 @@ function SendCommand({
           <Field orientation="horizontal">
             <Button type="submit" disabled={!isFormValid() || isSubmitting}>
               Submit
-              {isSubmitting && <FontAwesomeIcon icon={faSpinner} className="animate-spin" />}
+              {isSubmitting && <LoaderCircle aria-hidden="true" className="animate-spin" />}
             </Button>
             <Button
               variant="outline"
