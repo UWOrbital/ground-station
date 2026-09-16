@@ -5,6 +5,9 @@ from typing import Final
 CALL_SIGN_MIN_LENGTH: Final[int] = 5
 CALL_SIGN_MAX_LENGTH: Final[int] = 6
 DEFAULT_MAX_LENGTH: Final[int] = 255
+GENERAL_LOCATION_MAX_LENGTH: Final[int] = 100
+POSTAL_CODE_LENGTH: Final[int] = 6
+QUAL_LEVEL_COUNT: Final[int] = 5
 PACKET_RAW_LENGTH: Final[int] = 255
 PACKET_DATA_LENGTH: Final[int] = 223
 EMAIL_MIN_LENGTH: Final[int] = 5
