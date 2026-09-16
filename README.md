@@ -1,13 +1,18 @@
 <div align = center>
-<img width="1584" height="396" alt="1" src="https://github.com/user-attachments/assets/e8afd54f-120e-4fea-b2e2-aee9edd39e34" />
-<br>
-  All code for UW Orbital's Ground Station web apps.
+  <img width="1584" height="396" alt="UW Orbital Ground Station" src="https://github.com/user-attachments/assets/e8afd54f-120e-4fea-b2e2-aee9edd39e34" />
+  <br>
+  UW Orbital's ground station web applications and services.
 </div>
+<br>
+
+**[MCC](https://mcc.uworbital.org)**: Mission Control Centre. Operator interface for commanding the satellite and viewing telemetry.
+
+**[ARO](https://aro.uworbital.org)**: Amateur Radio Operator portal. Account-based image requests and viewing.
 
 ## Table of Contents
 
 - [UW Orbital Docs](#uw-orbital-docs)
-- [Notion](#notion)
+- [Onboarding](#onboarding)
 - [Contributing](#contributing)
 - [Authors](#authors)
 
@@ -20,14 +25,8 @@ Check out the site here: https://uworbital.github.io/docs/
 
 The documentation site now contains most of the information previously found in this README.
 
-## Notion
-The team Notion is another important source of information. Here you'll find other team documentation, onboarding info, and links to useful resources.
-
-The software section of the Notion is available here: https://www.notion.so/uworbital/Software-a613c4aaa36449969010cabba2fc329d
-
-Useful links:
-- Ground Station Onboarding: https://www.notion.so/uworbital/Ground-Station-Onboarding-10f8a26d767780d7ae8de921d9782b77
-- Software Development Life Cycle (SDLC): https://www.notion.so/uworbital/Software-Development-Life-Cycle-1218a26d767780619d42fa22f0785e73
+## Onboarding
+https://www.github.com/UWOrbital/sw-onboarding
 
 ## Contributing
 
@@ -37,7 +36,7 @@ Useful links:
      - Example: `danielg/implement-random-device-driver`
 3. Make a PR.
    - For the PR description, make sure to fill in all the required details in the generated template.
-   - Add at least three PR reviewers, including one software lead. When a PR is created, PR stats are added as a comment. You can use these stats to choose reviewers. Send a message in the #pr channel on Discord to notify the reviewers of your PR.
+   - Add at least three PR reviewers, including one software lead. When a PR is created, PR stats are added as a comment. You can use these stats to choose reviewers. Create a post in the #pr channel on Discord to notify the reviewers of your PR.
 4. Make any requested changes and merge your branch onto main once the PR is approved.
 
 ## Authors
