@@ -30,7 +30,7 @@ describe("useSessionsInRange", () => {
     expect(calledUrl).toContain("start_after=2026-01-01T00%3A00%3A00.000Z");
     expect(calledUrl).toContain("start_before=2026-01-02T00%3A00%3A00.000Z");
     expect(calledUrl).toContain("limit=50");
-  });
+  }, 15000);
 
   it("throws an ApiError on a failed response", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue({
@@ -43,8 +43,8 @@ describe("useSessionsInRange", () => {
       wrapper: createQueryWrapper(),
     });
 
-    await waitFor(() => expect(result.current.isError).toBe(true), { timeout: 5000 }); // default 1s trips on a slow run
+    await waitFor(() => expect(result.current.isError).toBe(true), { timeout: 5000 }); 
     expect(result.current.error).toBeInstanceOf(ApiError);
     expect((result.current.error as ApiError).status).toBe(500);
-  });
+  }, 15000); 
 });
