@@ -4,7 +4,7 @@ import Table from "../components/Table";
 import type { Command } from "../utils/types";
 import SelectCommand from "./SelectCommand";
 import SendCommand from "./SendCommand";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useSessionsInRange } from "../hooks/useSessions";
 import { useMainCommands } from "../hooks/useMainCommands";
 import { useCommandsBySession } from "../hooks/useCommands";
@@ -69,9 +69,9 @@ function Commands() {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [selectedCommandId, setSelectedCommandId] = useState<number | null>(null);
 
-  const now = new Date();
-  const past30Min = new Date(now.getTime() - 30 * 60 * 1000);
-  const in72Hours = new Date(now.getTime() + 72 * 60 * 60 * 1000);
+  const now = useRef(new Date()); // pinned per mount; a fresh query key each render would refetch endlessly
+  const past30Min = new Date(now.current.getTime() - 30 * 60 * 1000);
+  const in72Hours = new Date(now.current.getTime() + 72 * 60 * 60 * 1000);
   const sessionsQuery = useSessionsInRange(past30Min, in72Hours, 100);
 
   const mainCommandsQuery = useMainCommands();
