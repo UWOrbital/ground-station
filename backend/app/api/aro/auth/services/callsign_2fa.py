@@ -5,10 +5,11 @@ The callsign itself is a strict gate. Every other field contributes to a percent
 and the account is certified once that score clears settings.auth.callsign_match_pct.
 """
 
+from collections.abc import Callable
+
 import usaddress
 from fastapi import HTTPException, status
-from loguru import logger
-from collections.abc import Callable
+
 from app.api.aro.schemas.auth.requests import CallsignRequest
 from app.api.aro.schemas.types import normalize_postal_code, normalize_registry_text
 from app.config.env_settings.backend_config import settings
@@ -18,13 +19,15 @@ from app.data.repositories.dal import DAL
 Matcher = Callable[[str, str], bool]
 
 # Abbreviations vary between the registry and what a user types ("DR"/"DRIVE", "BOX"/"PO BOX")
-_IGNORED_ADDRESS_PARTS = frozenset({
-    "StreetNamePreType",
-    "StreetNamePostType",
-    "StreetNamePreDirectional",
-    "StreetNamePostDirectional",
-    "USPSBoxType",
-})
+_IGNORED_ADDRESS_PARTS = frozenset(
+    {
+        "StreetNamePreType",
+        "StreetNamePostType",
+        "StreetNamePreDirectional",
+        "StreetNamePostDirectional",
+        "USPSBoxType",
+    }
+)
 _TEXT_FIELDS = (
     "first_name",
     "last_name",
@@ -88,7 +91,7 @@ def _address_matches(user_value: str, registry_value: str) -> bool:
     registry_parts = _address_parts(registry_value)
     if user_parts and registry_parts:
         return user_parts == registry_parts
-    
+
     # Fall back to comparing the normalized text if too malformed
     return _text_matches(user_value, registry_value)
 
@@ -128,11 +131,7 @@ def score_callsign_match(request: CallsignRequest, record: AROUserCallsigns) -> 
     registry_levels = [getattr(record, column) for column in _QUAL_LEVEL_COLUMNS]
     scoreboard["qual_levels"] = sum(
         user_level == registry_level
-        for user_level, registry_level in zip(
-            request.qual_levels,
-            registry_levels,
-            strict=True
-        )
+        for user_level, registry_level in zip(request.qual_levels, registry_levels, strict=True)
     )
     weights["qual_levels"] = len(registry_levels)
 
@@ -159,8 +158,5 @@ async def verify_user_callsign(request: CallsignRequest, user: AROUsers) -> AROU
 
     return await DAL.aro_users().update(
         user.id,
-        {
-            "call_sign": request.call_sign, 
-            "is_callsign_verified": True
-        },
+        {"call_sign": request.call_sign, "is_callsign_verified": True},
     )
