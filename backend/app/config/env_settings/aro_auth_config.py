@@ -7,7 +7,7 @@ class AROAuthConfig(BaseSettings):
     jwt_secret: str
     session_secret: str
     is_production: bool = True
-    callsign_match_pct: int = 40
+    callsign_match_pct: float = 0.5
 
     model_config = SettingsConfigDict(
         env_prefix="ARO_AUTH_",
