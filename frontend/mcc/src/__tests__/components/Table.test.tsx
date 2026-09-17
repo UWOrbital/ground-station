@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { createColumnHelper } from "@tanstack/react-table";
-import Table from "./Table";
+import Table from "@/components/Table";
 
 type TestData = {
   id: number;

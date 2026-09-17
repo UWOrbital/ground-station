@@ -3,7 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { BrowserRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import Telemetry from "./Telemetry";
+import Telemetry from "@/pages/Telemetry";
 
 const mockTelemetryData = {
   data: [
@@ -168,5 +168,47 @@ describe("Telemetry Page", () => {
 
     expect(screen.getByText("Type")).toBeInTheDocument();
     expect(screen.getByText("Timestamp")).toBeInTheDocument();
+  });
+
+  it("selects rows by click and moves the selection with the arrow keys, clamped at both ends", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      json: async () => mockTelemetryData,
+    } as Response);
+
+    renderTelemetry();
+
+    const user = userEvent.setup();
+    const first = (await screen.findByText("3.7")).closest("tr")!;
+    const second = screen.getByText("25.0").closest("tr")!;
+    const isSelected = (row: HTMLElement) => row.classList.contains("bg-white");
+
+    screen.getByRole("table").parentElement!.focus();
+    await user.keyboard("{ArrowUp}");
+    expect(isSelected(first)).toBe(true);
+
+    await user.keyboard("{ArrowDown}{ArrowDown}");
+    expect(isSelected(second)).toBe(true);
+    expect(isSelected(first)).toBe(false);
+
+    await user.keyboard("{ArrowUp}{ArrowUp}");
+    expect(isSelected(first)).toBe(true);
+
+    await user.click(second);
+    expect(isSelected(second)).toBe(true);
+  });
+
+  it("selects the first row when ArrowDown is pressed with nothing selected", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      json: async () => mockTelemetryData,
+    } as Response);
+
+    renderTelemetry();
+
+    const first = (await screen.findByText("3.7")).closest("tr")!;
+    screen.getByRole("table").parentElement!.focus();
+    await userEvent.keyboard("{ArrowDown}");
+    expect(first).toHaveClass("bg-white");
   });
 });
