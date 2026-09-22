@@ -14,7 +14,7 @@ from app.api.aro.schemas.auth.requests import CallsignRequest
 from app.api.aro.schemas.types import normalize_postal_code, normalize_registry_text
 from app.config.env_settings.backend_config import settings
 from app.data.models.aro_user_models import AROUserCallsigns, AROUsers
-from app.data.repositories.dal import DAL
+from app.data.repositories.repositories import AROUserCallsignRepository, AROUsersRepository
 
 Matcher = Callable[[str, str], bool]
 
@@ -138,17 +138,24 @@ def score_callsign_match(request: CallsignRequest, record: AROUserCallsigns) -> 
     return sum(scoreboard.values()) / sum(weights[field] for field in scoreboard)
 
 
-async def verify_user_callsign(request: CallsignRequest, user: AROUsers) -> AROUsers:
+async def verify_user_callsign(
+    request: CallsignRequest,
+    user: AROUsers,
+    callsigns: AROUserCallsignRepository,
+    users: AROUsersRepository,
+) -> AROUsers:
     """
     Certify a user's callsign and record the result when the match clears the threshold.
 
     :param request: the user's claimed registry details
     :param user: the ARO user being certified
+    :param callsigns: repository of certified callsign registry records
+    :param users: repository used to persist the certification result
     :return: the updated user
     """
 
     # If callsign does not match this query does not match
-    record = await DAL.aro_user_callsigns().get_row_by_callsign(request.call_sign)
+    record = await callsigns.get_row_by_callsign(request.call_sign)
     if record is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Callsign unable to be verified.")
 
@@ -156,7 +163,7 @@ async def verify_user_callsign(request: CallsignRequest, user: AROUsers) -> AROU
     if score < settings.auth.callsign_match_pct:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Callsign unable to be verified.")
 
-    return await DAL.aro_users().update(
+    return await users.update(
         user.id,
         {"call_sign": request.call_sign, "is_callsign_verified": True},
     )

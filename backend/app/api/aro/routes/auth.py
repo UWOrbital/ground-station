@@ -11,6 +11,9 @@ from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_users.router import get_register_router
 
 from app.api.aro.auth.aro_session import (
+    AROUserAuthTokenRepo,
+    AROUserCallsignsRepo,
+    AROUsersRepo,
     create_access_token,
     get_user_by_token,
     issue_refresh_token,
@@ -51,6 +54,7 @@ def _set_refresh_cookie(response: Response, raw_refresh_token: str) -> None:
 @router.post("/login", response_model=AccessTokenResponse)
 async def login(
     response: Response,
+    auth_tokens: AROUserAuthTokenRepo,
     request: OAuth2PasswordRequestForm = Depends(),
     *,
     user_manager: AROUserManager = Depends(get_user_manager),
@@ -72,7 +76,7 @@ async def login(
         )
 
     access_token, expiry = create_access_token(user._user)
-    raw_refresh_token = await issue_refresh_token(user.id)
+    raw_refresh_token = await issue_refresh_token(user.id, None, auth_tokens)
 
     _set_refresh_cookie(response, raw_refresh_token)
 
@@ -80,7 +84,12 @@ async def login(
 
 
 @router.post("/rotate_tokens", response_model=AccessTokenResponse)
-async def rotate_tokens(response: Response, refresh_token: str | None = Cookie(default=None)) -> AccessTokenResponse:
+async def rotate_tokens(
+    response: Response,
+    auth_tokens: AROUserAuthTokenRepo,
+    users: AROUsersRepo,
+    refresh_token: str | None = Cookie(default=None),
+) -> AccessTokenResponse:
     """
     POST /api/aro/auth/rotate_tokens
 
@@ -96,7 +105,7 @@ async def rotate_tokens(response: Response, refresh_token: str | None = Cookie(d
             detail={"message": "Not authenticated.", "code": "missing_refresh_token"},
         )
 
-    new_raw_refresh, user = await rotate_refresh_token(refresh_token)
+    new_raw_refresh, user = await rotate_refresh_token(refresh_token, auth_tokens, users)
     access_token, expiry = create_access_token(user)
 
     _set_refresh_cookie(response, new_raw_refresh)
@@ -105,7 +114,9 @@ async def rotate_tokens(response: Response, refresh_token: str | None = Cookie(d
 
 
 @router.post("/logout")
-async def logout(response: Response, refresh_token: str | None = Cookie(default=None)) -> dict[str, str]:
+async def logout(
+    response: Response, auth_tokens: AROUserAuthTokenRepo, refresh_token: str | None = Cookie(default=None)
+) -> dict[str, str]:
     """
     POST /api/aro/auth/logout
 
@@ -114,7 +125,7 @@ async def logout(response: Response, refresh_token: str | None = Cookie(default=
     :param response: Response
     :returns: dict[str, str]: Logout Message
     """
-    await revoke_token(refresh_token)
+    await revoke_token(refresh_token, auth_tokens)
     response.delete_cookie(key="refresh_token")
     return {"message": "Logged out successfully."}
 
@@ -136,14 +147,21 @@ async def get_current_user(user: AROUsers = Depends(get_user_by_token)) -> AROUs
 
 
 @router.post("/certify_callsign", response_model=UserRead)
-async def certify_callsign(request: CallsignRequest, user: AROUsers = Depends(get_user_by_token)) -> AROUsers:
+async def certify_callsign(
+    request: CallsignRequest,
+    callsigns: AROUserCallsignsRepo,
+    users: AROUsersRepo,
+    user: AROUsers = Depends(get_user_by_token),
+) -> AROUsers:
     """
     POST /api/aro/auth/certify_callsign
 
     Validates a user's callsign against the AROUserCallsigns table.
 
     :param request: CallsignRequest
+    :param callsigns: AROUserCallsignRepository
+    :param users: AROUsersRepository
     :param user: AROUsers
     :returns: AROUsers
     """
-    return await verify_user_callsign(request, user)
+    return await verify_user_callsign(request, user, callsigns, users)

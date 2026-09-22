@@ -48,7 +48,7 @@ class CallsignRequest(BaseModel):
     :club_postal_code PostalCode | None
     """
 
-    # Unknown keys are an error, not silently dropped: a misspelled PII field would otherwise just lower the match.
+    # Unknown keys are an error, not silently dropped
     model_config = ConfigDict(extra="forbid")
 
     call_sign: CallSign
