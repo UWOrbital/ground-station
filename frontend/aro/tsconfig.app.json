@@ -22,10 +22,12 @@
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+
+    /* Path aliases (kept in sync with the "@" alias in vite.config.ts) */
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
-  "include": ["src"],
-  "paths": {
-    "@/*": ["./src/*"]
-  }
+  "include": ["src"]
 }

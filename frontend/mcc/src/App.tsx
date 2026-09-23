@@ -38,7 +38,14 @@ function App() {
               }
             />
             <Route path="/telemetry-data" element={<AROAdmin />} />
-            <Route path="/aro-requests" element={<LiveSession />} />
+            <Route
+              path="/live-sessions"
+              element={
+                <ProtectedRoute>
+                  <LiveSession />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/login" element={<Login />} />
             <Route path="/telemetry" element={<Telemetry />} />
             <Route path="/images" element={<Images />} />
