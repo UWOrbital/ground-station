@@ -126,6 +126,12 @@ async def logout(response: Response, refresh_token: str | None = Cookie(default=
 # --- Utility Endpoints ---------------------------------------------------------
 
 
+@router.get("/ping")
+async def ping(_: AROUsers = Depends(get_user_by_token)) -> dict[str, str]:
+    """Verify that the request contains a valid ARO access token."""
+    return {"status": "authenticated"}
+
+
 @router.get("/get_current_user", response_model=UserRead)
 async def get_current_user(user: AROUsers = Depends(get_user_by_token)) -> AROUsers:
     """

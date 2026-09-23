@@ -19,7 +19,7 @@ MCCUsersRepo = Annotated[MCCUsersRepository, Depends(DAL.get_repo(DAL.mcc_users)
 @mcc_auth_router.get("/ping", dependencies=[keycloak.require_auth])
 async def ping() -> dict[str, str]:
     """
-    Simple ping endpoint to verify that user is authenticated.
+    A simple ping endpoint to verify that user is authenticated.
     """
     return {"status": "authenticated"}
 

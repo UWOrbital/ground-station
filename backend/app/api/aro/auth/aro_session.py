@@ -159,7 +159,12 @@ async def get_user_by_token(
         )
 
     try:
-        payload = jwt.decode(credentials.credentials, settings.auth.jwt_secret, algorithms=["HS256"])
+        payload = jwt.decode(
+            credentials.credentials,
+            settings.auth.jwt_secret,
+            algorithms=["HS256"],
+            options={"require": ["exp", "sub"]},
+        )
     except jwt.ExpiredSignatureError:
         raise HTTPException(
             status.HTTP_401_UNAUTHORIZED,
@@ -171,8 +176,8 @@ async def get_user_by_token(
             detail={"message": "Invalid token.", "code": "invalid_token"},
         ) from None
 
-    raw_user_id = payload.get("sub")
-    if not raw_user_id:
+    raw_user_id = payload["sub"]
+    if not isinstance(raw_user_id, str):
         raise HTTPException(
             status.HTTP_401_UNAUTHORIZED,
             detail={"message": "Invalid token payload.", "code": "invalid_token"},
@@ -187,6 +192,12 @@ async def get_user_by_token(
             status.HTTP_401_UNAUTHORIZED,
             detail={"message": "Invalid token.", "code": "invalid_token"},
         ) from None
+
+    if not user.is_active:
+        raise HTTPException(
+            status.HTTP_401_UNAUTHORIZED,
+            detail={"message": "User account is inactive.", "code": "inactive_user"},
+        )
 
     return user
 
