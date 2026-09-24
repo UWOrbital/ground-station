@@ -21,7 +21,7 @@ export const NAVIGATION_LINKS: NavLink[] = [
     url: "/aro-admin",
   },
   {
-    text: "Live Sessions",
+    text: "Sessions",
     url: "/live-sessions",
   },
   {

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
-import { useTelemetry } from "./useTelemetry";
-import { createQueryWrapper } from "./testUtils";
+import { useTelemetry } from "@/hooks/useTelemetry";
+import { createQueryWrapper } from "@/__tests__/testUtils";
 
 beforeEach(() => {
   vi.restoreAllMocks();

@@ -1,7 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import SatelliteStatusIndicator, { type TelemetryData } from "./SatelliteStatusIndicator";
+import SatelliteStatusIndicator, {
+  type TelemetryData,
+} from "@/components/SatelliteStatusIndicator";
 
 describe("SatelliteStatusIndicator", () => {
   describe("Compact Button Rendering", () => {
