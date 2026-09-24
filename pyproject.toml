@@ -30,6 +30,7 @@ dependencies = [
     "fastapi-mail>=1.6.5",
 ]
 
+# install with `uv sync --extra dev` from the repo root
 [project.optional-dependencies]
 dev = [
     # testing
@@ -59,7 +60,7 @@ markers = [
 ]
 
 [tool.mypy]
-exclude = ["backend/tests/*", "backend/migrations/*"]
+exclude = ["backend/tests/*", "backend/migrations/*", "interfaces/*"]
 strict = true
 plugins = "pydantic.mypy"
 
