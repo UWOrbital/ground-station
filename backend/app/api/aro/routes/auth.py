@@ -16,6 +16,7 @@ from app.api.aro.auth.aro_session import (
     issue_refresh_token,
     revoke_token,
     rotate_refresh_token,
+    verify_access_token,
 )
 from app.api.aro.auth.manager import AROUserManager, get_user_manager
 from app.api.aro.auth.services.callsign_2fa import verify_user_callsign
@@ -126,8 +127,8 @@ async def logout(response: Response, refresh_token: str | None = Cookie(default=
 # --- Utility Endpoints ---------------------------------------------------------
 
 
-@router.get("/ping")
-async def ping(_: AROUsers = Depends(get_user_by_token)) -> dict[str, str]:
+@router.get("/ping", dependencies=[Depends(verify_access_token)])
+async def ping() -> dict[str, str]:
     """Verify that the request contains a valid ARO access token."""
     return {"status": "authenticated"}
 

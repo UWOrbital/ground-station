@@ -140,16 +140,14 @@ async def revoke_family(family_id: UUID) -> int:
     return await DAL.aro_user_auth_tokens().revoke_by_family_id(family_id)
 
 
-async def get_user_by_token(
-    aro_users: AROUsersRepo,
+async def verify_access_token(
     credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme),
-) -> AROUsers:
+) -> UUID:
     """
-    Resolve the bearer access token on a request to an AROUsers row. Every protected ARO route depends on this.
+    Validate a bearer access token and return its subject as a UUID.
 
-    :param aro_users: injected AROUsers repository.
     :param credentials: the parsed Authorization header, or None if absent.
-    :return the authenticated AROUsers row.
+    :return: the UUID stored in the token's subject claim.
     :raises HTTPException: 401 with a `code` distinguishing why.
     """
     if credentials is None:
@@ -177,17 +175,36 @@ async def get_user_by_token(
         ) from None
 
     raw_user_id = payload["sub"]
-    if not isinstance(raw_user_id, str):
+    if not isinstance(raw_user_id, str) or not raw_user_id:
         raise HTTPException(
             status.HTTP_401_UNAUTHORIZED,
             detail={"message": "Invalid token payload.", "code": "invalid_token"},
         )
 
     try:
-        user = await aro_users.get_by_id(UUID(raw_user_id))
+        return UUID(raw_user_id)
     except ValueError:
-        # UUID(raw_user_id) raises ValueError if "sub" wasn't a valid UUID
-        # get_by_id raises its own plain ValueError when no row matches
+        raise HTTPException(
+            status.HTTP_401_UNAUTHORIZED,
+            detail={"message": "Invalid token.", "code": "invalid_token"},
+        ) from None
+
+
+async def get_user_by_token(
+    aro_users: AROUsersRepo,
+    user_id: UUID = Depends(verify_access_token),
+) -> AROUsers:
+    """
+    Resolve a validated access-token subject to an active ARO user.
+
+    :param aro_users: injected AROUsers repository.
+    :param user_id: the validated subject UUID from the access token.
+    :return: the authenticated AROUsers row.
+    :raises HTTPException: 401 with a `code` distinguishing why.
+    """
+    try:
+        user = await aro_users.get_by_id(user_id)
+    except ValueError:
         raise HTTPException(
             status.HTTP_401_UNAUTHORIZED,
             detail={"message": "Invalid token.", "code": "invalid_token"},

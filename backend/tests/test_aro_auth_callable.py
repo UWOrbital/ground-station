@@ -57,7 +57,7 @@ async def test_ping_returns_authenticated_for_valid_token(
 
     assert response.status_code == 200
     assert response.json() == {"status": "authenticated"}
-    repo.get_by_id.assert_awaited_once_with(user.id)
+    repo.get_by_id.assert_not_awaited()
 
 
 async def test_ping_rejects_missing_token(auth_app: tuple[FastAPI, AsyncMock]) -> None:
@@ -106,7 +106,9 @@ async def test_ping_rejects_invalid_claims(
     repo.get_by_id.assert_not_awaited()
 
 
-async def test_ping_rejects_unknown_user(auth_app: tuple[FastAPI, AsyncMock]) -> None:
+async def test_get_current_user_rejects_unknown_user(
+    auth_app: tuple[FastAPI, AsyncMock],
+) -> None:
     app, repo = auth_app
     user_id = uuid4()
     repo.get_by_id.side_effect = ValueError("not found")
@@ -115,7 +117,7 @@ async def test_ping_rejects_unknown_user(auth_app: tuple[FastAPI, AsyncMock]) ->
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
         response = await client.get(
-            "/api/aro/auth/ping",
+            "/api/aro/auth/get_current_user",
             headers={"Authorization": f"Bearer {make_access_token(str(user_id))}"},
         )
 
@@ -123,7 +125,9 @@ async def test_ping_rejects_unknown_user(auth_app: tuple[FastAPI, AsyncMock]) ->
     assert response.json()["detail"]["code"] == "invalid_token"
 
 
-async def test_ping_rejects_inactive_user(auth_app: tuple[FastAPI, AsyncMock]) -> None:
+async def test_get_current_user_rejects_inactive_user(
+    auth_app: tuple[FastAPI, AsyncMock],
+) -> None:
     app, repo = auth_app
     user = make_user(is_active=False)
     repo.get_by_id.return_value = user
@@ -132,7 +136,7 @@ async def test_ping_rejects_inactive_user(auth_app: tuple[FastAPI, AsyncMock]) -
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
         response = await client.get(
-            "/api/aro/auth/ping",
+            "/api/aro/auth/get_current_user",
             headers={"Authorization": f"Bearer {make_access_token(str(user.id))}"},
         )
 
