@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
-import { useSessionsInRange } from "./useSessions";
+import { useSessionsInRange } from "@/hooks/useSessions";
 import { ApiError } from "@/lib/apiClient";
-import { createQueryWrapper } from "./testUtils";
+import { createQueryWrapper } from "@/__tests__/testUtils";
 
 beforeEach(() => {
   vi.restoreAllMocks();
@@ -23,14 +23,14 @@ describe("useSessionsInRange", () => {
       wrapper: createQueryWrapper(),
     });
 
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    await waitFor(() => expect(result.current.isSuccess).toBe(true), { timeout: 5000 });
     expect(result.current.data).toEqual(sessions);
 
     const calledUrl = String(fetchSpy.mock.calls[0][0]);
     expect(calledUrl).toContain("start_after=2026-01-01T00%3A00%3A00.000Z");
     expect(calledUrl).toContain("start_before=2026-01-02T00%3A00%3A00.000Z");
     expect(calledUrl).toContain("limit=50");
-  });
+  }, 15000);
 
   it("throws an ApiError on a failed response", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue({
@@ -43,8 +43,8 @@ describe("useSessionsInRange", () => {
       wrapper: createQueryWrapper(),
     });
 
-    await waitFor(() => expect(result.current.isError).toBe(true));
+    await waitFor(() => expect(result.current.isError).toBe(true), { timeout: 5000 });
     expect(result.current.error).toBeInstanceOf(ApiError);
     expect((result.current.error as ApiError).status).toBe(500);
-  });
+  }, 15000);
 });

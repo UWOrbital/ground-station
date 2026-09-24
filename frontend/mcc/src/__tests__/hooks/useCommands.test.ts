@@ -5,9 +5,9 @@ import {
   useCreateCommand,
   useUpdateCommand,
   useDeleteCommand,
-} from "./useCommands";
+} from "@/hooks/useCommands";
 import { ApiError } from "@/lib/apiClient";
-import { createQueryWrapper } from "./testUtils";
+import { createQueryWrapper } from "@/__tests__/testUtils";
 
 beforeEach(() => {
   vi.restoreAllMocks();
