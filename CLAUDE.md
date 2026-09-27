@@ -83,7 +83,7 @@ Keycloak is decoupled into its own `docker-compose.keycloak.yml` (mirrors an ext
 
 Middleware order matters and is enforced in `setup_middlewares`: CORS first, then `SessionMiddleware` (needed for OAuth state), then `LoggerMiddleware`. Don't reorder casually. (Route-level auth is enforced via FastAPI dependencies, not a middleware.)
 
-The `lifespan` context initializes `fastapi-cache` with an in-memory backend and calls `setup_database(session)` to create the base Postgres schemas (`main`, `transactional`, `aro_user`, `logs`; the `mcc_users` schema is created by its Alembic migration). It also starts the DB log sink (see Logging below). Table DDL is owned by **Alembic** — `setup_database` only creates schemas; the old `_create_tables` path is left as a deprecated comment.
+The `lifespan` context initializes `fastapi-cache` with an in-memory backend and starts the DB log sink (see Logging below). Database schema creation and changes are owned entirely by **Alembic** migrations, which must run before the application starts.
 
 ### Configuration
 
@@ -93,7 +93,7 @@ The `lifespan` context initializes `fastapi-cache` with an in-memory backend and
 
 ### Data layer
 
-- `backend/app/data/models/` — SQLModel table classes split across Postgres schemas: `main_models.py` (reference data), `transactional_models.py` (e.g. `CommsSession`), `aro_user_models.py`, `mcc_user_models.py`, `logs_models.py` (the `logs.api` sink table). Schema names are module-level constants (e.g. `MAIN_SCHEMA_NAME`) and are referenced by both `engine.py` and Alembic.
+- `backend/app/data/models/` — SQLModel table classes split across Postgres schemas: `main_models.py` (reference data), `transactional_models.py` (e.g. `CommsSession`), `aro_user_models.py`, `mcc_user_models.py`, `logs_models.py` (the `logs.api` sink table). Schema names are module-level constants (e.g. `MAIN_SCHEMA_NAME`) and are referenced by the models and Alembic migrations.
 - `backend/app/data/repositories/` — repository-style wrappers around SQLModel. New table accessors extend `abstract_repository.py` and register in the `DAL` registry (`dal.py`); tests monkeypatch `app.data.repositories.abstract_repository.get_db_session` and `app.data.repositories.repositories.get_db_session` (see `conftest.py`).
 - `backend/migrations/` — Alembic migrations. `backend/tests/conftest.py` runs `alembic upgrade head` inside the testcontainers Postgres, so any new table needs both a SQLModel class and a migration or the tests will fail.
 

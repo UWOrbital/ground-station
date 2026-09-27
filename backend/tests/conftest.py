@@ -17,7 +17,6 @@ os.environ.setdefault("KEYCLOAK_CLIENT_SECRET", "dummy")
 
 import pytest
 import pytest_asyncio
-from app.data.database.engine import setup_database
 from app.data.models.transactional_models import CommsSession
 from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
@@ -58,12 +57,10 @@ async def db_engine(postgresql: PostgresContainer) -> AsyncGenerator[AsyncEngine
 @pytest_asyncio.fixture(scope="session", autouse=True)
 async def migrate_db(db_engine: AsyncEngine) -> None:
     """
-    Creates the schemas and runs Alembic migrations to create tables.
+    Runs Alembic migrations to create the test database schema.
     """
-    async with AsyncSession(db_engine) as setup_session:
-        await setup_database(setup_session)
 
-    # Run Alembic migrations to create tables.
+    # Alembic is the only mechanism that creates the test database schema.
     repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     env = os.environ.copy()
     # Engine.url by default censors the password into "***" which breaks things.

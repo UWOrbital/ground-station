@@ -8,7 +8,6 @@ from fastapi_cache.backends.inmemory import InMemoryBackend
 
 from app.config.db_log_sink import start_db_log_sink, stop_db_log_sink
 from app.config.env_settings.backend_config import settings
-from app.data.database.engine import get_db_session, setup_database
 
 
 @asynccontextmanager
@@ -17,12 +16,8 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
     # Initialize FastAPI Cache (in memory cache)
     FastAPICache.init(InMemoryBackend())
 
-    # Create the schemas on startup using a fresh async session.
-    async with get_db_session() as session:
-        await setup_database(session)
-
-    # Start persisting logs to the database (logs.api). Done after the schemas
-    # exist so the very first write has somewhere to land.
+    # Start persisting logs to the database (logs.api). Migrations must already
+    # have created the schema before the application starts.
     start_db_log_sink(asyncio.get_running_loop(), settings.logger)
     try:
         yield
