@@ -2,10 +2,13 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { usePictureRequests } from "./usePictureRequests";
 import { ApiError } from "@/lib/apiClient";
+import { clearAccessToken, setAccessToken } from "@/lib/authToken";
 import { createQueryWrapper } from "./testUtils";
 
 beforeEach(() => {
   vi.restoreAllMocks();
+  clearAccessToken();
+  setAccessToken("abc", new Date(Date.now() + 10 * 60 * 1000));
 });
 
 describe("usePictureRequests", () => {
@@ -43,6 +46,8 @@ describe("usePictureRequests", () => {
     expect(calledUrl).toContain("/requests/?");
     expect(calledUrl).toContain("count=50");
     expect(calledUrl).toContain("offset=10");
+    const headers = (fetchSpy.mock.calls[0][1] as RequestInit).headers as Record<string, string>;
+    expect(headers.Authorization).toBe("Bearer abc");
   });
 
   it("throws an ApiError on a failed response", async () => {
