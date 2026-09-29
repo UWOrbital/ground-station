@@ -98,6 +98,20 @@ export interface CommandWithMaster extends Command {
 }
 
 // User-related interfaces
+
+/**
+ * The signed-in ARO user, matching the backend `UserRead` returned by
+ * `GET /api/aro/auth/get_current_user`.
+ */
+export interface AROUser {
+  id: string;
+  email: string;
+  is_active: boolean;
+  is_superuser: boolean;
+  is_verified: boolean;
+  is_callsign_verified: boolean;
+}
+
 export interface UserData {
   id: number;
   call_sign: string;
