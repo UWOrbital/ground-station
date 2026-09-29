@@ -36,7 +36,7 @@ beforeEach(() => {
 
 describe("useAuthStatus", () => {
   it("resolves to the user when a valid token is held", async () => {
-    setAccessToken("abc", new Date(Date.now() + 10 * 60 * 1000));
+    setAccessToken("abc");
     const fetchSpy = mockFetchByPath({ "/auth/get_current_user": jsonResponse(200, user) });
 
     const { result } = await renderSettled();
@@ -67,7 +67,7 @@ describe("useAuthStatus", () => {
   });
 
   it("resolves to null when the user lookup is rejected", async () => {
-    setAccessToken("abc", new Date(Date.now() + 10 * 60 * 1000));
+    setAccessToken("abc");
     mockFetchByPath({
       "/auth/get_current_user": jsonResponse(401),
       "/auth/rotate_tokens": jsonResponse(401),
