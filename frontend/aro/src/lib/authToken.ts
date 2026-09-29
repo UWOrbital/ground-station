@@ -5,31 +5,29 @@
  * cannot be read back by injected scripts. After a page reload the session is
  * restored from the httpOnly refresh cookie via `refreshAccessToken` in
  * `apiClient.ts`.
+ *
+ * The token's expiry is not tracked here: `expires_at` is stamped by the
+ * server's clock, and comparing it against a user's skewed local clock can make
+ * every fresh token look expired. Instead the server is the judge — an expired
+ * token gets a 401, and `authFetch` refreshes and retries.
  */
-
-// Treat the token as expired slightly early so it never lapses mid-request.
-const EXPIRY_SKEW_MS = 10_000;
 
 let accessToken: string | null = null;
-let expiresAtMs = 0;
 
 /**
- * @brief Read the current access token if it is still valid.
- * @return the bearer token, or null when absent or about to expire.
+ * @brief Read the current access token.
+ * @return the bearer token, or null when signed out.
  */
 export function getAccessToken(): string | null {
-  if (accessToken && Date.now() < expiresAtMs - EXPIRY_SKEW_MS) return accessToken;
-  return null;
+  return accessToken;
 }
 
 /**
  * @brief Store a freshly issued access token.
  * @param token the raw JWT access token.
- * @param expiresAt when the backend says the token expires.
  */
-export function setAccessToken(token: string, expiresAt: Date): void {
+export function setAccessToken(token: string): void {
   accessToken = token;
-  expiresAtMs = expiresAt.getTime();
 }
 
 /**
@@ -37,5 +35,4 @@ export function setAccessToken(token: string, expiresAt: Date): void {
  */
 export function clearAccessToken(): void {
   accessToken = null;
-  expiresAtMs = 0;
 }

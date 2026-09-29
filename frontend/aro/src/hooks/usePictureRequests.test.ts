@@ -8,7 +8,7 @@ import { createQueryWrapper } from "./testUtils";
 beforeEach(() => {
   vi.restoreAllMocks();
   clearAccessToken();
-  setAccessToken("abc", new Date(Date.now() + 10 * 60 * 1000));
+  setAccessToken("abc");
 });
 
 describe("usePictureRequests", () => {

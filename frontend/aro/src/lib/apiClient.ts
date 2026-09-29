@@ -73,7 +73,7 @@ export interface AccessTokenResponse {
  * @param body the parsed `/auth/login` or `/auth/rotate_tokens` response.
  */
 export function storeAccessToken(body: AccessTokenResponse): void {
-  setAccessToken(body.access_token, new Date(body.expires_at));
+  setAccessToken(body.access_token);
 }
 
 /**
@@ -138,8 +138,14 @@ export async function authFetch(url: string, init: AuthFetchInit = {}): Promise<
   const send = () =>
     fetch(url, { credentials: "include", ...init, headers: { ...authHeaders(), ...init.headers } });
 
+  const sentToken = getAccessToken();
   const res = await send();
-  if (res.status === 401 && !refreshed && (await refreshAccessToken())) return send();
+  if (res.status !== 401 || refreshed) return res;
+
+  // The token expired. A concurrent request may already have rotated it, so
+  // reuse that token rather than spending another rotation.
+  const current = getAccessToken();
+  if ((current !== null && current !== sentToken) || (await refreshAccessToken())) return send();
   return res;
 }
 

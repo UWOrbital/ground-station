@@ -3,8 +3,7 @@ import { authFetch, authHeaders, errorMessage, refreshAccessToken } from "./apiC
 import { clearAccessToken, getAccessToken, setAccessToken } from "./authToken";
 import { calledUrls, jsonResponse, mockFetchByPath, tokenBody } from "@/hooks/testUtils";
 
-const signIn = (token: string = "old-token") =>
-  setAccessToken(token, new Date(Date.now() + 10 * 60 * 1000));
+const signIn = (token: string = "old-token") => setAccessToken(token);
 
 /**
  * @brief Read the Authorization header sent on the nth fetch call.
@@ -118,6 +117,50 @@ describe("authFetch", () => {
     expect(res.status).toBe(200);
     expect(fetchSpy).toHaveBeenCalledTimes(3);
     expect(authHeaderOf(fetchSpy, 2)).toBe("Bearer fresh");
+  });
+
+  it("keeps using a server-issued token even when the local clock is far ahead", async () => {
+    // A client clock an hour fast sees the server's expires_at as already past.
+    const expiredLocally = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const fetchSpy = mockFetchByPath({
+      "/auth/rotate_tokens": jsonResponse(200, {
+        ...tokenBody("fresh"),
+        expires_at: expiredLocally,
+      }),
+      "/thing": jsonResponse(200),
+    });
+
+    await authFetch("http://api/thing");
+    await authFetch("http://api/thing");
+
+    expect(calledUrls(fetchSpy)).toEqual([
+      expect.stringContaining("/auth/rotate_tokens"),
+      "http://api/thing",
+      "http://api/thing",
+    ]);
+    expect(authHeaderOf(fetchSpy, 1)).toBe("Bearer fresh");
+    expect(authHeaderOf(fetchSpy, 2)).toBe("Bearer fresh");
+  });
+
+  it("reuses a token another request rotated while this one was in flight", async () => {
+    signIn("stale");
+    const thing = vi
+      .fn<() => Response>()
+      .mockImplementationOnce(() => {
+        setAccessToken("rotated-elsewhere");
+        return jsonResponse(401);
+      })
+      .mockReturnValueOnce(jsonResponse(200));
+    const fetchSpy = mockFetchByPath({
+      "/auth/rotate_tokens": jsonResponse(200, tokenBody("unused")),
+      "/thing": thing,
+    });
+
+    const res = await authFetch("http://api/thing");
+
+    expect(res.status).toBe(200);
+    expect(calledUrls(fetchSpy)).toEqual(["http://api/thing", "http://api/thing"]);
+    expect(authHeaderOf(fetchSpy, 1)).toBe("Bearer rotated-elsewhere");
   });
 
   it("returns the 401 when the refresh also fails", async () => {
