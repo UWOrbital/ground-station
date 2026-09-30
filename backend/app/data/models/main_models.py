@@ -42,16 +42,20 @@ class MainCommand(BaseSQLModel, table=True):
     @model_validator(mode="after")
     def validate_params_format(self) -> "MainCommand":
         """
-        Returns self if params and format are both None or have the same number
-        of comma-separated values. If one of params or format is missing, or the
-        numbers of comma-separated values do not match, raise DatabaseError.
+        Returns self if params and format are both None, or have the same number
+        of comma-separated values and params are of a supported type. If one of
+        params or format is missing, or the numbers of comma-separated values do
+        not match, raise DatabaseError.
         """
+        allowed_param_types = {"int", "float", "boolean", "string"}
         if (
             self.format is None
             and self.params is None
             or (
-                # TODO: Check if the params have valid types
-                self.params is not None and self.format is not None and self.params.count(",") == self.format.count(",")
+                self.params is not None
+                and self.format is not None
+                and self.params.count(",") == self.format.count(",")
+                and set(self.params).issubset(allowed_param_types)
             )
         ):
             return self
