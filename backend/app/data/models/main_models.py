@@ -66,8 +66,11 @@ class MainCommand(BaseSQLModel, table=True):
         elif self.format is None:
             raise DatabaseError("Missing format")
 
-        else:
+        elif self.params.count(",") != self.format.count(","):
             raise DatabaseError("Params and format do not have the same number of values")
+
+        else:
+            raise DatabaseError("Params are not of a supported type")
 
 
 class MainTelemetry(BaseSQLModel, table=True):
