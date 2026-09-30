@@ -6,7 +6,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 
 async def test_main_command_basic(db_session: AsyncSession):
-    test1 = MainCommand(id=1, name="Test 1", data_size=1, total_size=2, format="int 7 bytes", params="time")
+    test1 = MainCommand(id=1, name="Test 1", data_size=1, total_size=2, format="int", params="time")
     db_session.add(test1)
     await db_session.commit()
     query = select(MainCommand)
@@ -17,12 +17,12 @@ async def test_main_command_basic(db_session: AsyncSession):
     assert returned_item1.data_size == 1
     assert returned_item1.total_size == 2
     assert returned_item1.name == "Test 1"
-    assert returned_item1.format == "int 7 bytes"
+    assert returned_item1.format == "int"
     assert returned_item1.params == "time"
 
 
 async def test_main_telemetry_basic(db_session: AsyncSession):
-    test1 = MainTelemetry(id=1, name="Test 1", data_size=1, total_size=2, format="int 7 bytes")
+    test1 = MainTelemetry(id=1, name="Test 1", data_size=1, total_size=2, format="int")
     db_session.add(test1)
     await db_session.commit()
     query = select(MainTelemetry)
@@ -33,7 +33,7 @@ async def test_main_telemetry_basic(db_session: AsyncSession):
     assert returned_item1.data_size == 1
     assert returned_item1.total_size == 2
     assert returned_item1.name == "Test 1"
-    assert returned_item1.format == "int 7 bytes"
+    assert returned_item1.format == "int"
 
 
 def test_main_command_valid():
@@ -97,6 +97,20 @@ async def test_main_command_params_format_mismatch(db_session):
                 name="Test",
                 params="param1,param2,param3",
                 format="int,int",
+                data_size=2,
+                total_size=2,
+            )
+        )
+        await db_session.commit()
+
+async def test_main_command_params_of_unsupported_type(db_session):
+    with pytest.raises(DatabaseError, match="Params are not of a supported type"):
+        db_session.add(
+            MainCommand(
+                id=1,
+                name="Test",
+                params="param1,param2,param3",
+                format="int,char,int",
                 data_size=2,
                 total_size=2,
             )
