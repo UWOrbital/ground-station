@@ -11,14 +11,9 @@ const renderAt = (auth: { isAuthenticated: boolean; isLoading: boolean }) => {
   render(
     <MemoryRouter initialEntries={["/secret"]}>
       <Routes>
-        <Route
-          path="/secret"
-          element={
-            <ProtectedRoute>
-              <p>secret page</p>
-            </ProtectedRoute>
-          }
-        />
+        <Route element={<ProtectedRoute />}>
+          <Route path="/secret" element={<p>secret page</p>} />
+        </Route>
         <Route path="/login" element={<p>login page</p>} />
       </Routes>
     </MemoryRouter>,
