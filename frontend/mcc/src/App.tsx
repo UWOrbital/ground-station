@@ -28,7 +28,14 @@ function App() {
         <Background />
         <div className="pt-16">
           <Routes>
-            <Route path="/" element={<Dashboard />} />
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/commands"
               element={
@@ -37,7 +44,14 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route path="/telemetry-data" element={<AROAdmin />} />
+            <Route
+              path="/telemetry-data"
+              element={
+                <ProtectedRoute>
+                  <AROAdmin />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/live-sessions"
               element={
@@ -47,9 +61,30 @@ function App() {
               }
             />
             <Route path="/login" element={<Login />} />
-            <Route path="/telemetry" element={<Telemetry />} />
-            <Route path="/images" element={<Images />} />
-            <Route path="*" element={<PageNotFound />} />
+            <Route
+              path="/telemetry"
+              element={
+                <ProtectedRoute>
+                  <Telemetry />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/images"
+              element={
+                <ProtectedRoute>
+                  <Images />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="*"
+              element={
+                <ProtectedRoute>
+                  <PageNotFound />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
         </div>
         <ToastContainer />
