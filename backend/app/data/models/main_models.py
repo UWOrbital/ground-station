@@ -18,6 +18,24 @@ MAIN_TELEMETRY_TABLE_NAME: Final[str] = "telemetry"
 MainTableID = int
 MainTableIDDatabase = Integer
 
+# Richer wire types (int32, uint8, datetime, ...) used by firmware are out of
+# scope for now.
+SUPPORTED_PARAM_TYPES: Final[set[str]] = {"int", "float", "boolean", "string"}
+
+
+def _is_supported_format(format_str: str) -> bool:
+    """
+    Check whether every comma-separated token in a format string is a supported param type.
+
+    Tokens are trimmed and lowercased before comparison, matching the parsing done by the
+    MCC frontend in ``commandParams.ts``.
+
+    :param format_str: comma-separated format string to validate.
+    :return: True if every token is one of the supported types, False otherwise.
+    """
+    tokens = {token.strip().lower() for token in format_str.split(",")}
+    return tokens.issubset(SUPPORTED_PARAM_TYPES)
+
 
 class MainCommand(BaseSQLModel, table=True):
     """
@@ -42,16 +60,19 @@ class MainCommand(BaseSQLModel, table=True):
     @model_validator(mode="after")
     def validate_params_format(self) -> "MainCommand":
         """
-        Returns self if params and format are both None or have the same number
-        of comma-separated values. If one of params or format is missing, or the
-        numbers of comma-separated values do not match, raise DatabaseError.
+        Returns self if params and format are both None, or have the same number
+        of comma-separated values and params are of a supported type. If one of
+        params or format is missing, or the numbers of comma-separated values do
+        not match, raise DatabaseError.
         """
         if (
             self.format is None
             and self.params is None
             or (
-                # TODO: Check if the params have valid types
-                self.params is not None and self.format is not None and self.params.count(",") == self.format.count(",")
+                self.params is not None
+                and self.format is not None
+                and self.params.count(",") == self.format.count(",")
+                and _is_supported_format(self.format)
             )
         ):
             return self
@@ -62,8 +83,11 @@ class MainCommand(BaseSQLModel, table=True):
         elif self.format is None:
             raise DatabaseError("Missing format")
 
-        else:
+        elif self.params.count(",") != self.format.count(","):
             raise DatabaseError("Params and format do not have the same number of values")
+
+        else:
+            raise DatabaseError("Params are not of a supported type")
 
 
 class MainTelemetry(BaseSQLModel, table=True):
