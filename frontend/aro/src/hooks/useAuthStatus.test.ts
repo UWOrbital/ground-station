@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
+import { focusManager } from "@tanstack/react-query";
 import { useAuthStatus } from "./useAuthStatus";
+import { ApiError } from "@/lib/apiClient";
 import { accessTokenStore } from "@/lib/authToken";
 import {
   calledUrls,
@@ -29,9 +31,20 @@ const renderSettled = async () => {
   return hook;
 };
 
+/**
+ * @brief Render useAuthStatus and wait for it to fail.
+ * @return the renderHook result.
+ */
+const renderErrored = async () => {
+  const hook = renderHook(() => useAuthStatus(), { wrapper: createQueryWrapper() });
+  await waitFor(() => expect(hook.result.current.isError).toBe(true));
+  return hook;
+};
+
 beforeEach(() => {
   vi.restoreAllMocks();
   accessTokenStore.clear();
+  focusManager.setFocused(undefined);
 });
 
 describe("useAuthStatus", () => {
@@ -78,11 +91,56 @@ describe("useAuthStatus", () => {
     expect(result.current.data).toBeNull();
   });
 
-  it("resolves to null when fetch rejects", async () => {
+  it("errors instead of signing out when the backend can't be reached", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("network"));
 
+    const { result } = await renderErrored();
+
+    expect(result.current.data).toBeUndefined();
+  });
+
+  it("errors instead of signing out when the user lookup hits a server error", async () => {
+    accessTokenStore.set("abc");
+    mockFetchByPath({ "/auth/get_current_user": jsonResponse(500, { detail: "boom" }) });
+
+    const { result } = await renderErrored();
+
+    expect(result.current.error).toBeInstanceOf(ApiError);
+    expect(result.current.data).toBeUndefined();
+  });
+
+  it("keeps the signed-in user when a later refetch fails", async () => {
+    accessTokenStore.set("abc");
+    const lookup = vi
+      .fn<() => Response>()
+      .mockReturnValueOnce(jsonResponse(200, user))
+      .mockImplementation(() => {
+        throw new Error("network");
+      });
+    mockFetchByPath({ "/auth/get_current_user": lookup });
     const { result } = await renderSettled();
 
-    expect(result.current.data).toBeNull();
+    await act(async () => {
+      await result.current.refetch();
+    });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(lookup).toHaveBeenCalledTimes(2);
+    expect(result.current.data).toEqual(user);
+  });
+
+  it("does not re-check on window focus while the status is fresh", async () => {
+    accessTokenStore.set("abc");
+    const fetchSpy = mockFetchByPath({ "/auth/get_current_user": jsonResponse(200, user) });
+    await renderSettled();
+
+    await act(async () => {
+      focusManager.setFocused(false);
+      focusManager.setFocused(true);
+      // Give a focus-triggered refetch the chance to fire before asserting it didn't.
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 });
