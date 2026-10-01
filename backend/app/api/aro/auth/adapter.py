@@ -18,6 +18,8 @@ class AROUserRecord:
 
         # these 6 define the entire contract
         self.id: UUID = user.id
+        self.first_name: str = user.first_name
+        self.last_name: str | None = user.last_name
         self.email: str = login.email
         self.hashed_password: str = login.password
         self.is_active: bool = user.is_active

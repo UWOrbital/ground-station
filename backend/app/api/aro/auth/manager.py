@@ -12,9 +12,11 @@ from uuid import UUID
 
 from fastapi import Depends, Request
 from fastapi_users import BaseUserManager, UUIDIDMixin
+from pydantic import NameEmail
 
 from app.api.aro.auth.adapter import AROUserDatabaseAdapter, AROUserRecord
 from app.config.env_settings.backend_config import settings
+from app.utils.email import Email, EmailType, send
 
 
 class AROUserManager(UUIDIDMixin, BaseUserManager[AROUserRecord, UUID]):
@@ -32,7 +34,17 @@ class AROUserManager(UUIDIDMixin, BaseUserManager[AROUserRecord, UUID]):
 
     @override
     async def on_after_forgot_password(self, user: AROUserRecord, token: str, request: Request | None = None) -> None:
-        pass  # TODO: send the "Reset password" email with this token (app.utils.email.send_many)
+        name = user.first_name
+        if user.last_name:
+            name += f" {user.last_name}"
+
+        email = Email(
+            subject="Reset your UWOrbital ARO password",
+            recipients=[NameEmail(name, user.email)],
+            type=EmailType.PASSWORD_RESET,
+            text=f"Your password reset token is: \n{token}",
+        )
+        await send(email)
 
 
 async def get_user_db() -> AsyncGenerator[AROUserDatabaseAdapter, None]:
