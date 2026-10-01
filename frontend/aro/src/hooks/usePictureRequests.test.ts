@@ -2,13 +2,13 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { usePictureRequests } from "./usePictureRequests";
 import { ApiError } from "@/lib/apiClient";
-import { clearAccessToken, setAccessToken } from "@/lib/authToken";
+import { accessTokenStore } from "@/lib/authToken";
 import { createQueryWrapper } from "./testUtils";
 
 beforeEach(() => {
   vi.restoreAllMocks();
-  clearAccessToken();
-  setAccessToken("abc");
+  accessTokenStore.clear();
+  accessTokenStore.set("abc");
 });
 
 describe("usePictureRequests", () => {

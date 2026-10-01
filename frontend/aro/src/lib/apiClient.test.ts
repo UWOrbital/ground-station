@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { authFetch, authHeaders, errorMessage, refreshAccessToken } from "./apiClient";
-import { clearAccessToken, getAccessToken, setAccessToken } from "./authToken";
+import { accessTokenStore } from "./authToken";
 import { calledUrls, jsonResponse, mockFetchByPath, tokenBody } from "@/hooks/testUtils";
 
-const signIn = (token: string = "old-token") => setAccessToken(token);
+const signIn = (token: string = "old-token") => accessTokenStore.set(token);
 
 /**
  * @brief Read the Authorization header sent on the nth fetch call.
@@ -16,7 +16,7 @@ const authHeaderOf = (fetchSpy: { mock: { calls: unknown[][] } }, n: number) =>
 
 beforeEach(() => {
   vi.restoreAllMocks();
-  clearAccessToken();
+  accessTokenStore.clear();
 });
 
 describe("authHeaders", () => {
@@ -35,7 +35,7 @@ describe("refreshAccessToken", () => {
     mockFetchByPath({ "/auth/rotate_tokens": jsonResponse(200, tokenBody("new-token")) });
 
     expect(await refreshAccessToken()).toBe(true);
-    expect(getAccessToken()).toBe("new-token");
+    expect(accessTokenStore.get()).toBe("new-token");
   });
 
   it("clears the token when the refresh cookie is rejected", async () => {
@@ -43,7 +43,7 @@ describe("refreshAccessToken", () => {
     mockFetchByPath({ "/auth/rotate_tokens": jsonResponse(401) });
 
     expect(await refreshAccessToken()).toBe(false);
-    expect(getAccessToken()).toBeNull();
+    expect(accessTokenStore.get()).toBeNull();
   });
 
   it("returns false when the network fails", async () => {
@@ -147,7 +147,7 @@ describe("authFetch", () => {
     const thing = vi
       .fn<() => Response>()
       .mockImplementationOnce(() => {
-        setAccessToken("rotated-elsewhere");
+        accessTokenStore.set("rotated-elsewhere");
         return jsonResponse(401);
       })
       .mockReturnValueOnce(jsonResponse(200));

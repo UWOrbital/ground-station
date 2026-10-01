@@ -12,27 +12,36 @@
  * token gets a 401, and `authFetch` refreshes and retries.
  */
 
-let accessToken: string | null = null;
-
 /**
- * @brief Read the current access token.
- * @return the bearer token, or null when signed out.
+ * Holds the current access token. Use the exported {@link accessTokenStore}
+ * singleton rather than constructing another store.
  */
-export function getAccessToken(): string | null {
-  return accessToken;
+class AccessTokenStore {
+  private token: string | null = null;
+
+  /**
+   * @brief Read the current access token.
+   * @return the bearer token, or null when signed out.
+   */
+  get(): string | null {
+    return this.token;
+  }
+
+  /**
+   * @brief Store a freshly issued access token.
+   * @param token the raw JWT access token.
+   */
+  set(token: string): void {
+    this.token = token;
+  }
+
+  /**
+   * @brief Forget the current access token (e.g. on logout or failed refresh).
+   */
+  clear(): void {
+    this.token = null;
+  }
 }
 
-/**
- * @brief Store a freshly issued access token.
- * @param token the raw JWT access token.
- */
-export function setAccessToken(token: string): void {
-  accessToken = token;
-}
-
-/**
- * @brief Forget the current access token (e.g. on logout or failed refresh).
- */
-export function clearAccessToken(): void {
-  accessToken = null;
-}
+/** The app-wide access token store. */
+export const accessTokenStore = new AccessTokenStore();

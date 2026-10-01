@@ -17,7 +17,7 @@
  * silently rotates it using the httpOnly refresh cookie when it expires.
  */
 
-import { clearAccessToken, getAccessToken, setAccessToken } from "@/lib/authToken";
+import { accessTokenStore } from "@/lib/authToken";
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api/aro";
 
@@ -53,7 +53,7 @@ export function jsonHeaders(): HeadersInit {
  * @return headers object including `Authorization` if signed in.
  */
 export function authHeaders(): Record<string, string> {
-  const token = getAccessToken();
+  const token = accessTokenStore.get();
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (token) headers.Authorization = `Bearer ${token}`;
   return headers;
@@ -73,7 +73,7 @@ export interface AccessTokenResponse {
  * @param body the parsed `/auth/login` or `/auth/rotate_tokens` response.
  */
 export function storeAccessToken(body: AccessTokenResponse): void {
-  setAccessToken(body.access_token);
+  accessTokenStore.set(body.access_token);
 }
 
 /**
@@ -87,13 +87,13 @@ async function rotateTokens(): Promise<boolean> {
       credentials: "include",
     });
     if (!res.ok) {
-      clearAccessToken();
+      accessTokenStore.clear();
       return false;
     }
     storeAccessToken(await res.json());
     return true;
   } catch {
-    clearAccessToken();
+    accessTokenStore.clear();
     return false;
   }
 }
@@ -130,7 +130,7 @@ export type AuthFetchInit = Omit<RequestInit, "headers"> & { headers?: Record<st
  */
 export async function authFetch(url: string, init: AuthFetchInit = {}): Promise<Response> {
   let refreshed = false;
-  if (!getAccessToken()) {
+  if (!accessTokenStore.get()) {
     refreshed = true;
     await refreshAccessToken();
   }
@@ -138,13 +138,13 @@ export async function authFetch(url: string, init: AuthFetchInit = {}): Promise<
   const send = () =>
     fetch(url, { credentials: "include", ...init, headers: { ...authHeaders(), ...init.headers } });
 
-  const sentToken = getAccessToken();
+  const sentToken = accessTokenStore.get();
   const res = await send();
   if (res.status !== 401 || refreshed) return res;
 
   // The token expired. A concurrent request may already have rotated it, so
   // reuse that token rather than spending another rotation.
-  const current = getAccessToken();
+  const current = accessTokenStore.get();
   if ((current !== null && current !== sentToken) || (await refreshAccessToken())) return send();
   return res;
 }
