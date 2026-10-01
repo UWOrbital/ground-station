@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { authFetch, authHeaders, errorMessage, refreshAccessToken } from "./apiClient";
+import { ApiError, authFetch, authHeaders, errorMessage, refreshAccessToken } from "./apiClient";
 import { accessTokenStore } from "./authToken";
 import { calledUrls, jsonResponse, mockFetchByPath, tokenBody } from "@/hooks/testUtils";
 
@@ -46,9 +46,34 @@ describe("refreshAccessToken", () => {
     expect(accessTokenStore.get()).toBeNull();
   });
 
-  it("returns false when the network fails", async () => {
+  it("rejects without clearing the token when the network fails", async () => {
+    signIn();
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("network"));
-    expect(await refreshAccessToken()).toBe(false);
+
+    await expect(refreshAccessToken()).rejects.toThrow("network");
+    expect(accessTokenStore.get()).toBe("old-token");
+  });
+
+  it("rejects without clearing the token on a server error", async () => {
+    signIn();
+    mockFetchByPath({ "/auth/rotate_tokens": jsonResponse(503, { detail: "down" }) });
+
+    const err = await refreshAccessToken().catch((e: unknown) => e);
+
+    expect(err).toBeInstanceOf(ApiError);
+    expect((err as ApiError).status).toBe(503);
+    expect(accessTokenStore.get()).toBe("old-token");
+  });
+
+  it("lets a new rotation start after a failed one", async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockRejectedValueOnce(new Error("network"))
+      .mockResolvedValueOnce(jsonResponse(200, tokenBody("new-token")));
+
+    await expect(refreshAccessToken()).rejects.toThrow("network");
+    expect(await refreshAccessToken()).toBe(true);
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
   });
 
   it("shares one rotation between concurrent callers", async () => {
@@ -185,6 +210,18 @@ describe("authFetch", () => {
     await authFetch("http://api/thing");
 
     expect(fetchSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it("rejects instead of sending a tokenless request when the refresh can't reach the server", async () => {
+    const fetchSpy = mockFetchByPath({
+      "/auth/rotate_tokens": () => {
+        throw new Error("network");
+      },
+      "/thing": jsonResponse(200),
+    });
+
+    await expect(authFetch("http://api/thing")).rejects.toThrow("network");
+    expect(calledUrls(fetchSpy)).toEqual([expect.stringContaining("/auth/rotate_tokens")]);
   });
 
   it("lets callers override headers", async () => {
