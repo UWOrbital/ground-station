@@ -3,22 +3,17 @@ import { render, screen } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import "@testing-library/jest-dom";
 import Nav from "./Nav";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth, type AuthState } from "@/contexts/AuthContext";
+import { fakeAuthState } from "@/hooks/testUtils";
 
 vi.mock("@/contexts/AuthContext", () => ({ useAuth: vi.fn() }));
 
 /**
  * @brief Render Nav with a mocked auth state.
- * @param auth the auth flags the Nav should see.
+ * @param auth the auth fields the Nav should see.
  */
-const renderNav = (auth: { isAuthenticated: boolean; isLoading: boolean }) => {
-  vi.mocked(useAuth).mockReturnValue({
-    ...auth,
-    user: null,
-    recheck: vi.fn(),
-    login: vi.fn(),
-    logout: vi.fn(),
-  });
+const renderNav = (auth: Partial<AuthState>) => {
+  vi.mocked(useAuth).mockReturnValue(fakeAuthState(auth));
   render(
     <BrowserRouter>
       <Nav />
@@ -50,6 +45,13 @@ describe("Nav", () => {
 
   it("shows neither Login nor Profile while the auth check is in flight", () => {
     renderNav({ isAuthenticated: false, isLoading: true });
+    expect(screen.getByText("Home")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Login" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Profile" })).not.toBeInTheDocument();
+  });
+
+  it("shows neither Login nor Profile when the backend can't be reached", () => {
+    renderNav({ isAuthenticated: false, isUnavailable: true });
     expect(screen.getByText("Home")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Login" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Profile" })).not.toBeInTheDocument();

@@ -9,7 +9,7 @@ import { useAuth } from "../contexts/AuthContext";
  * @return tsx element of Nav component
  */
 function Nav() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, isUnavailable } = useAuth();
 
   return (
     <nav className="m-7 text-white">
@@ -22,15 +22,13 @@ function Nav() {
 
       {/* Navigation Links */}
       <div className="absolute right-14 mt-2 flex space-x-7">
-        {NAVIGATION_LINKS.filter((link) => isAuthenticated || link.url !== "/new-request").map(
-          (link) => (
-            <Link key={link.url} to={link.url} className="mt-1 hover:underline">
-              {link.text}
-            </Link>
-          ),
-        )}
-        {/* Hidden until the auth check settles so a signed-in user never sees Login flash */}
-        {!isLoading && (
+        {NAVIGATION_LINKS.filter((link) => isAuthenticated || !link.requiresAuth).map((link) => (
+          <Link key={link.url} to={link.url} className="mt-1 hover:underline">
+            {link.text}
+          </Link>
+        ))}
+        {/* Hidden until the auth status is known so a signed-in user never sees Login flash */}
+        {!isLoading && !isUnavailable && (
           <div className="border-1 border-white rounded-xl p-1 px-2 hover:bg-white hover:text-black">
             {isAuthenticated ? <Link to="/profile">Profile</Link> : <Link to="/login">Login</Link>}
           </div>
