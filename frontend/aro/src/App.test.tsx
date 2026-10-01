@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import App from "./App";
-import { clearAccessToken } from "@/lib/authToken";
+import { accessTokenStore } from "@/lib/authToken";
 import { createQueryWrapper, jsonResponse, mockFetchByPath } from "@/hooks/testUtils";
 
 /**
@@ -21,7 +21,7 @@ const renderAppAt = (path: string) => {
 
 beforeEach(() => {
   vi.restoreAllMocks();
-  clearAccessToken();
+  accessTokenStore.clear();
 });
 
 describe("App", () => {
