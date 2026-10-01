@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider, useAuth } from "./AuthContext";
 import { accessTokenStore } from "@/lib/authToken";
+import { parseOrThrow } from "@/lib/apiClient";
 import { createQueryWrapper, jsonResponse, mockFetchByPath, tokenBody } from "@/hooks/testUtils";
 
 const user = {
@@ -45,6 +46,25 @@ const renderProbe = () =>
     </AuthProvider>,
     { wrapper: createQueryWrapper() },
   );
+
+/**
+ * @brief Render the Probe against a caller-owned QueryClient, so tests can inspect its cache.
+ * @param queryClient the client to provide.
+ * @return the render result.
+ */
+const renderProbeWith = (queryClient: QueryClient) =>
+  render(
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <Probe />
+      </AuthProvider>
+    </QueryClientProvider>,
+  );
+
+const signedInRoutes = () => ({
+  "/auth/rotate_tokens": jsonResponse(200, tokenBody()),
+  "/auth/get_current_user": jsonResponse(200, user),
+});
 
 beforeEach(() => {
   vi.restoreAllMocks();
@@ -169,6 +189,35 @@ describe("AuthContext", () => {
     expect(queryClient.getQueryData(["picture-requests", 100, 0])).toBeUndefined();
     const logoutCall = fetchSpy.mock.calls.find(([url]) => String(url).includes("/auth/logout"));
     expect((logoutCall?.[1] as RequestInit).method).toBe("POST");
+  });
+
+  it("signs out and clears cached user data when an API call gets a 401", async () => {
+    mockFetchByPath(signedInRoutes());
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    queryClient.setQueryData(["picture-requests", 100, 0], [{ id: "private" }]);
+    renderProbeWith(queryClient);
+    await screen.findByText("signed in as ham@example.com");
+
+    await act(async () => {
+      await parseOrThrow(jsonResponse(401)).catch(() => {});
+    });
+
+    expect(await screen.findByText("signed out")).toBeInTheDocument();
+    expect(accessTokenStore.get()).toBeNull();
+    expect(queryClient.getQueryData(["picture-requests", 100, 0])).toBeUndefined();
+  });
+
+  it("stops handling API 401s once unmounted", async () => {
+    mockFetchByPath(signedInRoutes());
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const { unmount } = renderProbeWith(queryClient);
+    await screen.findByText("signed in as ham@example.com");
+    unmount();
+    queryClient.setQueryData(["picture-requests", 100, 0], [{ id: "kept" }]);
+
+    await parseOrThrow(jsonResponse(401)).catch(() => {});
+
+    expect(queryClient.getQueryData(["picture-requests", 100, 0])).toEqual([{ id: "kept" }]);
   });
 
   it("keeps the context value stable when only mutation state changes", async () => {
