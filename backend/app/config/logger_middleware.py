@@ -52,8 +52,8 @@ class LoggerMiddleware(BaseHTTPMiddleware):
         param_keys = sorted(request.query_params.keys())
         # Size from the header so the (possibly sensitive) body is never read.
         request_size = _content_length(request.headers)
-        # TODO: update this based on userID header name
-        request_user_id = request.headers.get("user_id", "Anonymous")
+        # From UserIdMiddleware (app.config.user_id_middleware)
+        request_user_id = getattr(request.state, "user_id", None)
 
         logger.info(
             " | ".join(
