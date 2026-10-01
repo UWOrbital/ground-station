@@ -1,5 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { authFetch, authHeaders, errorMessage, refreshAccessToken } from "./apiClient";
+import {
+  ApiError,
+  authFetch,
+  authHeaders,
+  errorMessage,
+  parseOrThrow,
+  refreshAccessToken,
+  setUnauthorizedHandler,
+} from "./apiClient";
 import { accessTokenStore } from "./authToken";
 import { calledUrls, jsonResponse, mockFetchByPath, tokenBody } from "@/hooks/testUtils";
 
@@ -17,6 +25,7 @@ const authHeaderOf = (fetchSpy: { mock: { calls: unknown[][] } }, n: number) =>
 beforeEach(() => {
   vi.restoreAllMocks();
   accessTokenStore.clear();
+  setUnauthorizedHandler(null);
 });
 
 describe("authHeaders", () => {
@@ -46,9 +55,34 @@ describe("refreshAccessToken", () => {
     expect(accessTokenStore.get()).toBeNull();
   });
 
-  it("returns false when the network fails", async () => {
+  it("rejects without clearing the token when the network fails", async () => {
+    signIn();
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("network"));
-    expect(await refreshAccessToken()).toBe(false);
+
+    await expect(refreshAccessToken()).rejects.toThrow("network");
+    expect(accessTokenStore.get()).toBe("old-token");
+  });
+
+  it("rejects without clearing the token on a server error", async () => {
+    signIn();
+    mockFetchByPath({ "/auth/rotate_tokens": jsonResponse(503, { detail: "down" }) });
+
+    const err = await refreshAccessToken().catch((e: unknown) => e);
+
+    expect(err).toBeInstanceOf(ApiError);
+    expect((err as ApiError).status).toBe(503);
+    expect(accessTokenStore.get()).toBe("old-token");
+  });
+
+  it("lets a new rotation start after a failed one", async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockRejectedValueOnce(new Error("network"))
+      .mockResolvedValueOnce(jsonResponse(200, tokenBody("new-token")));
+
+    await expect(refreshAccessToken()).rejects.toThrow("network");
+    expect(await refreshAccessToken()).toBe(true);
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
   });
 
   it("shares one rotation between concurrent callers", async () => {
@@ -187,6 +221,18 @@ describe("authFetch", () => {
     expect(fetchSpy).toHaveBeenCalledTimes(2);
   });
 
+  it("rejects instead of sending a tokenless request when the refresh can't reach the server", async () => {
+    const fetchSpy = mockFetchByPath({
+      "/auth/rotate_tokens": () => {
+        throw new Error("network");
+      },
+      "/thing": jsonResponse(200),
+    });
+
+    await expect(authFetch("http://api/thing")).rejects.toThrow("network");
+    expect(calledUrls(fetchSpy)).toEqual([expect.stringContaining("/auth/rotate_tokens")]);
+  });
+
   it("lets callers override headers", async () => {
     signIn("abc");
     const fetchSpy = mockFetchByPath({ "/thing": jsonResponse(200) });
@@ -216,5 +262,40 @@ describe("errorMessage", () => {
   it("falls back to the status code", () => {
     expect(errorMessage({}, 502)).toBe("Request failed: 502");
     expect(errorMessage(null, 502)).toBe("Request failed: 502");
+  });
+});
+
+describe("parseOrThrow", () => {
+  it("returns the parsed body on success", async () => {
+    expect(await parseOrThrow(jsonResponse(200, { ok: 1 }))).toEqual({ ok: 1 });
+  });
+
+  it("on a 401 drops the token, notifies the handler and throws, without reloading", async () => {
+    signIn();
+    const onUnauthorized = vi.fn();
+    setUnauthorizedHandler(onUnauthorized);
+    const hrefBefore = window.location.href;
+
+    const err = await parseOrThrow(jsonResponse(401)).catch((e: unknown) => e);
+
+    expect(err).toBeInstanceOf(ApiError);
+    expect((err as ApiError).status).toBe(401);
+    expect(onUnauthorized).toHaveBeenCalledTimes(1);
+    expect(accessTokenStore.get()).toBeNull();
+    expect(window.location.href).toBe(hrefBefore);
+  });
+
+  it("still throws on a 401 when no handler is registered", async () => {
+    await expect(parseOrThrow(jsonResponse(401))).rejects.toBeInstanceOf(ApiError);
+  });
+
+  it("throws other errors without signing the user out", async () => {
+    signIn();
+    const onUnauthorized = vi.fn();
+    setUnauthorizedHandler(onUnauthorized);
+
+    await expect(parseOrThrow(jsonResponse(500, { detail: "boom" }))).rejects.toThrow("boom");
+    expect(onUnauthorized).not.toHaveBeenCalled();
+    expect(accessTokenStore.get()).toBe("old-token");
   });
 });

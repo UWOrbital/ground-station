@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { type QueryClient, useMutation, useQueryClient } from "@tanstack/react-query";
 import { API_BASE_URL, ApiError, errorMessage, storeAccessToken } from "@/lib/apiClient";
 import { accessTokenStore } from "@/lib/authToken";
 import { AUTH_STATUS_QUERY_KEY } from "@/hooks/useAuthStatus";
@@ -63,6 +63,19 @@ export const useLogin = () => {
 };
 
 /**
+ * @brief Mark the user signed out and drop every cached query holding their data.
+ *
+ * Shared by logout and by the API 401 handler, so the next user never sees the
+ * previous user's data.
+ *
+ * @param queryClient the app's React Query client.
+ */
+export function clearSession(queryClient: QueryClient): void {
+  queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== "auth" });
+  queryClient.setQueryData(AUTH_STATUS_QUERY_KEY, null);
+}
+
+/**
  * @brief Mutation hook logging the user out and clearing every cached user query.
  * @return useMutation result object; call `mutateAsync()`.
  */
@@ -70,10 +83,6 @@ export const useLogout = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: postLogout,
-    onSettled: () => {
-      // Drop the previous user's data so the next user never sees it.
-      queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== "auth" });
-      queryClient.setQueryData(AUTH_STATUS_QUERY_KEY, null);
-    },
+    onSettled: () => clearSession(queryClient),
   });
 };

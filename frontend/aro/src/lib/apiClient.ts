@@ -9,7 +9,9 @@
  * intentional difference is 401 handling: ARO authenticates via a
  * POST-only `/api/aro/auth/login` (JWT access token plus refresh cookie),
  * so there is no backend redirect endpoint to send the browser to. On 401
- * we redirect to the ARO frontend `/login` route instead.
+ * we notify the handler registered via {@link setUnauthorizedHandler}
+ * (AuthProvider), which marks the user signed out so `ProtectedRoute` can
+ * redirect client-side and remember where the user was going.
  *
  * ARO endpoints authenticate with a short-lived bearer access token (held in
  * memory by `authToken.ts`) rather than a session cookie, so authenticated
@@ -21,7 +23,15 @@ import { accessTokenStore } from "@/lib/authToken";
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api/aro";
 
-const LOGIN_ROUTE = "/login";
+let unauthorizedHandler: (() => void) | null = null;
+
+/**
+ * @brief Register the callback run when an API call reports the session is gone.
+ * @param handler the callback, or null to unregister.
+ */
+export function setUnauthorizedHandler(handler: (() => void) | null): void {
+  unauthorizedHandler = handler;
+}
 
 /**
  * Error thrown by {@link parseOrThrow} carrying the HTTP status code.
@@ -78,24 +88,28 @@ export function storeAccessToken(body: AccessTokenResponse): void {
 
 /**
  * @brief Exchange the refresh cookie for a new access token.
- * @return true when a new access token was stored, false otherwise.
+ *
+ * Only a 401 means the session is gone. An outage (network error or other
+ * failed status) throws instead, so callers don't mistake it for a sign-out.
+ *
+ * @return true when a new access token was stored, false when the session is gone.
+ * @throws ApiError or a network error when the backend can't be reached.
  */
 async function rotateTokens(): Promise<boolean> {
-  try {
-    const res = await fetch(`${API_BASE_URL}/auth/rotate_tokens`, {
-      method: "POST",
-      credentials: "include",
-    });
-    if (!res.ok) {
-      accessTokenStore.clear();
-      return false;
-    }
-    storeAccessToken(await res.json());
-    return true;
-  } catch {
+  const res = await fetch(`${API_BASE_URL}/auth/rotate_tokens`, {
+    method: "POST",
+    credentials: "include",
+  });
+  if (res.status === 401) {
     accessTokenStore.clear();
     return false;
   }
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new ApiError(res.status, errorMessage(body, res.status));
+  }
+  storeAccessToken(await res.json());
+  return true;
 }
 
 let refreshInFlight: Promise<boolean> | null = null;
@@ -106,7 +120,8 @@ let refreshInFlight: Promise<boolean> | null = null;
  * The backend treats reuse of an already-rotated refresh token as theft and
  * revokes the whole session, so two parallel rotations must never be sent.
  *
- * @return true when a new access token was stored, false otherwise.
+ * @return true when a new access token was stored, false when the session is gone.
+ * @throws when the backend can't be reached (see {@link rotateTokens}).
  */
 export function refreshAccessToken(): Promise<boolean> {
   if (!refreshInFlight) {
@@ -127,6 +142,7 @@ export type AuthFetchInit = Omit<RequestInit, "headers"> & { headers?: Record<st
  * @param url the request URL.
  * @param init fetch options; headers are merged over the default auth headers.
  * @return the final Response (possibly still a 401 if the session is gone).
+ * @throws when a needed token refresh can't reach the backend.
  */
 export async function authFetch(url: string, init: AuthFetchInit = {}): Promise<Response> {
   let refreshed = false;
@@ -169,13 +185,18 @@ export function errorMessage(body: unknown, status: number): string {
 }
 
 /**
- * @brief Parse a fetch Response, redirecting to login on 401 and throwing on other errors.
+ * @brief Parse a fetch Response, throwing an ApiError on any failure.
+ *
+ * A 401 also drops the access token and notifies the unauthorized handler, so
+ * the app marks the user signed out and `ProtectedRoute` redirects to login.
+ *
  * @param res the fetch Response to parse.
  * @return the parsed JSON body typed as T.
  */
 export async function parseOrThrow<T>(res: Response): Promise<T> {
   if (res.status === 401) {
-    window.location.href = LOGIN_ROUTE;
+    accessTokenStore.clear();
+    unauthorizedHandler?.();
     throw new ApiError(401, "Not authenticated");
   }
   if (!res.ok) {
