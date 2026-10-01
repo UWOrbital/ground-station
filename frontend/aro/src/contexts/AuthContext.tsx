@@ -1,4 +1,4 @@
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, type ReactNode } from "react";
 import { useAuthStatus } from "@/hooks/useAuthStatus";
 import { useLogin, useLogout } from "@/hooks/useAuthMutations";
 import type { AROUser } from "@/types";
@@ -6,7 +6,10 @@ import type { AROUser } from "@/types";
 interface AuthState {
   user: AROUser | null;
   isAuthenticated: boolean;
+  /** True until the first auth check settles, including retries after an outage. */
   isLoading: boolean;
+  /** True when the backend couldn't be reached and no auth status is known yet. */
+  isUnavailable: boolean;
   recheck: () => void;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -24,24 +27,39 @@ const AuthContext = createContext<AuthState | undefined>(undefined);
  * @return the AuthContext provider wrapping the children.
  */
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { data, isLoading, refetch } = useAuthStatus();
-  const loginMutation = useLogin();
-  const logoutMutation = useLogout();
+  const { data, isPending, isFetching, isError, refetch } = useAuthStatus();
+  const { mutateAsync: loginAsync } = useLogin();
+  const { mutateAsync: logoutAsync } = useLogout();
 
-  const value: AuthState = {
-    user: data ?? null,
-    isAuthenticated: Boolean(data),
-    isLoading,
-    recheck: () => {
-      void refetch();
+  const recheck = useCallback(() => {
+    void refetch();
+  }, [refetch]);
+  const login = useCallback(
+    async (email: string, password: string) => {
+      await loginAsync({ email, password });
     },
-    login: async (email, password) => {
-      await loginMutation.mutateAsync({ email, password });
-    },
-    logout: async () => {
-      await logoutMutation.mutateAsync();
-    },
-  };
+    [loginAsync],
+  );
+  const logout = useCallback(async () => {
+    await logoutAsync();
+  }, [logoutAsync]);
+
+  const noStatusYet = data === undefined;
+  const isLoading = noStatusYet && (isPending || isFetching);
+  const isUnavailable = noStatusYet && isError && !isFetching;
+
+  const value = useMemo<AuthState>(
+    () => ({
+      user: data ?? null,
+      isAuthenticated: Boolean(data),
+      isLoading,
+      isUnavailable,
+      recheck,
+      login,
+      logout,
+    }),
+    [data, isLoading, isUnavailable, recheck, login, logout],
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

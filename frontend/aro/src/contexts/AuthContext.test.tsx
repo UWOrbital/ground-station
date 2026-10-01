@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider, useAuth } from "./AuthContext";
@@ -20,12 +20,17 @@ const user = {
  * @return tsx element describing the current auth state.
  */
 function Probe() {
-  const { user, isAuthenticated, isLoading, recheck, login, logout } = useAuth();
+  const { user, isAuthenticated, isLoading, isUnavailable, recheck, login, logout } = useAuth();
+  const status = isLoading
+    ? "loading"
+    : isUnavailable
+      ? "unavailable"
+      : isAuthenticated
+        ? `signed in as ${user?.email}`
+        : "signed out";
   return (
     <>
-      <p>
-        {isLoading ? "loading" : isAuthenticated ? `signed in as ${user?.email}` : "signed out"}
-      </p>
+      <p>{status}</p>
       <button onClick={recheck}>recheck</button>
       <button onClick={() => login("ham@example.com", "pw").catch(() => {})}>login</button>
       <button onClick={() => logout().catch(() => {})}>logout</button>
@@ -61,6 +66,31 @@ describe("AuthContext", () => {
     mockFetchByPath({ "/auth/rotate_tokens": jsonResponse(401) });
     renderProbe();
     expect(await screen.findByText("signed out")).toBeInTheDocument();
+  });
+
+  it("is unavailable, not signed out, when the first check can't reach the backend", async () => {
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("network"));
+    renderProbe();
+    expect(await screen.findByText("unavailable")).toBeInTheDocument();
+  });
+
+  it("recheck recovers from an unavailable backend", async () => {
+    const rotate = vi
+      .fn<() => Response>()
+      .mockImplementationOnce(() => {
+        throw new Error("network");
+      })
+      .mockReturnValue(jsonResponse(200, tokenBody()));
+    mockFetchByPath({
+      "/auth/rotate_tokens": rotate,
+      "/auth/get_current_user": jsonResponse(200, user),
+    });
+    renderProbe();
+    await screen.findByText("unavailable");
+
+    await userEvent.click(screen.getByRole("button", { name: "recheck" }));
+
+    expect(await screen.findByText("signed in as ham@example.com")).toBeInTheDocument();
   });
 
   it("recheck picks up a new session", async () => {
@@ -139,6 +169,39 @@ describe("AuthContext", () => {
     expect(queryClient.getQueryData(["picture-requests", 100, 0])).toBeUndefined();
     const logoutCall = fetchSpy.mock.calls.find(([url]) => String(url).includes("/auth/logout"));
     expect((logoutCall?.[1] as RequestInit).method).toBe("POST");
+  });
+
+  it("keeps the context value stable when only mutation state changes", async () => {
+    mockFetchByPath({
+      "/auth/rotate_tokens": jsonResponse(401),
+      "/auth/login": jsonResponse(401, { detail: "Invalid credentials." }),
+    });
+    const seen = new Set<ReturnType<typeof useAuth>>();
+    /**
+     * @brief Consumer recording every distinct context value it is rendered with.
+     * @return nothing visible.
+     */
+    function ValueSpy() {
+      seen.add(useAuth());
+      return null;
+    }
+    render(
+      <AuthProvider>
+        <Probe />
+        <ValueSpy />
+      </AuthProvider>,
+      { wrapper: createQueryWrapper() },
+    );
+    await screen.findByText("signed out");
+    const settledCount = seen.size;
+
+    // The rejected login moves the mutation through pending and error, re-rendering the provider.
+    await userEvent.click(screen.getByRole("button", { name: "login" }));
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+
+    expect(seen.size).toBe(settledCount);
   });
 
   it("throws when used outside AuthProvider", () => {
