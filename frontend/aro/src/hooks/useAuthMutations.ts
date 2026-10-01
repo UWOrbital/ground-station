@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { API_BASE_URL, ApiError, errorMessage, storeAccessToken } from "@/lib/apiClient";
-import { clearAccessToken } from "@/lib/authToken";
+import { accessTokenStore } from "@/lib/authToken";
 import { AUTH_STATUS_QUERY_KEY } from "@/hooks/useAuthStatus";
 
 /**
@@ -46,7 +46,7 @@ async function postLogout(): Promise<void> {
     });
     if (!res.ok) throw new ApiError(res.status, `Logout failed: ${res.status}`);
   } finally {
-    clearAccessToken();
+    accessTokenStore.clear();
   }
 }
 

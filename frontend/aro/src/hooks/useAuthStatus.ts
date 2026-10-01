@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { API_BASE_URL, authFetch, refreshAccessToken } from "@/lib/apiClient";
-import { getAccessToken } from "@/lib/authToken";
+import { accessTokenStore } from "@/lib/authToken";
 import type { AROUser } from "@/types";
 
 export const AUTH_STATUS_QUERY_KEY = ["auth", "status"] as const;
@@ -16,7 +16,7 @@ export const AUTH_STATUS_QUERY_KEY = ["auth", "status"] as const;
  */
 async function fetchCurrentUser(): Promise<AROUser | null> {
   try {
-    if (!getAccessToken() && !(await refreshAccessToken())) return null;
+    if (!accessTokenStore.get() && !(await refreshAccessToken())) return null;
     const res = await authFetch(`${API_BASE_URL}/auth/get_current_user`);
     if (!res.ok) return null;
     return (await res.json()) as AROUser;

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { useAuthStatus } from "./useAuthStatus";
-import { clearAccessToken, setAccessToken } from "@/lib/authToken";
+import { accessTokenStore } from "@/lib/authToken";
 import {
   calledUrls,
   createQueryWrapper,
@@ -31,12 +31,12 @@ const renderSettled = async () => {
 
 beforeEach(() => {
   vi.restoreAllMocks();
-  clearAccessToken();
+  accessTokenStore.clear();
 });
 
 describe("useAuthStatus", () => {
   it("resolves to the user when a valid token is held", async () => {
-    setAccessToken("abc");
+    accessTokenStore.set("abc");
     const fetchSpy = mockFetchByPath({ "/auth/get_current_user": jsonResponse(200, user) });
 
     const { result } = await renderSettled();
@@ -67,7 +67,7 @@ describe("useAuthStatus", () => {
   });
 
   it("resolves to null when the user lookup is rejected", async () => {
-    setAccessToken("abc");
+    accessTokenStore.set("abc");
     mockFetchByPath({
       "/auth/get_current_user": jsonResponse(401),
       "/auth/rotate_tokens": jsonResponse(401),

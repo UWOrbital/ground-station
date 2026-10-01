@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider, useAuth } from "./AuthContext";
-import { clearAccessToken, getAccessToken } from "@/lib/authToken";
+import { accessTokenStore } from "@/lib/authToken";
 import { createQueryWrapper, jsonResponse, mockFetchByPath, tokenBody } from "@/hooks/testUtils";
 
 const user = {
@@ -43,7 +43,7 @@ const renderProbe = () =>
 
 beforeEach(() => {
   vi.restoreAllMocks();
-  clearAccessToken();
+  accessTokenStore.clear();
 });
 
 describe("AuthContext", () => {
@@ -92,7 +92,7 @@ describe("AuthContext", () => {
     await userEvent.click(screen.getByRole("button", { name: "login" }));
 
     expect(await screen.findByText("signed in as ham@example.com")).toBeInTheDocument();
-    expect(getAccessToken()).toBe("logged-in");
+    expect(accessTokenStore.get()).toBe("logged-in");
     const loginCall = fetchSpy.mock.calls.find(([url]) => String(url).includes("/auth/login"));
     const body = (loginCall?.[1] as RequestInit).body as URLSearchParams;
     expect(body.get("username")).toBe("ham@example.com");
@@ -112,7 +112,7 @@ describe("AuthContext", () => {
     await userEvent.click(screen.getByRole("button", { name: "login" }));
 
     expect(screen.getByText("signed out")).toBeInTheDocument();
-    expect(getAccessToken()).toBeNull();
+    expect(accessTokenStore.get()).toBeNull();
   });
 
   it("logout revokes the session and clears other users' cached data", async () => {
@@ -135,7 +135,7 @@ describe("AuthContext", () => {
     await userEvent.click(screen.getByRole("button", { name: "logout" }));
 
     expect(await screen.findByText("signed out")).toBeInTheDocument();
-    expect(getAccessToken()).toBeNull();
+    expect(accessTokenStore.get()).toBeNull();
     expect(queryClient.getQueryData(["picture-requests", 100, 0])).toBeUndefined();
     const logoutCall = fetchSpy.mock.calls.find(([url]) => String(url).includes("/auth/logout"));
     expect((logoutCall?.[1] as RequestInit).method).toBe("POST");
