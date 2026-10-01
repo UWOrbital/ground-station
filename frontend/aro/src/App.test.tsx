@@ -80,6 +80,12 @@ describe("App", () => {
     expect(screen.queryByRole("link", { name: "Login" })).not.toBeInTheDocument();
   });
 
+  it("sends signed-in users away from the login page", async () => {
+    renderAppAt("/login", signedIn);
+    expect(await screen.findByText("Amateur Radio Operator")).toBeInTheDocument();
+    expect(screen.queryByText("Login to your ARO Account")).not.toBeInTheDocument();
+  });
+
   it("offers a retry instead of the login page when the backend is down", async () => {
     renderAppAt("/profile/settings", null);
     expect(await screen.findByRole("button", { name: "Retry" })).toBeInTheDocument();
