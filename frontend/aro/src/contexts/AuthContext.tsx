@@ -3,7 +3,7 @@ import { useAuthStatus } from "@/hooks/useAuthStatus";
 import { useLogin, useLogout } from "@/hooks/useAuthMutations";
 import type { AROUser } from "@/types";
 
-interface AuthState {
+export interface AuthState {
   user: AROUser | null;
   isAuthenticated: boolean;
   /** True until the first auth check settles, including retries after an outage. */

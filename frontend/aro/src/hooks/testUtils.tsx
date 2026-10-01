@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { vi } from "vitest";
+import type { AuthState } from "@/contexts/AuthContext";
 
 /**
  * @brief Build a React Query provider wrapper for hook tests.
@@ -73,4 +74,25 @@ export function mockFetchByPath(routes: Record<string, Response | (() => Respons
  */
 export function calledUrls(fetchSpy: { mock: { calls: unknown[][] } }): string[] {
   return fetchSpy.mock.calls.map((call) => String(call[0]));
+}
+
+/**
+ * @brief Build a full AuthState for tests that mock `useAuth`.
+ *
+ * Defaults to a settled, signed-out state with no-op actions.
+ *
+ * @param overrides the fields to change from the defaults.
+ * @return a complete AuthState.
+ */
+export function fakeAuthState(overrides: Partial<AuthState> = {}): AuthState {
+  return {
+    user: null,
+    isAuthenticated: false,
+    isLoading: false,
+    isUnavailable: false,
+    recheck: vi.fn(),
+    login: vi.fn(),
+    logout: vi.fn(),
+    ...overrides,
+  };
 }
