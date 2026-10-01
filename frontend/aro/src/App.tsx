@@ -14,6 +14,7 @@ import PageNotFound from "./components/PageNotFound.tsx";
 import Gallery from "./components/profile/photo-gallery/gallery.tsx";
 import ProfileForm from "./components/profile/profile-form/profile-form.tsx";
 import ProtectedRoute from "./components/ProtectedRoute.tsx";
+import GuestRoute from "./components/GuestRoute.tsx";
 import { AuthProvider } from "./contexts/AuthContext.tsx";
 
 /**
@@ -33,11 +34,25 @@ function App() {
         <Route path="/requests" element={<Requests />} />
         <Route path="/profile" element={<Profile />} />*/}
         <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
+        <Route
+          path="/login"
+          element={
+            <GuestRoute>
+              <Login />
+            </GuestRoute>
+          }
+        />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify" element={<Verify />} />
         <Route path="/verify/request" element={<RequestVerification />} />
-        <Route path="/sign-up" element={<Signup />} />
+        <Route
+          path="/sign-up"
+          element={
+            <GuestRoute>
+              <Signup />
+            </GuestRoute>
+          }
+        />
         <Route
           path="/new-request"
           element={
