@@ -1,13 +1,13 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
-from fastapi.exceptions import HTTPException
 
 from app.api.mcc.schemas.requests import UpdateUserRequest
 from app.api.mcc.schemas.responses import UserInformationResponse
 from app.data.models.mcc_user_models import MCCUsers
 from app.data.repositories.dal import DAL
 from app.data.repositories.repositories import MCCUsersRepository
+from app.exceptions.exceptions import InvalidArgumentError, NotFoundError, UnknownError
 from app.mcc_keycloak.client import keycloak
 
 mcc_users_router = APIRouter(tags=["MCC", "Users"], dependencies=[keycloak.require_auth])
@@ -50,11 +50,11 @@ async def update_me(
     try:
         await mcc_users.update(user.id, data)
     except ValueError as e:
-        raise HTTPException(status_code=404, detail="User not found or field unavailable") from e
+        raise NotFoundError("User not found or field unavailable") from e
     except TypeError as e:
-        raise HTTPException(status_code=422, detail="Field type mismatch") from e
+        raise InvalidArgumentError("Field type mismatch") from e
     except RuntimeError as e:
-        raise HTTPException(status_code=500, detail="Failed to update user") from e
+        raise UnknownError("Failed to update user") from e
 
     await keycloak.sync_user_changes(user.id, data)
 
@@ -72,7 +72,7 @@ async def delete_me(
     try:
         await mcc_users.delete_by_id(user.id)
     except ValueError as e:
-        raise HTTPException(status_code=404, detail="User not found") from e
+        raise NotFoundError("User not found") from e
 
     await keycloak.sync_user_deletion(user.id)
     return {"status": "success"}

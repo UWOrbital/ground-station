@@ -2,7 +2,6 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
-from fastapi.exceptions import HTTPException
 
 from app.api.mcc.schemas.requests import CreateCommandRequest, UpdateCommandRequest
 from app.api.mcc.schemas.responses import CommandResponse, CommandsResponse, DeleteCommandResponse
@@ -10,6 +9,7 @@ from app.api.mcc.services.scheduling import assert_not_locked_out
 from app.data.models.mcc_user_models import MCCUsers
 from app.data.repositories.dal import DAL
 from app.data.repositories.repositories import CommandsRepository, CommsSessionRepository
+from app.exceptions.exceptions import InvalidArgumentError, InvalidStateError, NotFoundError
 from app.mcc_keycloak.client import keycloak
 
 commands_router = APIRouter(tags=["MCC", "Commands"])
@@ -46,7 +46,7 @@ async def get_commands_by_session(
     try:
         await comms_sessions.get_by_id(session_id)
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e)) from e
+        raise NotFoundError(str(e)) from e
     return CommandsResponse(data=await commands.get_by_session(session_id))
 
 
@@ -69,12 +69,12 @@ async def create_command(
     try:
         session = await comms_sessions.get_by_id(request.session_id)
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e)) from e
+        raise NotFoundError(str(e)) from e
 
     try:
         assert_not_locked_out(session)
     except ValueError as e:
-        raise HTTPException(status_code=409, detail=str(e)) from e
+        raise InvalidStateError(str(e)) from e
 
     created_command = await commands.create(
         {
@@ -100,7 +100,7 @@ async def get_command(command_id: UUID, commands: CommandsRepo) -> CommandRespon
     try:
         command = await commands.get_by_id(command_id)
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e)) from e
+        raise NotFoundError(str(e)) from e
     return CommandResponse(data=command)
 
 
@@ -122,16 +122,19 @@ async def update_command(
     """
     updates = request.model_dump(exclude_none=True)
     if not updates:
-        raise HTTPException(status_code=422, detail="At least one field must be provided to update")
+        raise InvalidArgumentError("At least one field must be provided to update")
     try:
         existing_command = await commands.get_by_id(command_id)
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e)) from e
+        raise NotFoundError(str(e)) from e
     try:
         session = await comms_sessions.get_by_id(existing_command.session_id)
+    except ValueError as e:
+        raise NotFoundError(str(e)) from e
+    try:
         assert_not_locked_out(session)
     except ValueError as e:
-        raise HTTPException(status_code=409, detail=str(e)) from e
+        raise InvalidStateError(str(e)) from e
     updated_command = await commands.update(command_id, updates)
     return CommandResponse(data=updated_command)
 
@@ -153,11 +156,14 @@ async def delete_command(
     try:
         existing_command = await commands.get_by_id(command_id)
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e)) from e
+        raise NotFoundError(str(e)) from e
     try:
         session = await comms_sessions.get_by_id(existing_command.session_id)
+    except ValueError as e:
+        raise NotFoundError(str(e)) from e
+    try:
         assert_not_locked_out(session)
     except ValueError as e:
-        raise HTTPException(status_code=409, detail=str(e)) from e
+        raise InvalidStateError(str(e)) from e
     await commands.delete_by_id(command_id)
     return DeleteCommandResponse(message=f"Command {command_id} deleted successfully")
