@@ -51,7 +51,7 @@ function AROAdmin() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <p className="text-lg text-muted-foreground">Loading request...</p>
+        <p className="text-lg text-muted-foreground">Loading requests...</p>
       </div>
     );
   }
