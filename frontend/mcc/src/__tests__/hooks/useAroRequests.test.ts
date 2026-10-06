@@ -9,10 +9,16 @@ beforeEach(() => {
 });
 
 describe("useAroRequests", () => {
-  it ("returns the unwrapped ARO request list", async () => {
+  it("returns the unwrapped ARO request list", async () => {
     const requests = [
-      { id: "r1", aro_id: "u1", latitude: 47.5, longitude: -122.3,
-        created_on: "2026-01-01T00:00:00Z", status: "pending" },
+      {
+        id: "r1",
+        aro_id: "u1",
+        latitude: 47.5,
+        longitude: -122.3,
+        created_on: "2026-01-01T00:00:00Z",
+        status: "pending",
+      },
     ];
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue({
       ok: true,

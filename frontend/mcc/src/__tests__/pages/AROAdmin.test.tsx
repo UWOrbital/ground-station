@@ -15,7 +15,7 @@ describe("ARO Admin Page", () => {
     expect(screen.getByText("Loading requests...")).toBeInTheDocument();
   });
 
-  it ("shows the error message when the fetch fails", () => {
+  it("shows the error message when the fetch fails", () => {
     hookReturns({ isLoading: false, isError: true, error: new Error("No requests yet") });
     render(<AROAdmin />);
     expect(screen.getByText("No requests yet")).toBeInTheDocument();
@@ -26,8 +26,13 @@ describe("ARO Admin Page", () => {
       isLoading: false,
       isError: false,
       data: [
-        { id: "r1", aro_id: "u1", latitude: 47.5, longitude: -122.3,
-          created_on: "2026-01-01T00:00:00Z", status: "pending"
+        {
+          id: "r1",
+          aro_id: "u1",
+          latitude: 47.5,
+          longitude: -122.3,
+          created_on: "2026-01-01T00:00:00Z",
+          status: "pending",
         },
       ],
     });
@@ -35,4 +40,4 @@ describe("ARO Admin Page", () => {
     expect(screen.getByText("pending")).toBeInTheDocument();
     expect(screen.getByText("u1")).toBeInTheDocument();
   });
-})
+});

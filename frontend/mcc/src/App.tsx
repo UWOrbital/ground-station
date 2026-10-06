@@ -43,7 +43,7 @@ function App() {
                 <ProtectedRoute>
                   <AROAdmin />
                 </ProtectedRoute>
-                }
+              }
             />
             <Route
               path="/live-sessions"

@@ -3,7 +3,6 @@ import { useAroRequests } from "../hooks/useAroRequests";
 import Table from "../components/Table";
 import type { ARORequest } from "@/utils/types";
 
-
 const statusColors: Record<string, string> = {
   pending: "text-yellow-400",
   scheduled: "text-blue-400",
@@ -21,7 +20,7 @@ const columns = [
     cell: (info) => {
       const status = info.getValue();
       return <span className={statusColors[status] || "text-gray-400"}>{status}</span>;
-    }
+    },
   }),
   columnHelper.accessor("latitude", {
     header: "Latitude",

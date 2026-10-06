@@ -6,10 +6,7 @@ interface ARORequestResponse {
   data: ARORequest[];
 }
 
-async function fetchAroRequests(
-  count: number,
-  offset: number,
-): Promise<ARORequest[]> {
+async function fetchAroRequests(count: number, offset: number): Promise<ARORequest[]> {
   const params = new URLSearchParams({
     count: String(count),
     offset: String(offset),
@@ -19,7 +16,7 @@ async function fetchAroRequests(
     headers: jsonHeaders(),
   });
   const json = await parseOrThrow<ARORequestResponse>(res);
-  return json.data
+  return json.data;
 }
 
 const REQUESTS_POLL_INTERVAL_MS = 10_000;
