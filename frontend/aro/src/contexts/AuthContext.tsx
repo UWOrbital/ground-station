@@ -1,6 +1,8 @@
-import { createContext, useCallback, useContext, useMemo, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, type ReactNode } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStatus } from "@/hooks/useAuthStatus";
-import { useLogin, useLogout } from "@/hooks/useAuthMutations";
+import { clearSession, useLogin, useLogout } from "@/hooks/useAuthMutations";
+import { setUnauthorizedHandler } from "@/lib/apiClient";
 import type { AROUser } from "@/types";
 
 interface AuthState {
@@ -21,15 +23,23 @@ const AuthContext = createContext<AuthState | undefined>(undefined);
  * @brief Provides ARO authentication state and actions to the tree.
  *
  * Mirrors MCC's AuthProvider. ARO has no backend login/logout redirect
- * endpoints, so `login` and `logout` are exposed here as well.
+ * endpoints, so `login` and `logout` are exposed here as well. It also signs
+ * the user out when any API call reports a 401, so `ProtectedRoute` handles
+ * the redirect.
  *
  * @param children the subtree that can consume auth state.
  * @return the AuthContext provider wrapping the children.
  */
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const { data, isPending, isFetching, isError, refetch } = useAuthStatus();
   const { mutateAsync: loginAsync } = useLogin();
   const { mutateAsync: logoutAsync } = useLogout();
+
+  useEffect(() => {
+    setUnauthorizedHandler(() => clearSession(queryClient));
+    return () => setUnauthorizedHandler(null);
+  }, [queryClient]);
 
   const recheck = useCallback(() => {
     void refetch();
