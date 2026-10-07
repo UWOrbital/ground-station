@@ -28,6 +28,7 @@ dependencies = [
     "pydantic-extra-types>=2.11.0",
     "phonenumbers>=9.0.0",
     "fastapi-mail>=1.6.5",
+    "usaddress>=0.5.10",
 ]
 
 # install with `uv sync --extra dev` from the repo root
@@ -65,5 +66,5 @@ strict = true
 plugins = "pydantic.mypy"
 
 [[tool.mypy.overrides]]
-module = ["jwcrypto.*"]
+module = ["jwcrypto.*", "usaddress.*"]
 ignore_missing_imports = true
