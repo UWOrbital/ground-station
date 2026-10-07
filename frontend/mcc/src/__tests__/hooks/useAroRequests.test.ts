@@ -26,9 +26,7 @@ describe("useAroRequests", () => {
       json: async () => ({ data: requests }),
     } as Response);
 
-    const count = 100;
-    const offset = 0;
-    const { result } = renderHook(() => useAroRequests(count, offset), {
+    const { result } = renderHook(() => useAroRequests(100, 0), {
       wrapper: createQueryWrapper(),
     });
 
