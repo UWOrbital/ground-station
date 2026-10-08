@@ -37,7 +37,14 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route path="/telemetry-data" element={<AROAdmin />} />
+            <Route
+              path="/aro-admin"
+              element={
+                <ProtectedRoute>
+                  <AROAdmin />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/live-sessions"
               element={
