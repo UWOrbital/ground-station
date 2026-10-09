@@ -5,7 +5,7 @@ from sqlalchemy import Integer
 from sqlmodel import Field
 
 from app.data.models.base_model import BaseSQLModel
-from app.exceptions.exceptions import DatabaseError
+from app.exceptions import DatabaseError
 
 # Schema information
 MAIN_SCHEMA_NAME: Final[str] = "main"

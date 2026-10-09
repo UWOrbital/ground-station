@@ -1,6 +1,6 @@
 from app.data.models.transactional_models import CommsSession
 from app.data.repositories.dal import DAL
-from app.exceptions.exceptions import InvalidStateError
+from app.exceptions import InvalidStateError
 
 
 def assert_not_locked_out(session: CommsSession) -> None:

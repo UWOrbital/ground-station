@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
-from app.exceptions.exceptions import (
+from app.exceptions import (
     BaseOrbitalError,
     DatabaseError,
     InvalidArgumentError,

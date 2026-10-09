@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends
 from app.api.mcc.schemas.responses import MainTelemetriesResponse, MainTelemetryResponse
 from app.data.repositories.dal import DAL
 from app.data.repositories.repositories import MainTelemetryRepository
-from app.exceptions.exceptions import NotFoundError
+from app.exceptions import NotFoundError
 from app.mcc_keycloak.client import keycloak
 
 main_telemetry_router = APIRouter(tags=["MCC", "Main Telemetry"])

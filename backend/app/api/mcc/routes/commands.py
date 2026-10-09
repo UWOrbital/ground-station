@@ -9,7 +9,7 @@ from app.api.mcc.services.scheduling import assert_not_locked_out
 from app.data.models.mcc_user_models import MCCUsers
 from app.data.repositories.dal import DAL
 from app.data.repositories.repositories import CommandsRepository, CommsSessionRepository
-from app.exceptions.exceptions import InvalidArgumentError, InvalidStateError, NotFoundError
+from app.exceptions import InvalidArgumentError, InvalidStateError, NotFoundError
 from app.mcc_keycloak.client import keycloak
 
 commands_router = APIRouter(tags=["MCC", "Commands"])

@@ -20,7 +20,7 @@ from app.data.models.aro_user_models import AROUsers
 from app.data.models.transactional_models import ARORequest
 from app.data.repositories.dal import DAL
 from app.data.repositories.repositories import ARORequestRepository, PacketRepository
-from app.exceptions.exceptions import InvalidStateError, NotFoundError
+from app.exceptions import InvalidStateError, NotFoundError
 
 picture_requests_router = APIRouter(tags=["ARO", "Picture Requests"])
 

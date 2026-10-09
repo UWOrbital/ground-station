@@ -7,7 +7,7 @@ from app.api.mcc.schemas.responses import UserInformationResponse
 from app.data.models.mcc_user_models import MCCUsers
 from app.data.repositories.dal import DAL
 from app.data.repositories.repositories import MCCUsersRepository
-from app.exceptions.exceptions import InvalidArgumentError, NotFoundError, UnknownError
+from app.exceptions import InvalidArgumentError, NotFoundError, UnknownError
 from app.mcc_keycloak.client import keycloak
 
 mcc_users_router = APIRouter(tags=["MCC", "Users"], dependencies=[keycloak.require_auth])

@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends
 from app.api.mcc.schemas.responses import MainCommandResponse, MainCommandsResponse
 from app.data.repositories.dal import DAL
 from app.data.repositories.repositories import MainCommandRepository
-from app.exceptions.exceptions import NotFoundError
+from app.exceptions import NotFoundError
 from app.mcc_keycloak.client import keycloak
 
 main_commands_router = APIRouter(tags=["MCC", "Main Commands"])
