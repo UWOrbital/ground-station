@@ -1,11 +1,11 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
-from fastapi.exceptions import HTTPException
 
 from app.api.mcc.schemas.responses import MainTelemetriesResponse, MainTelemetryResponse
 from app.data.repositories.dal import DAL
 from app.data.repositories.repositories import MainTelemetryRepository
+from app.exceptions import NotFoundError
 from app.mcc_keycloak.client import keycloak
 
 main_telemetry_router = APIRouter(tags=["MCC", "Main Telemetry"])
@@ -42,5 +42,5 @@ async def get_telemetry_by_id(
     try:
         telemetry = await main_telemetries.get_by_id(telemetry_id)
     except ValueError as e:
-        raise HTTPException(status_code=404, detail="Telemetry not found") from e
+        raise NotFoundError("Telemetry not found") from e
     return MainTelemetryResponse(data=telemetry)
