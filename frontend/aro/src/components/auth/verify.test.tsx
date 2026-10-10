@@ -110,4 +110,3 @@ describe("Verify", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 });
-
