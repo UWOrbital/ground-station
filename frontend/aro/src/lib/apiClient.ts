@@ -42,11 +42,14 @@ export function jsonHeaders(): HeadersInit {
 }
 
 /**
- * @brief Parse a fetch Response, redirecting to login on 401 and throwing on other errors.
- * @param res the fetch Response to parse.
- * @return the parsed JSON body typed as T.
+ * @brief Check a fetch Response for failure, redirecting to login on 401 and throwing on other errors.
+ *
+ * Use this instead of {@link parseOrThrow} for endpoints that answer with an
+ * empty body (e.g. 202 Accepted), where `res.json()` would reject.
+ *
+ * @param res the fetch Response to check
  */
-export async function parseOrThrow<T>(res: Response): Promise<T> {
+export async function throwIfError(res: Response): Promise<void> {
   if (res.status === 401) {
     window.location.href = LOGIN_ROUTE;
     throw new ApiError(401, "Not authenticated");
@@ -55,5 +58,14 @@ export async function parseOrThrow<T>(res: Response): Promise<T> {
     const body = await res.json().catch(() => ({}));
     throw new ApiError(res.status, body.detail ?? `Request failed: ${res.status}`);
   }
+}
+
+/**
+ * @brief Parse a fetch Response, redirecting to login on 401 and throwing on other errors.
+ * @param res the fetch Response to parse.
+ * @return the parsed JSON body typed as T.
+ */
+export async function parseOrThrow<T>(res: Response): Promise<T> {
+  await throwIfError(res);
   return res.json();
 }

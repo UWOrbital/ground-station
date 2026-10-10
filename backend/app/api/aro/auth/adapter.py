@@ -23,7 +23,7 @@ class AROUserRecord:
         self.is_active: bool = user.is_active
 
         self.is_superuser: bool = user.is_superuser
-        self.is_verified: bool = False
+        self.is_verified: bool = user.is_verified
         self.is_callsign_verified: bool = user.is_callsign_verified
 
 

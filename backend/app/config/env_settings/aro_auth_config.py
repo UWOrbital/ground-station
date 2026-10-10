@@ -7,6 +7,7 @@ class AROAuthConfig(BaseSettings):
     jwt_secret: str
     session_secret: str
     is_production: bool = True
+    frontend_url: str = "http://localhost:5173"
 
     model_config = SettingsConfigDict(
         env_prefix="ARO_AUTH_",

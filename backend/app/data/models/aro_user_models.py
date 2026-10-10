@@ -33,6 +33,8 @@ class AROUsers(BaseSQLModel, table=True):
     :param call_sign: ARO User's call sign that we will use to communicate with them
     :type call_sign: str
     :param is_active: bool
+    :param is_verified: Whether the ARO user has confirmed ownership of their email address
+    :type is_verified: bool
     :param is_callsign_verified: ARO User's callsign verification status
     :type is_callsign_verified: bool
     :param email: Valid email
@@ -51,6 +53,7 @@ class AROUsers(BaseSQLModel, table=True):
     )
     is_active: bool = Field(default=True)
     is_superuser: bool = Field(default=False)
+    is_verified: bool = Field(default=False)
     is_callsign_verified: bool = Field(default=False)
     email: EmailStr = Field(min_length=EMAIL_MIN_LENGTH, max_length=DEFAULT_MAX_LENGTH, unique=True)
     first_name: str = Field(max_length=DEFAULT_MAX_LENGTH)

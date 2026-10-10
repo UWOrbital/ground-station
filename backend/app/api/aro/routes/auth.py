@@ -8,7 +8,7 @@ After initial authentication, the user can authorize with their callsign at sign
 
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
-from fastapi_users.router import get_register_router, get_reset_password_router
+from fastapi_users.router import get_register_router, get_reset_password_router, get_verify_router
 
 from app.api.aro.auth.aro_session import (
     create_access_token,
@@ -34,6 +34,10 @@ router.include_router(get_register_router(get_user_manager, UserRead, UserCreate
 # POST /api/aro/auth/forgot-password
 # POST /api/aro/auth/reset-password
 router.include_router(get_reset_password_router(get_user_manager))
+
+# POST /api/aro/auth/request-verify-token
+# POST /api/aro/auth/verify
+router.include_router(get_verify_router(get_user_manager, UserRead))
 
 
 def _set_refresh_cookie(response: Response, raw_refresh_token: str) -> None:
