@@ -5,6 +5,7 @@ import Nav from "./components/Nav";
 import Background from "./components/Background";
 import NewRequestForm from "./components/new-request/new-request-form.tsx";
 import Login from "./components/auth/login.tsx";
+import ForgotPassword from "./components/auth/forgot-password.tsx";
 import Signup from "./components/auth/sign-up.tsx";
 import Verify from "./components/auth/verify.tsx";
 import Home from "./components/Home.tsx";
@@ -30,6 +31,7 @@ function App() {
         <Route path="/profile" element={<Profile />} />*/}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify" element={<Verify />} />
         <Route path="/sign-up" element={<Signup />} />
         <Route path="/new-request" element={<NewRequestForm />} />
