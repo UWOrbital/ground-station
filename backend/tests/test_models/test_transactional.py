@@ -24,7 +24,7 @@ async def test_commands_basic(db_session: AsyncSession, default_comms_session: C
     await db_session.commit()
 
     # Setup the MainCommand table
-    main_command1 = MainCommand(id=1, name="Test 1", data_size=1, total_size=2, format="int 7 bytes", params="time")
+    main_command1 = MainCommand(id=1, name="Test 1", data_size=1, total_size=2, format="int", params="time")
     db_session.add(main_command1)
     await db_session.commit()
 
@@ -242,7 +242,7 @@ async def test_telemetry_packet_link(db_session: AsyncSession, default_comms_ses
 
 async def test_commands_packet_link(db_session: AsyncSession, default_comms_session: CommsSession):
     # Setup the database
-    main_command = MainCommand(id=1, name="Test 1", data_size=1, total_size=2, format="int 7 bytes", params="time")
+    main_command = MainCommand(id=1, name="Test 1", data_size=1, total_size=2, format="int", params="time")
     db_session.add(main_command)
     await db_session.commit()
 
@@ -271,7 +271,7 @@ async def test_commands_packet_link(db_session: AsyncSession, default_comms_sess
 
 async def test_command_response_defaults_none(db_session: AsyncSession, default_comms_session: CommsSession):
     # Setup the database
-    main_command = MainCommand(id=1, name="Test 1", data_size=1, total_size=2, format="int 7 bytes", params="time")
+    main_command = MainCommand(id=1, name="Test 1", data_size=1, total_size=2, format="int", params="time")
     db_session.add(main_command)
     await db_session.commit()
     db_session.add(default_comms_session)

@@ -22,6 +22,7 @@ from app.config.env_settings.backend_config import settings
 from app.config.env_settings.cors_config import add_cors_middleware
 from app.config.logger_middleware import LoggerMiddleware
 from app.config.request_id_middleware import RequestIDMiddleware
+from app.config.user_id_middleware import UserIdMiddleware
 
 
 def setup_routes(app: FastAPI) -> None:
@@ -62,6 +63,7 @@ def setup_middlewares(app: FastAPI) -> None:
         LoggerMiddleware,
         excluded_endpoints=settings.logger.excluded_endpoints,
     )
+    app.add_middleware(UserIdMiddleware)
     app.add_middleware(RequestIDMiddleware)
 
 

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { vi } from "vitest";
 
 /**
  * @brief Build a React Query provider wrapper for hook tests.
@@ -25,4 +26,51 @@ export function createQueryWrapper() {
   return function QueryWrapper({ children }: { children: ReactNode }) {
     return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
   };
+}
+
+/**
+ * @brief Build a minimal fake fetch Response carrying a JSON body.
+ * @param status HTTP status code; 2xx statuses are reported as ok.
+ * @param body value returned from `json()`.
+ * @return an object that satisfies the parts of Response the app reads.
+ */
+export function jsonResponse(status: number, body: unknown = {}): Response {
+  return { ok: status >= 200 && status < 300, status, json: async () => body } as Response;
+}
+
+/**
+ * @brief Build a successful `/auth/login` or `/auth/rotate_tokens` response body.
+ * @param token the access token value to hand out.
+ * @return an AccessTokenResponse-shaped body expiring in ten minutes.
+ */
+export function tokenBody(token: string = "access-token") {
+  return {
+    access_token: token,
+    token_type: "bearer",
+    expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+  };
+}
+
+/**
+ * @brief Mock global fetch, answering each call by the first route whose path the URL contains.
+ * @param routes map of URL substring to a response, or a function producing one per call.
+ * @return the fetch spy, for asserting on calls.
+ */
+export function mockFetchByPath(routes: Record<string, Response | (() => Response)>) {
+  return vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+    const url = String(input);
+    const path = Object.keys(routes).find((key) => url.includes(key));
+    if (!path) throw new Error(`Unmocked fetch: ${url}`);
+    const route = routes[path];
+    return typeof route === "function" ? route() : route;
+  });
+}
+
+/**
+ * @brief List the URLs a fetch spy was called with, in order.
+ * @param fetchSpy the spy returned by {@link mockFetchByPath} or vi.spyOn.
+ * @return the requested URLs as strings.
+ */
+export function calledUrls(fetchSpy: { mock: { calls: unknown[][] } }): string[] {
+  return fetchSpy.mock.calls.map((call) => String(call[0]));
 }

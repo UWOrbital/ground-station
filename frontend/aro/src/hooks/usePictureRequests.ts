@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { API_BASE_URL, jsonHeaders, parseOrThrow } from "@/lib/apiClient";
+import { API_BASE_URL, authFetch, parseOrThrow } from "@/lib/apiClient";
 import type { AROCommandStatus } from "@/types";
 
 /**
@@ -48,10 +48,7 @@ async function fetchPictureRequests(count: number, offset: number): Promise<Pict
     count: String(count),
     offset: String(offset),
   });
-  const res = await fetch(`${API_BASE_URL}/requests/?${params}`, {
-    credentials: "include",
-    headers: jsonHeaders(),
-  });
+  const res = await authFetch(`${API_BASE_URL}/requests/?${params}`);
   const json = await parseOrThrow<PictureRequestsResponse>(res);
   return json.data;
 }

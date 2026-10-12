@@ -30,14 +30,23 @@ async def get_commands(commands: CommandsRepo) -> CommandsResponse:
 
 
 @commands_router.get("/session/{session_id}", dependencies=[keycloak.require_auth])
-async def get_commands_by_session(session_id: UUID, commands: CommandsRepo) -> CommandsResponse:
+async def get_commands_by_session(
+    session_id: UUID,
+    commands: CommandsRepo,
+    comms_sessions: CommsSessionRepo,
+) -> CommandsResponse:
     """
     Retrieve all commands associated with a given session.
 
     :param session_id: UUID of the target session.
     :param commands: injected Command repository.
+    :param comms_sessions: injected CommsSession repository.
     :return: All commands tied to that session.
     """
+    try:
+        await comms_sessions.get_by_id(session_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
     return CommandsResponse(data=await commands.get_by_session(session_id))
 
 

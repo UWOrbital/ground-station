@@ -292,3 +292,12 @@ async def test_get_commands_by_session_empty(client: AsyncClient, comms_session:
 
     assert response.status_code == 200
     assert response.json()["data"] == []
+
+
+async def test_get_commands_by_session_not_found(client: AsyncClient) -> None:
+    """Test that requesting commands for a nonexistent session returns a 404 exception."""
+    random_id = str(uuid4())
+    response = await client.get(f"/api/mcc/commands/session/{random_id}")
+
+    assert response.status_code == 404
+    assert random_id in response.json()["detail"]

@@ -39,7 +39,10 @@ describe("useSessionsInRange", () => {
       json: async () => ({ detail: "boom" }),
     } as Response);
 
-    const { result } = renderHook(() => useSessionsInRange(new Date(), new Date()), {
+    // Build the range once: `new Date()` inside the render callback would change the
+    // query key on every render, restarting the query so it never settles.
+    const now = new Date();
+    const { result } = renderHook(() => useSessionsInRange(now, now), {
       wrapper: createQueryWrapper(),
     });
 

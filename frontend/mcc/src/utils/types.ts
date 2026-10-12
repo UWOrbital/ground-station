@@ -6,6 +6,9 @@ export type CommandStatus =
 
 export type SessionStatus = "pending" | "scheduled" | "ongoing" | "completed";
 
+export type ARORequestStatus =
+  "pending" | "scheduled" | "taken" | "cancelled" | "failed" | "completed";
+
 export type MainPacketType = "uplink" | "downlink";
 
 // Database table interfaces
@@ -38,6 +41,20 @@ export interface Command {
   packet_id: string | null;
   sequence_index: number | null;
   response: string | null;
+}
+
+export interface ARORequest {
+  id: string;
+  aro_id: string;
+  latitude: number;
+  longitude: number;
+  created_on: string;
+  request_sent_to_obc_on: string | null;
+  pic_taken_on: string | null;
+  pic_transmitted_on: string | null;
+  delete_deadline: string | null;
+  packet_id: string | null;
+  status: ARORequestStatus;
 }
 
 export interface Telemetry {
