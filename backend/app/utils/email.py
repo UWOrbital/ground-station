@@ -133,10 +133,11 @@ def _create_message_schema_fields(email: Email) -> dict[str, Any]:
 
     if email.html and email.text:
         # Create a multipart email
+        # switched the alternative_body and template_body to match the correct fields for FastMail
         fields |= {
-            "template_body": email.html,
-            "subtype": MessageType.html,
-            "alternative_body": email.text,
+            "template_body": email.text,
+            "subtype": MessageType.plain,
+            "alternative_body": email.html,
             "multipart_subtype": MultipartSubtypeEnum.alternative,
         }
     elif email.html is not None:

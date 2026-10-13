@@ -17,6 +17,7 @@ from pydantic import NameEmail
 from app.api.aro.auth.adapter import AROUserDatabaseAdapter, AROUserRecord
 from app.config.env_settings.backend_config import settings
 from app.utils.email import Email, EmailType, send
+from app.utils.email_templates import render_email_template
 
 
 class AROUserManager(UUIDIDMixin, BaseUserManager[AROUserRecord, UUID]):
@@ -34,6 +35,13 @@ class AROUserManager(UUIDIDMixin, BaseUserManager[AROUserRecord, UUID]):
 
     @override
     async def on_after_forgot_password(self, user: AROUserRecord, token: str, request: Request | None = None) -> None:
+        """
+        Called after a user requests a password reset.
+
+        :param user: the user requesting a password reset
+        :param token: the reset token
+        :param request: the incoming request, if any
+        """
         name = user.first_name
         if user.last_name:
             name += f" {user.last_name}"
@@ -42,7 +50,11 @@ class AROUserManager(UUIDIDMixin, BaseUserManager[AROUserRecord, UUID]):
             subject="Reset your UWOrbital ARO password",
             recipients=[NameEmail(name, user.email)],
             type=EmailType.PASSWORD_RESET,
-            text=f"Your password reset token is: \n{token}",
+            text=(
+                f"Hi {name},\n\nYour ARO password reset token is:\n{token}\n\n"
+                f"If you didn't request this, ignore this email."
+            ),
+            html=render_email_template("reset_password.html", name=name, token=token),
         )
         await send(email)
 
