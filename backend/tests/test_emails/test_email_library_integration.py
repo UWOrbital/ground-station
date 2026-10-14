@@ -3,6 +3,7 @@ from io import BytesIO
 import pytest
 from fastapi import UploadFile
 from fastapi_mail import MessageSchema, MessageType, MultipartSubtypeEnum
+from fastapi_mail.msg import MailMsg
 from pydantic import NameEmail
 from app.utils.email import Email, EmailType, _create_message_schema_fields, _default_sender
 
@@ -85,12 +86,29 @@ def test_multipart_email_to_message_schema():
         "reply_to": [],
         "attachments": [],
         "headers": None,
-        "template_body": "<p>John html</p>",
-        "subtype": MessageType.html,
-        "alternative_body": "John plaintext",
+        "template_body": "John plaintext",
+        "subtype": MessageType.plain,
+        "alternative_body": "<p>John html</p>",
         "multipart_subtype": MultipartSubtypeEnum.alternative,
     }
     MessageSchema(**message_fields)
+
+@pytest.mark.asyncio
+async def test_multipart_email_puts_html_last() -> None:
+    """Mail clients render the last multipart/alternative part, so HTML must come after plaintext."""
+    email = Email(
+        subject="John subject",
+        recipients=[get_name_email()],
+        type=EmailType.TEST,
+        text="John plaintext",
+        html="<p>John html</p>",
+    )
+
+    mime = await MailMsg(MessageSchema(**_create_message_schema_fields(email)))._message("sender@example.com")
+    alternative = next(part for part in mime.walk() if part.get_content_type() == "multipart/alternative")
+    parts = [part.get_content_type() for part in alternative.get_payload()]
+
+    assert parts == ["text/plain", "text/html"]
 
 def test_optional_fields_are_preserved():
     email = Email(
