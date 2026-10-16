@@ -16,8 +16,7 @@ from pydantic import NameEmail
 
 from app.api.aro.auth.adapter import AROUserDatabaseAdapter, AROUserRecord
 from app.config.env_settings.backend_config import settings
-from app.utils.email import Email, EmailType, send
-from app.utils.email_templates import render_email_template
+from app.utils.email import Email, EmailType, render_email_template, send
 
 
 class AROUserManager(UUIDIDMixin, BaseUserManager[AROUserRecord, UUID]):

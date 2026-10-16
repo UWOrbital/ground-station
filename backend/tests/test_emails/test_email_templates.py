@@ -1,7 +1,7 @@
 import pytest
 from jinja2 import TemplateNotFound
 
-from app.utils.email_templates import render_email_template
+from app.utils.email import render_email_template
 
 
 def test_reset_password_template_fills_placeholders() -> None:
