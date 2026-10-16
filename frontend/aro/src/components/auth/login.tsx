@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 /**
  * @brief Login component for ARO
  * @return tsx element of Login component
@@ -29,7 +31,9 @@ function Login() {
               <label htmlFor="password" className="text-black block mb-1">
                 Password
               </label>
-              <a className="hover:underline cursor-pointer">Forgot Your Pasword? </a>
+              <Link to="/forgot-password" className="text-black hover:underline cursor-pointer">
+                Forgot Your Password?
+              </Link>
             </div>
             <input
               type="password"

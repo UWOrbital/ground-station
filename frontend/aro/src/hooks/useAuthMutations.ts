@@ -1,5 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { API_BASE_URL, ApiError, errorMessage, storeAccessToken } from "@/lib/apiClient";
+import {
+  API_BASE_URL,
+  ApiError,
+  errorMessage,
+  jsonHeaders,
+  storeAccessToken,
+} from "@/lib/apiClient";
 import { accessTokenStore } from "@/lib/authToken";
 import { AUTH_STATUS_QUERY_KEY } from "@/hooks/useAuthStatus";
 
@@ -77,3 +83,17 @@ export const useLogout = () => {
     },
   });
 };
+
+async function postForgotPassword(email: string): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+    method: "POST",
+    headers: jsonHeaders(),
+    body: JSON.stringify({ email }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new ApiError(res.status, errorMessage(body, res.status));
+  }
+}
+
+export const useForgotPassword = () => useMutation({ mutationFn: postForgotPassword });
