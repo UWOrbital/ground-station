@@ -157,11 +157,13 @@ function Commands() {
           </div>
         )}
       </div>
-      <SelectCommand
-        mainCommands={mainCommands}
-        selectedCommandId={selectedCommandId}
-        setSelectedCommandId={setSelectedCommandId}
-      />
+      {!selectedCommandId && (
+        <SelectCommand
+          mainCommands={mainCommands}
+          selectedCommandId={selectedCommandId}
+          setSelectedCommandId={setSelectedCommandId}
+        />
+      )}
     </div>
   );
 }

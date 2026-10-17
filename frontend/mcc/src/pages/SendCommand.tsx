@@ -170,8 +170,8 @@ function SendCommand({
 
     const baseInputClasses = `
       w-full px-3 py-2 border rounded-md
-      focus:outline-none focus:ring-2 focus:ring-blue-500
-      ${!isValid && value ? "border-red-500 bg-red-50" : "border-gray-300"}
+      focus:outline-none focus:ring-2 focus:ring-ring
+      ${!isValid && value ? "border-destructive bg-destructive/10" : "border-input"}
     `;
 
     switch (param.type) {
@@ -179,7 +179,7 @@ function SendCommand({
         return (
           <Select value={value} onValueChange={(val) => handleParameterChange(param.name, val)}>
             <SelectTrigger
-              className={`w-[180px] ${!isValid && value ? "border-red-500 bg-red-50" : "border-gray-300"}`}
+              className={`w-[180px] ${!isValid && value ? "border-destructive bg-destructive/10" : "border-input"}`}
             >
               <SelectValue placeholder="Select..." />
             </SelectTrigger>
@@ -253,7 +253,7 @@ function SendCommand({
                       style={{ maxHeight: !isValid && value ? "3rem" : "0" }}
                     >
                       {!isValid && value && (
-                        <p className="text-sm text-red-600 animate-in fade-in-50 duration-150">
+                        <p className="text-sm text-destructive animate-in fade-in-50 duration-150">
                           Invalid {param.type} value
                         </p>
                       )}
