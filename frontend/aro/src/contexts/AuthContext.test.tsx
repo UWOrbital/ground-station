@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, useMutationState } from "@tanstack/react-query";
 import { AuthProvider, useAuth } from "./AuthContext";
 import { accessTokenStore } from "@/lib/authToken";
 import { createQueryWrapper, jsonResponse, mockFetchByPath, tokenBody } from "@/hooks/testUtils";
@@ -20,17 +20,13 @@ const user = {
  * @return tsx element describing the current auth state.
  */
 function Probe() {
-  const { user, isAuthenticated, isLoading, isUnavailable, recheck, login, logout } = useAuth();
-  const status = isLoading
-    ? "loading"
-    : isUnavailable
-      ? "unavailable"
-      : isAuthenticated
-        ? `signed in as ${user?.email}`
-        : "signed out";
+  const { status, user, recheck, login, logout } = useAuth();
   return (
     <>
-      <p>{status}</p>
+      <p>
+        {status}
+        {user && ` as ${user.email}`}
+      </p>
       <button onClick={recheck}>recheck</button>
       <button onClick={() => login("ham@example.com", "pw").catch(() => {})}>login</button>
       <button onClick={() => logout().catch(() => {})}>logout</button>
@@ -59,13 +55,13 @@ describe("AuthContext", () => {
     });
     renderProbe();
     expect(screen.getByText("loading")).toBeInTheDocument();
-    expect(await screen.findByText("signed in as ham@example.com")).toBeInTheDocument();
+    expect(await screen.findByText("signedIn as ham@example.com")).toBeInTheDocument();
   });
 
   it("is signed out when there is no session", async () => {
     mockFetchByPath({ "/auth/rotate_tokens": jsonResponse(401) });
     renderProbe();
-    expect(await screen.findByText("signed out")).toBeInTheDocument();
+    expect(await screen.findByText("signedOut")).toBeInTheDocument();
   });
 
   it("is unavailable, not signed out, when the first check can't reach the backend", async () => {
@@ -90,7 +86,7 @@ describe("AuthContext", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "recheck" }));
 
-    expect(await screen.findByText("signed in as ham@example.com")).toBeInTheDocument();
+    expect(await screen.findByText("signedIn as ham@example.com")).toBeInTheDocument();
   });
 
   it("recheck picks up a new session", async () => {
@@ -103,11 +99,11 @@ describe("AuthContext", () => {
       "/auth/get_current_user": jsonResponse(200, user),
     });
     renderProbe();
-    await screen.findByText("signed out");
+    await screen.findByText("signedOut");
 
     await userEvent.click(screen.getByRole("button", { name: "recheck" }));
 
-    expect(await screen.findByText("signed in as ham@example.com")).toBeInTheDocument();
+    expect(await screen.findByText("signedIn as ham@example.com")).toBeInTheDocument();
   });
 
   it("login posts the credentials as a form and signs the user in", async () => {
@@ -117,11 +113,11 @@ describe("AuthContext", () => {
       "/auth/get_current_user": jsonResponse(200, user),
     });
     renderProbe();
-    await screen.findByText("signed out");
+    await screen.findByText("signedOut");
 
     await userEvent.click(screen.getByRole("button", { name: "login" }));
 
-    expect(await screen.findByText("signed in as ham@example.com")).toBeInTheDocument();
+    expect(await screen.findByText("signedIn as ham@example.com")).toBeInTheDocument();
     expect(accessTokenStore.get()).toBe("logged-in");
     const loginCall = fetchSpy.mock.calls.find(([url]) => String(url).includes("/auth/login"));
     const body = (loginCall?.[1] as RequestInit).body as URLSearchParams;
@@ -137,11 +133,11 @@ describe("AuthContext", () => {
       }),
     });
     renderProbe();
-    await screen.findByText("signed out");
+    await screen.findByText("signedOut");
 
     await userEvent.click(screen.getByRole("button", { name: "login" }));
 
-    expect(screen.getByText("signed out")).toBeInTheDocument();
+    expect(screen.getByText("signedOut")).toBeInTheDocument();
     expect(accessTokenStore.get()).toBeNull();
   });
 
@@ -160,11 +156,11 @@ describe("AuthContext", () => {
         </AuthProvider>
       </QueryClientProvider>,
     );
-    await screen.findByText("signed in as ham@example.com");
+    await screen.findByText("signedIn as ham@example.com");
 
     await userEvent.click(screen.getByRole("button", { name: "logout" }));
 
-    expect(await screen.findByText("signed out")).toBeInTheDocument();
+    expect(await screen.findByText("signedOut")).toBeInTheDocument();
     expect(accessTokenStore.get()).toBeNull();
     expect(queryClient.getQueryData(["picture-requests", 100, 0])).toBeUndefined();
     const logoutCall = fetchSpy.mock.calls.find(([url]) => String(url).includes("/auth/logout"));
@@ -179,11 +175,12 @@ describe("AuthContext", () => {
     const seen = new Set<ReturnType<typeof useAuth>>();
     /**
      * @brief Consumer recording every distinct context value it is rendered with.
-     * @return nothing visible.
+     * @return the login mutation's status, re-rendered in the same batch as the provider.
      */
     function ValueSpy() {
       seen.add(useAuth());
-      return null;
+      const [loginStatus] = useMutationState({ select: (mutation) => mutation.state.status });
+      return <p>login {loginStatus ?? "idle"}</p>;
     }
     render(
       <AuthProvider>
@@ -192,14 +189,12 @@ describe("AuthContext", () => {
       </AuthProvider>,
       { wrapper: createQueryWrapper() },
     );
-    await screen.findByText("signed out");
+    await screen.findByText("signedOut");
     const settledCount = seen.size;
 
     // The rejected login moves the mutation through pending and error, re-rendering the provider.
     await userEvent.click(screen.getByRole("button", { name: "login" }));
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 20));
-    });
+    await screen.findByText("login error");
 
     expect(seen.size).toBe(settledCount);
   });
