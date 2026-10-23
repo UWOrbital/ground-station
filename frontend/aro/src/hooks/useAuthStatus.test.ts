@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { createElement, type ReactNode } from "react";
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { focusManager } from "@tanstack/react-query";
+import { onlineManager, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useAuthStatus } from "./useAuthStatus";
 import { ApiError } from "@/lib/apiClient";
 import { accessTokenStore } from "@/lib/authToken";
@@ -44,7 +45,6 @@ const renderErrored = async () => {
 beforeEach(() => {
   vi.restoreAllMocks();
   accessTokenStore.clear();
-  focusManager.setFocused(undefined);
 });
 
 describe("useAuthStatus", () => {
@@ -91,6 +91,18 @@ describe("useAuthStatus", () => {
     expect(result.current.data).toBeNull();
   });
 
+  it("drops the refreshed token when the user lookup still rejects it", async () => {
+    mockFetchByPath({
+      "/auth/rotate_tokens": jsonResponse(200, tokenBody("inactive-user-token")),
+      "/auth/get_current_user": jsonResponse(401),
+    });
+
+    const { result } = await renderSettled();
+
+    expect(result.current.data).toBeNull();
+    expect(accessTokenStore.get()).toBeNull();
+  });
+
   it("errors instead of signing out when the backend can't be reached", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("network"));
 
@@ -129,18 +141,37 @@ describe("useAuthStatus", () => {
     expect(result.current.data).toEqual(user);
   });
 
-  it("does not re-check on window focus while the status is fresh", async () => {
+  it("keeps a resolved status fresh, so window refocus doesn't re-check it", async () => {
     accessTokenStore.set("abc");
-    const fetchSpy = mockFetchByPath({ "/auth/get_current_user": jsonResponse(200, user) });
-    await renderSettled();
+    mockFetchByPath({ "/auth/get_current_user": jsonResponse(200, user) });
 
-    await act(async () => {
-      focusManager.setFocused(false);
-      focusManager.setFocused(true);
-      // Give a focus-triggered refetch the chance to fire before asserting it didn't.
-      await new Promise((resolve) => setTimeout(resolve, 20));
-    });
+    const { result } = await renderSettled();
 
+    expect(result.current.isStale).toBe(false);
+  });
+
+  it("fails after one attempt even when the app's client retries queries", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("network"));
+    // App defaults (retry: 3), unlike createQueryWrapper.
+    const queryClient = new QueryClient();
+    const wrapper = ({ children }: { children: ReactNode }) =>
+      createElement(QueryClientProvider, { client: queryClient }, children);
+
+    const { result } = renderHook(() => useAuthStatus(), { wrapper });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
     expect(fetchSpy).toHaveBeenCalledTimes(1);
+    queryClient.clear();
+  });
+
+  it("errors instead of pausing while the browser is offline", async () => {
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new TypeError("Failed to fetch"));
+    onlineManager.setOnline(false);
+    try {
+      const { result } = await renderErrored();
+      expect(result.current.data).toBeUndefined();
+    } finally {
+      onlineManager.setOnline(true);
+    }
   });
 });

@@ -94,11 +94,7 @@ async function rotateTokens(): Promise<boolean> {
     accessTokenStore.clear();
     return false;
   }
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new ApiError(res.status, errorMessage(body, res.status));
-  }
-  storeAccessToken(await res.json());
+  storeAccessToken(await parseOrThrow<AccessTokenResponse>(res));
   return true;
 }
 
