@@ -10,7 +10,7 @@ import type { AROUser } from "@/types";
  */
 export type AuthStatus = "loading" | "unavailable" | "signedIn" | "signedOut";
 
-interface AuthState {
+export interface AuthState {
   status: AuthStatus;
   /** The signed-in user; non-null exactly when `status` is `signedIn`. */
   user: AROUser | null;
