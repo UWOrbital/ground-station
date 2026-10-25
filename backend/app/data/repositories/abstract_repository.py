@@ -2,7 +2,7 @@ from abc import ABC
 from typing import Any, TypeVar
 from uuid import UUID
 
-from sqlmodel import select
+from sqlmodel import col, select
 
 from app.data.database.engine import get_db_session
 from app.data.models.base_model import BaseSQLModel
@@ -28,7 +28,7 @@ class AbstractRepository[T, PK](ABC):
         :return: a list of all model instances
         """
         async with get_db_session() as session:
-            query = select(self.model)
+            query = select(self.model).order_by(col(self.model.id))
             if offset:
                 query = query.offset(offset)
             if limit is not None:

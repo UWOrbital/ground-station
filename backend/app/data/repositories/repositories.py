@@ -354,6 +354,7 @@ class TelemetryRepository(AbstractRepository[Telemetry, UUID]):
                 .join(MainTelemetry, Telemetry.type_ == MainTelemetry.id)  # type: ignore[arg-type]
                 .join(Packet, Telemetry.packet_id == Packet.id, isouter=True)  # type: ignore[arg-type]
                 .join(CommsSession, Packet.session_id == CommsSession.id, isouter=True)  # type: ignore[arg-type]
+                .order_by(col(Telemetry.id))
             )
             if offset:
                 query = query.offset(offset)
