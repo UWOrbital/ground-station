@@ -16,3 +16,7 @@ SESSION_LOCKOUT_SECONDS: Final[int] = 10
 PICTURE_REQUEST_DELETE_WINDOW: Final[timedelta] = timedelta(hours=24)
 ACCESS_TOKEN_LIFETIME = timedelta(minutes=10)
 REFRESH_TOKEN_LIFETIME = timedelta(days=14)
+# pagination defaults for GET all endpoints
+DEFAULT_PAGE_LIMIT: Final[int] = 100
+MAX_PAGE_LIMIT: Final[int] = 1000  # mitigates abuse with upper bound
+DEFAULT_PAGE_OFFSET: Final[int] = 0
