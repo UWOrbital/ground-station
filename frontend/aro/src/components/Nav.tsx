@@ -12,11 +12,11 @@ function Nav() {
   const isLoggedIn = false;
 
   return (
-    <nav className="px-7 pb-3 flex items-center justify-between m-7 text-white border-b border-border z-50">
+    <nav className="px-7 h-12 pb-3 flex items-center justify-between m-4 text-white border-b border-border/40 z-50">
       {/* Logo */}
-      <div className="flex-1">
-        <Link to="/" className="hover:opacity-80 transition-opacity">
-          <img src={orbital_logo} alt="orbital-logo" className="h-12 w-auto" />
+      <div>
+        <Link to="/" className="inline-block hover:opacity-80 transition-opacity">
+          <img src={orbital_logo} alt="orbital-logo" className="h-10 w-auto" />
         </Link>
       </div>
 
@@ -41,7 +41,7 @@ function Nav() {
               {link.text}
             </Link>
           ))}
-          <div className="border-1 border-white rounded-xl p-1 px-2 hover:bg-white hover:text-black">
+          <div className="border-1 border-white rounded-xl py-2 px-4 hover:bg-white hover:text-black">
             <Link to="/login" className="">
               Login
             </Link>
