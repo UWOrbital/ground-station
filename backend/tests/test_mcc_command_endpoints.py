@@ -75,6 +75,51 @@ async def setup_main_commands(db_session):
     await db_session.commit()
 
 
+# ---------------------------------------------Testing the GET-all endpoint--------------------------------------------- #
+
+
+async def test_get_commands_empty(client: AsyncClient) -> None:
+    """Test that GET-all returns an empty list when no commands exist."""
+    response = await client.get("/api/mcc/commands/")
+
+    assert response.status_code == 200
+    assert response.json()["data"] == []
+
+
+async def test_get_commands_returns_all_by_default(client: AsyncClient, comms_session: CommsSession) -> None:
+    """Test that GET-all returns every command when no pagination params are given."""
+    for type_ in (1, 2, 3):
+        resp = await client.post("/api/mcc/commands/", json={"type_": type_, "session_id": str(comms_session.id)})
+        assert resp.status_code == 200
+
+    response = await client.get("/api/mcc/commands/")
+
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert len(data) == 3
+    assert all({"id", "session_id", "status", "type_"} <= cmd.keys() for cmd in data)
+
+
+async def test_get_commands_respects_limit(client: AsyncClient, comms_session: CommsSession) -> None:
+    """Test that the limit query param caps the number of returned commands."""
+    for type_ in (1, 2, 3):
+        await client.post("/api/mcc/commands/", json={"type_": type_, "session_id": str(comms_session.id)})
+
+    first_page = await client.get("/api/mcc/commands/", params={"limit": 2, "offset": 0})
+    second_page = await client.get("/api/mcc/commands/", params={"limit": 2, "offset": 2})
+    assert first_page.status_code == 200
+    assert second_page.status_code == 200
+
+    first_ids = {cmd["id"] for cmd in first_page.json()["data"]}
+    second_ids = {cmd["id"] for cmd in second_page.json()["data"]}
+    assert len(first_ids) == 2
+    assert len(second_ids) == 1
+    assert first_ids.isdisjoint(second_ids)
+
+    assert (await client.get("/api/mcc/commands/", params={"offset": -1})).status_code == 422
+    assert (await client.get("/api/mcc/commands/", params={"limit": 10_000})).status_code == 422
+
+
 # ---------------------------------------------Testing the POST endpoint--------------------------------------------- #
 
 
