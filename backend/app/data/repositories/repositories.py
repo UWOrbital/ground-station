@@ -338,7 +338,7 @@ class TelemetryRepository(AbstractRepository[Telemetry, UUID]):
         """
         return await self.get_all_by(type_=telemetry_id)
 
-    async def get_all(self) -> list[TelemetryEntry]:  # type: ignore[override]
+    async def get_all(self, limit: int | None = None, offset: int = 0) -> list[TelemetryEntry]:  # type: ignore[override]
         """
         Retrieves all telemetry entries, joined with MainTelemetry to expose the type name.
 
@@ -349,14 +349,17 @@ class TelemetryRepository(AbstractRepository[Telemetry, UUID]):
         :return: list[TelemetryEntry]
         """
         async with get_db_session() as session:
-            results = (
-                await session.exec(
-                    select(Telemetry, MainTelemetry.name, Packet.session_id, CommsSession.status)
-                    .join(MainTelemetry, Telemetry.type_ == MainTelemetry.id)  # type: ignore[arg-type]
-                    .join(Packet, Telemetry.packet_id == Packet.id, isouter=True)  # type: ignore[arg-type]
-                    .join(CommsSession, Packet.session_id == CommsSession.id, isouter=True)  # type: ignore[arg-type]
-                )
-            ).all()
+            query = (
+                select(Telemetry, MainTelemetry.name, Packet.session_id, CommsSession.status)
+                .join(MainTelemetry, Telemetry.type_ == MainTelemetry.id)  # type: ignore[arg-type]
+                .join(Packet, Telemetry.packet_id == Packet.id, isouter=True)  # type: ignore[arg-type]
+                .join(CommsSession, Packet.session_id == CommsSession.id, isouter=True)
+            )  # type: ignore[arg-type]
+            if offset:
+                query = query.offset(offset)
+            if limit:
+                query = query.limit(limit)
+            results = (await session.exec(query)).all()
             return [
                 TelemetryEntry(
                     id=t.id,
