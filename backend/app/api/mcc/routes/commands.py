@@ -29,6 +29,8 @@ async def get_commands(
     Retrieve all commands from the database.
 
     :param commands: injected Command repository.
+    :param limit: max rows to return; None returns all rows
+    :param offset: number of rows to skip
     :return: All command entries.
     """
     return CommandsResponse(data=await commands.get_all(limit=limit, offset=offset))

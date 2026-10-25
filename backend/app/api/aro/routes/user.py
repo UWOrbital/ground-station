@@ -34,6 +34,8 @@ async def get_all_users(
 
     :param aro_users: injected AROUsers repository.
     :param user: the authenticated superuser (injected).
+    :param limit: max rows to return; None returns all rows
+    :param offset: number of rows to skip
     :return: all users
     """
     users = await aro_users.get_all(limit=limit, offset=offset)
