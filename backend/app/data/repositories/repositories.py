@@ -357,7 +357,7 @@ class TelemetryRepository(AbstractRepository[Telemetry, UUID]):
             )
             if offset:
                 query = query.offset(offset)
-            if limit:
+            if limit is not None:
                 query = query.limit(limit)
             results = (await session.exec(query)).all()
             return [

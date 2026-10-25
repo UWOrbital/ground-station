@@ -31,7 +31,7 @@ class AbstractRepository[T, PK](ABC):
             query = select(self.model)
             if offset:
                 query = query.offset(offset)
-            if limit:
+            if limit is not None:
                 query = query.limit(limit)
             return list((await session.exec(query)).all())
 
