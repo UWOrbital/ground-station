@@ -22,7 +22,7 @@ async def get_telemetry(
     Retrieves all telemetry.
 
     :param telemetry_repo: injected Telemetry repository.
-    :param limit: max rows to return; None returns all rows
+    :param limit: max rows to return
     :param offset: number of rows to skip
     :return: all telemetry entries.
     """
