@@ -1,8 +1,9 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from app.api.mcc.schemas.responses import TelemetryListResponse
+from app.config.data_values import DEFAULT_PAGE_LIMIT, DEFAULT_PAGE_OFFSET, MAX_PAGE_LIMIT
 from app.data.repositories.dal import DAL
 from app.data.repositories.repositories import TelemetryRepository
 
@@ -14,6 +15,8 @@ TelemetryRepo = Annotated[TelemetryRepository, Depends(DAL.get_repo(DAL.telemetr
 @telemetry_router.get("/")
 async def get_telemetry(
     telemetry_repo: TelemetryRepo,
+    limit: int = Query(default=DEFAULT_PAGE_LIMIT, ge=1, le=MAX_PAGE_LIMIT),
+    offset: int = Query(default=DEFAULT_PAGE_OFFSET, ge=0),
 ) -> TelemetryListResponse:
     """
     Retrieves all telemetry.
@@ -21,5 +24,5 @@ async def get_telemetry(
     :param telemetry_repo: injected Telemetry repository.
     :return: all telemetry entries.
     """
-    telemetry = await telemetry_repo.get_all()
+    telemetry = await telemetry_repo.get_all(limit=limit, offset=offset)
     return TelemetryListResponse(data=telemetry)

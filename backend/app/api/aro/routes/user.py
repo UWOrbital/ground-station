@@ -1,11 +1,12 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from app.api.aro.auth.aro_session import require_superuser
 from app.api.aro.schemas.admin.requests import UserRequest
 from app.api.aro.schemas.admin.responses import AllUsersResponse, UserResponse
+from app.config.data_values import DEFAULT_PAGE_LIMIT, DEFAULT_PAGE_OFFSET, MAX_PAGE_LIMIT
 from app.data.models.aro_user_models import AROUsers
 from app.data.repositories.dal import DAL
 from app.data.repositories.repositories import (
@@ -22,7 +23,12 @@ AROUserLoginsRepo = Annotated[AROUserLoginRepository, Depends(DAL.get_repo(DAL.a
 
 
 @aro_user_router.get("/get_all_users", response_model=AllUsersResponse)
-async def get_all_users(aro_users: AROUsersRepo, user: AROUsers = Depends(require_superuser)) -> AllUsersResponse:
+async def get_all_users(
+    aro_users: AROUsersRepo,
+    user: AROUsers = Depends(require_superuser),
+    limit: int = Query(default=DEFAULT_PAGE_LIMIT, ge=1, le=MAX_PAGE_LIMIT),
+    offset: int = Query(default=DEFAULT_PAGE_OFFSET, ge=0),
+) -> AllUsersResponse:
     """
     Gets all users
 
@@ -30,7 +36,7 @@ async def get_all_users(aro_users: AROUsersRepo, user: AROUsers = Depends(requir
     :param user: the authenticated superuser (injected).
     :return: all users
     """
-    users = await aro_users.get_all()
+    users = await aro_users.get_all(limit=limit, offset=offset)
     return AllUsersResponse(data=users)
 
 
