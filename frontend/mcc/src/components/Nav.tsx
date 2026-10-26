@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import orbital_logo from "../assets/orbital_logo.png";
 import { NAVIGATION_LINKS } from "../utils/nav-links";
 import { useAuth } from "../contexts/AuthContext";
+import { useSatelliteStatus } from "../hooks/useSatelliteStatus";
 import { useTheme } from "../contexts/ThemeContext";
 import SatelliteStatusIndicator from "./SatelliteStatusIndicator";
 import LogoutButton from "./LogoutButton";
@@ -13,6 +14,7 @@ import LogoutButton from "./LogoutButton";
 function Nav() {
   const { isAuthenticated } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { data: satellite } = useSatelliteStatus(isAuthenticated);
 
   return (
     <nav className="fixed top-0 left-0 right-0 h-16 px-8 flex items-center bg-background/80 backdrop-blur-sm border-b border-border z-50">
@@ -36,15 +38,14 @@ function Nav() {
         {/* Satellite Status Indicator - Only shown when logged in */}
         {isAuthenticated && (
           <SatelliteStatusIndicator
-            status="online"
-            lastContact="2 min ago"
-            sessionDuration="1h 23m"
-            telemetryData={[
-              { label: "Battery Level", value: "85", unit: "%" },
-              { label: "Temperature", value: "42", unit: "°C" },
-              { label: "Signal Strength", value: "Strong", unit: "" },
-              { label: "Altitude", value: "450", unit: "km" },
-            ]}
+            status={satellite?.status}
+            lastContact={satellite?.last_contact}
+            sessionDuration={satellite?.session_duration}
+            telemetryData={satellite?.telemetry_data.map((item) => ({
+              label: item.label,
+              value: item.value,
+              unit: item.unit ?? undefined,
+            }))}
           />
         )}
 
