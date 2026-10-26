@@ -2,7 +2,6 @@ from typing import Annotated, Final
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
-from fastapi.exceptions import HTTPException
 
 from app.api.mcc.schemas.requests import UpdateAdminRequestStatusRequest
 from app.api.mcc.schemas.responses import AdminApplicantsResponse, UserInformationResponse
@@ -10,6 +9,7 @@ from app.data.enums.mcc_users import MCCAdminRequestStatus
 from app.data.models.mcc_user_models import MCCUsers
 from app.data.repositories.dal import DAL
 from app.data.repositories.repositories import MCCUsersRepository
+from app.exceptions import InvalidStateError, NotFoundError
 from app.mcc_keycloak.client import keycloak
 
 admin_router = APIRouter(tags=["MCC", "Admin"])
@@ -36,7 +36,7 @@ async def request_admin_access(
     :return: the user's updated information, including the new request status.
     """
     if user.admin_request_status != MCCAdminRequestStatus.NOT_REQUESTED:
-        raise HTTPException(status_code=409, detail=REQUEST_ACCESS_CONFLICT_DETAILS[user.admin_request_status])
+        raise InvalidStateError(REQUEST_ACCESS_CONFLICT_DETAILS[user.admin_request_status])
 
     updated_user = await mcc_users.update(user.id, {"admin_request_status": MCCAdminRequestStatus.PENDING})
     return UserInformationResponse.model_validate(updated_user, from_attributes=True)
@@ -73,10 +73,10 @@ async def decide_admin_applicant(
     try:
         target_user = await mcc_users.get_by_id(user_id)
     except ValueError as e:
-        raise HTTPException(status_code=404, detail="User not found") from e
+        raise NotFoundError("User not found") from e
 
     if target_user.admin_request_status != MCCAdminRequestStatus.PENDING:
-        raise HTTPException(status_code=409, detail="User does not have a pending admin access request")
+        raise InvalidStateError("User does not have a pending admin access request")
 
     if request.status == MCCAdminRequestStatus.APPROVED:
         await keycloak.grant_mcc_admin(user_id)  # Grant before DB write: Keycloak failure must leave request PENDING.

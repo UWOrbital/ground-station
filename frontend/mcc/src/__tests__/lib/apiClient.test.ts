@@ -30,6 +30,17 @@ describe("parseOrThrow", () => {
     await expect(err).rejects.toMatchObject({ status: 404, message: "Session not found" });
   });
 
+  it("throws an ApiError carrying the backend message and status", async () => {
+    const err = parseOrThrow(
+      response(409, async () => ({ message: "Session is within its lockout window" })),
+    );
+    await expect(err).rejects.toBeInstanceOf(ApiError);
+    await expect(err).rejects.toMatchObject({
+      status: 409,
+      message: "Session is within its lockout window",
+    });
+  });
+
   it("falls back to a generic message when the error body has no detail or isn't JSON", async () => {
     await expect(parseOrThrow(response(500, async () => ({})))).rejects.toThrow(
       "Request failed: 500",

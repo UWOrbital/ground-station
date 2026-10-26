@@ -204,6 +204,12 @@ describe("errorMessage", () => {
     expect(errorMessage({ detail: "boom" }, 500)).toBe("boom");
   });
 
+  it("reads a top-level message from a custom backend error", () => {
+    expect(errorMessage({ message: "This picture request can no longer be deleted." }, 409)).toBe(
+      "This picture request can no longer be deleted.",
+    );
+  });
+
   it("reads the message of an ARO auth error detail", () => {
     expect(
       errorMessage(

@@ -118,7 +118,7 @@ async def rotate_refresh_token(raw_token: str) -> tuple[str, AROUsers]:
 
 async def revoke_token(refresh_token: str | None) -> None:
     """
-    Invalidate a single refresh token.
+    Invalidate every refresh token in the presented token's family.
 
     :param refresh_token: str | None
     :returns: None
@@ -127,7 +127,7 @@ async def revoke_token(refresh_token: str | None) -> None:
         token_hash = _hash_refresh_token(refresh_token)
         existing = await DAL.aro_user_auth_tokens().get_first_by(token_hash=token_hash)
         if existing is not None:
-            await DAL.aro_user_auth_tokens().update(existing.id, {"revoked_at": datetime.now(UTC)})
+            await revoke_family(existing.family_id)
 
 
 async def revoke_family(family_id: UUID) -> int:

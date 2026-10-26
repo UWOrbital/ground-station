@@ -1,6 +1,6 @@
 import pytest
 from app.data.models.main_models import MainCommand, MainTelemetry
-from app.exceptions.exceptions import DatabaseError
+from app.exceptions import DatabaseError
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 

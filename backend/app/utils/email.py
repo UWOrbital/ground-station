@@ -1,10 +1,12 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import StrEnum
+from pathlib import Path
 from typing import Any
 
 from fastapi import UploadFile
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType, MultipartSubtypeEnum
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 from loguru import logger
 from pydantic import NameEmail
 
@@ -24,6 +26,9 @@ _conf = ConnectionConfig(
     MAIL_DEBUG=False,
     SUPPRESS_SEND=False,  # Set to True for testing
 )
+
+_TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "templates" / "emails"
+_env = Environment(loader=FileSystemLoader(_TEMPLATE_DIR), autoescape=select_autoescape(["html"]))
 
 
 def _default_sender() -> NameEmail:
@@ -133,10 +138,11 @@ def _create_message_schema_fields(email: Email) -> dict[str, Any]:
 
     if email.html and email.text:
         # Create a multipart email
+        # switched the alternative_body and template_body to match the correct fields for FastMail
         fields |= {
-            "template_body": email.html,
-            "subtype": MessageType.html,
-            "alternative_body": email.text,
+            "template_body": email.text,
+            "subtype": MessageType.plain,
+            "alternative_body": email.html,
             "multipart_subtype": MultipartSubtypeEnum.alternative,
         }
     elif email.html is not None:
@@ -216,3 +222,14 @@ async def send_many(emails: list[Email]) -> None:
                     ]
                 )
             )
+
+
+def render_email_template(template_name: str, **context: object) -> str:
+    """
+    Render an HTML email template from app/templates/emails.
+
+    :param template_name: file name of the template, e.g. "reset_password.html".
+    :param context: values substituted into the template's placeholders.
+    :return: the rendered HTML string.
+    """
+    return _env.get_template(template_name).render(**context)

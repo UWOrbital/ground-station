@@ -44,8 +44,9 @@ export async function parseOrThrow<T>(res: Response): Promise<T> {
     throw new ApiError(401, "Not authenticated");
   }
   if (!res.ok) {
+    // Custom backend errors (app/exceptions) send `message`; FastAPI's HTTPException sends `detail`.
     const body = await res.json().catch(() => ({}));
-    throw new ApiError(res.status, body.detail ?? `Request failed: ${res.status}`);
+    throw new ApiError(res.status, body.message ?? body.detail ?? `Request failed: ${res.status}`);
   }
   return res.json();
 }

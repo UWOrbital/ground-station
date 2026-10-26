@@ -81,7 +81,7 @@ async def test_request_admin_access_blocked_unless_not_requested(
     response = await client.post(f"{ADMIN_PREFIX}/request-access")
 
     assert response.status_code == 409
-    assert response.json()["detail"] == REQUEST_ACCESS_CONFLICT_DETAILS[status]
+    assert response.json()["message"] == REQUEST_ACCESS_CONFLICT_DETAILS[status]
 
 
 async def test_get_admin_applicants(admin_client: AsyncClient, pending_user: MCCUsers, mcc_user: MCCUsers) -> None:
