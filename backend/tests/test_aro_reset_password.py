@@ -8,6 +8,7 @@ from httpx import ASGITransport, AsyncClient
 from app.api.aro.auth.adapter import AROUserRecord
 from app.api.aro.auth.manager import AROUserManager
 from app.data.repositories.dal import DAL
+from app.utils.email import Email, EmailType
 from main import app
 
 EMAIL = "reset.me@test.com"
@@ -104,3 +105,35 @@ async def test_reset_password_rejects_bad_token(client: AsyncClient, registered_
     assert res.status_code == 400
     assert res.json()["detail"] == "RESET_PASSWORD_BAD_TOKEN"
     assert await login(client, OLD_PASSWORD) == 200
+
+
+async def test_forgot_password_sends_html_and_text_email(
+    client: AsyncClient,
+    registered_user: dict[str, str],
+    sent_tokens: list[tuple[str, str]],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The reset email carries the token in both the plaintext and the rendered HTML body.
+
+    :param client: HTTP client bound to the app.
+    :param registered_user: the ARO user requesting the reset.
+    :param sent_tokens: tokens captured from the forgot-password hook.
+    :param monkeypatch: used to swap out the real SMTP send.
+    """
+    sent_emails: list[Email] = []
+
+    async def capture(email: Email) -> None:
+        sent_emails.append(email)
+
+    monkeypatch.setattr("app.api.aro.auth.manager.send", capture)
+    await forgot(client, EMAIL)
+
+    assert len(sent_emails) == 1
+    email = sent_emails[0]
+    token = sent_tokens[0][1]
+    assert email.type == EmailType.PASSWORD_RESET
+    assert [r.email for r in email.recipients] == [EMAIL]
+    assert email.text is not None and token in email.text
+    assert email.html is not None and token in email.html
+    assert "Hi Reset," in email.text
+    assert "Reset" in email.html

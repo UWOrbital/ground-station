@@ -2,9 +2,11 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-* {
-  border-color: var(--border);
-  outline-color: color-mix(in oklch, var(--ring) 50%, transparent);
+@layer base {
+  * {
+    border-color: var(--border);
+    outline-color: color-mix(in oklch, var(--ring) 50%, transparent);
+  }
 }
 
 body {

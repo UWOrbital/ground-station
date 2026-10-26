@@ -8,6 +8,7 @@ import Login from "./components/auth/login.tsx";
 import ForgotPassword from "./components/auth/forgot-password.tsx";
 import Signup from "./components/auth/sign-up.tsx";
 import Verify from "./components/auth/verify.tsx";
+import RequestVerification from "./components/auth/request-verification.tsx";
 import Home from "./components/Home.tsx";
 import PageNotFound from "./components/PageNotFound.tsx";
 import Gallery from "./components/profile/photo-gallery/gallery.tsx";
@@ -33,6 +34,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify" element={<Verify />} />
+        <Route path="/verify/request" element={<RequestVerification />} />
         <Route path="/sign-up" element={<Signup />} />
         <Route path="/new-request" element={<NewRequestForm />} />
         <Route path="*" element={<PageNotFound />} />
