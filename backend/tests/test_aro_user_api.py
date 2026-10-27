@@ -126,6 +126,23 @@ async def test_get_all_users(client, test_user1_creation, test_user2_creation, a
     assert user2_from_response["phone_number"] == test_user2_creation["phone_number"]
 
 
+async def test_get_all_users_respects_limit(client, test_user1_creation, test_user2_creation, auth_headers):
+    """Test that the limit query param caps the number of users returned."""
+    first_page = await client.get("/api/aro/user/get_all_users", headers=auth_headers, params={"limit": 2, "offset": 0})
+    second_page = await client.get("/api/aro/user/get_all_users", headers=auth_headers, params={"limit": 2, "offset": 2})
+    assert first_page.status_code == 200
+    assert second_page.status_code == 200
+
+    first_ids = {user["id"] for user in first_page.json()["data"]}
+    second_ids = {user["id"] for user in second_page.json()["data"]}
+    assert len(first_ids) == 2
+    assert len(second_ids) == 1
+    assert first_ids.isdisjoint(second_ids)
+
+    assert (await client.get("/api/aro/user/get_all_users", headers=auth_headers, params={"offset": -1})).status_code == 422
+    assert (await client.get("/api/aro/user/get_all_users", headers=auth_headers, params={"limit": 10_000})).status_code == 422
+
+
 # Test deleting user1
 async def test_user1_deletion(client, test_user1_creation, test_user2_creation, auth_headers):
     user_id = test_user1_creation["id"]

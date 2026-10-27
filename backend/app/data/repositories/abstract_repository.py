@@ -2,6 +2,7 @@ from abc import ABC
 from typing import Any, TypeVar
 from uuid import UUID
 
+from sqlalchemy.orm import class_mapper
 from sqlmodel import select
 
 from app.data.database.engine import get_db_session
@@ -19,14 +20,22 @@ class AbstractRepository[T, PK](ABC):
     model: type[T]
     uneditable_fields: set[str] = {"id"}
 
-    async def get_all(self) -> list[T]:
+    async def get_all(self, limit: int | None = None, offset: int = 0) -> list[T]:
         """
-        Get all data wrapper for the unspecified model
+        Get all data wrapper for the unspecified model, optionally paginated.
 
+        :param limit: max rows to return; None returns all rows
+        :param offset: number of rows to skip
         :return: a list of all model instances
         """
         async with get_db_session() as session:
-            return list((await session.exec(select(self.model))).all())
+            pk = class_mapper(self.model).primary_key[0]
+            query = select(self.model).order_by(pk)
+            if offset:
+                query = query.offset(offset)
+            if limit is not None:
+                query = query.limit(limit)
+            return list((await session.exec(query)).all())
 
     async def get_first_by(self, **kwargs: object) -> T | None:
         """
