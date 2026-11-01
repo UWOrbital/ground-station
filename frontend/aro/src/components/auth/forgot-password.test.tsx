@@ -18,7 +18,7 @@ function renderPage(): void {
 afterEach(() => vi.restoreAllMocks());
 
 describe("ForgotPassword", () => {
-  it("posts the email and accepts an empty 202 response with a neutral confirmation", async () => {
+  it("posts the email and confirms the reset link", async () => {
     const user = userEvent.setup();
     let resolveRequest!: (response: Response) => void;
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(
@@ -28,6 +28,11 @@ describe("ForgotPassword", () => {
         }),
     );
     renderPage();
+
+    expect(
+      screen.getByText("Enter your email and we'll send you a link to reset your password."),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Email")).toHaveAttribute("placeholder", "name@example.com");
 
     await user.type(screen.getByLabelText("Email"), "ham@example.com");
     await user.click(screen.getByRole("button", { name: "Send reset link" }));
