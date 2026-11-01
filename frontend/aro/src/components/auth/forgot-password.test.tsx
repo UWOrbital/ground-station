@@ -30,7 +30,7 @@ describe("ForgotPassword", () => {
     renderPage();
 
     await user.type(screen.getByLabelText("Email"), "ham@example.com");
-    await user.click(screen.getByRole("button", { name: "Send Reset Instructions" }));
+    await user.click(screen.getByRole("button", { name: "Send reset link" }));
     expect(screen.getByRole("button", { name: "Sending…" })).toBeDisabled();
     expect(screen.getByLabelText("Email")).toBeDisabled();
     expect(fetchSpy).toHaveBeenCalledExactlyOnceWith(`${API_BASE_URL}/auth/forgot-password`, {
@@ -41,9 +41,10 @@ describe("ForgotPassword", () => {
 
     resolveRequest(new Response(null, { status: 202 }));
     expect(await screen.findByRole("status")).toHaveTextContent(
-      "If an account exists for that email",
+      "We've sent a link to reset your password to ham@example.com.",
     );
-    expect(screen.getByRole("link", { name: "Back to Login" })).toHaveAttribute("href", "/login");
+    expect(screen.getByText(/The link will expire in 1 hour/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Back to login" })).toHaveAttribute("href", "/login");
   });
 
   it.each(["", "invalid-email"])("does not submit invalid input %j", async (email) => {
@@ -51,7 +52,7 @@ describe("ForgotPassword", () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     renderPage();
     if (email) await user.type(screen.getByLabelText("Email"), email);
-    await user.click(screen.getByRole("button", { name: "Send Reset Instructions" }));
+    await user.click(screen.getByRole("button", { name: "Send reset link" }));
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(screen.getByLabelText("Email")).toBeInvalid();
   });
@@ -67,10 +68,10 @@ describe("ForgotPassword", () => {
       .mockResolvedValueOnce(new Response(null, { status: 202 }));
     renderPage();
     await user.type(screen.getByLabelText("Email"), "ham@example.com");
-    await user.click(screen.getByRole("button", { name: "Send Reset Instructions" }));
+    await user.click(screen.getByRole("button", { name: "Send reset link" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Please try again later.");
     expect(screen.getByLabelText("Email")).toHaveValue("ham@example.com");
-    await user.click(screen.getByRole("button", { name: "Send Reset Instructions" }));
+    await user.click(screen.getByRole("button", { name: "Send reset link" }));
     expect(await screen.findByRole("status")).toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
@@ -80,10 +81,27 @@ describe("ForgotPassword", () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new TypeError("Failed to fetch"));
     renderPage();
     await user.type(screen.getByLabelText("Email"), "ham@example.com");
-    await user.click(screen.getByRole("button", { name: "Send Reset Instructions" }));
+    await user.click(screen.getByRole("button", { name: "Send reset link" }));
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Unable to request password reset instructions. Please try again.",
     );
-    expect(screen.getByRole("button", { name: "Send Reset Instructions" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Send reset link" })).toBeEnabled();
+  });
+
+  it("resends the link to the submitted email", async () => {
+    const user = userEvent.setup();
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(() => Promise.resolve(new Response(null, { status: 202 })));
+    renderPage();
+    await user.type(screen.getByLabelText("Email"), "ham@example.com");
+    await user.click(screen.getByRole("button", { name: "Send reset link" }));
+    await user.click(await screen.findByRole("button", { name: "Resend link" }));
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    expect(fetchSpy).toHaveBeenLastCalledWith(
+      `${API_BASE_URL}/auth/forgot-password`,
+      expect.objectContaining({ body: JSON.stringify({ email: "ham@example.com" }) }),
+    );
+    expect(await screen.findByRole("status")).toHaveTextContent("ham@example.com");
   });
 });

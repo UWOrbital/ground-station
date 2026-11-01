@@ -13,7 +13,7 @@ describe("App", () => {
       </MemoryRouter>,
       { wrapper: createQueryWrapper() },
     );
-    expect(screen.getByRole("heading", { name: "Forgot Your Password?" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Reset your password" })).toBeInTheDocument();
   });
 
   it("navigates from login to password recovery and back", async () => {
@@ -27,8 +27,8 @@ describe("App", () => {
     const link = screen.getByRole("link", { name: "Forgot Your Password?" });
     expect(link).toHaveAttribute("href", "/forgot-password");
     await user.click(link);
-    expect(screen.getByRole("heading", { name: "Forgot Your Password?" })).toBeInTheDocument();
-    await user.click(screen.getByRole("link", { name: "Back to Login" }));
+    expect(screen.getByRole("heading", { name: "Reset your password" })).toBeInTheDocument();
+    await user.click(screen.getByRole("link", { name: "Back to login" }));
     expect(screen.getByRole("heading", { name: "Login to your ARO Account" })).toBeInTheDocument();
   });
 
