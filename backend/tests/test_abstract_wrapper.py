@@ -48,6 +48,13 @@ async def test_get_all(wrapper,obj1,obj2):
     else:
         assert arr[1].email==obj1["email"]
 
+async def test_get_all_with_pagination(wrapper,obj1,obj2):
+    await wrapper.create(obj1)
+    await wrapper.create(obj2)
+    arr=await wrapper.get_all(limit=1, offset=0)
+    assert len(arr) == 1
+    assert arr[0].email==obj1["email"] or arr[0].email==obj2["email"]
+
 async def test_get_by_id(wrapper,obj1):
     get=await wrapper.create(obj1)
     obj=await wrapper.get_by_id(get.id)
