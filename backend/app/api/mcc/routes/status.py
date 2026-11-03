@@ -1,9 +1,10 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
 from app.api.mcc.schemas.responses import SatelliteStatusResponse, TelemetryDataResponse
+from app.data.enums.satellite import SatelliteStatus
 from app.data.enums.transactional import SessionStatus
 from app.data.repositories.dal import DAL
 from app.data.repositories.repositories import CommsSessionRepository, TelemetryRepository
@@ -13,13 +14,11 @@ status_router = APIRouter(tags=["MCC", "Status"])
 CommsSessionRepo = Annotated[CommsSessionRepository, Depends(DAL.get_repo(DAL.comms_sessions))]
 TelemetryRepo = Annotated[TelemetryRepository, Depends(DAL.get_repo(DAL.telemetry))]
 
-# TODO : Expand the states of the backend to have a status of pending,
-# scheduled and completed instead of idle
-STATUS_MAP = {
-    SessionStatus.ONGOING: "online",
-    SessionStatus.COMPLETED: "idle",
-    SessionStatus.PENDING: "idle",
-    SessionStatus.SCHEDULED: "idle",
+STATUS_MAP: dict[SessionStatus, SatelliteStatus] = {
+    SessionStatus.ONGOING: SatelliteStatus.ONLINE,
+    SessionStatus.COMPLETED: SatelliteStatus.COMPLETED,
+    SessionStatus.PENDING: SatelliteStatus.PENDING,
+    SessionStatus.SCHEDULED: SatelliteStatus.SCHEDULED,
 }
 
 # NOTE : This is fragile and might change with the change of IDS in the spreadsheet referenced below
@@ -52,15 +51,15 @@ async def get_satellite_status(
 
     if session is None:
         return SatelliteStatusResponse(
-            status="offline",
+            status=SatelliteStatus.OFFLINE,
             last_contact="Never",
             session_duration="--",
             telemetry_data=[],
         )
 
-    frontend_status = STATUS_MAP.get(session.status, "error")
+    frontend_status = STATUS_MAP[session.status]
 
-    now = datetime.now()
+    now = datetime.now(UTC)
     contact_time = session.end_time if session.end_time is not None else session.start_time
     diff = now - contact_time
     minutes = int(diff.total_seconds() / 60)
