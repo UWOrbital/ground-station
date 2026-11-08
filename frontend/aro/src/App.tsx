@@ -13,6 +13,8 @@ import Home from "./components/Home.tsx";
 import PageNotFound from "./components/PageNotFound.tsx";
 import Gallery from "./components/profile/photo-gallery/gallery.tsx";
 import ProfileForm from "./components/profile/profile-form/profile-form.tsx";
+import ProtectedRoute from "./components/ProtectedRoute.tsx";
+import { AuthProvider } from "./contexts/AuthContext.tsx";
 
 /**
  * @brief App component displaying the main application
@@ -20,7 +22,7 @@ import ProfileForm from "./components/profile/profile-form/profile-form.tsx";
  */
 function App() {
   return (
-    <>
+    <AuthProvider>
       <Nav />
       <Background />
       <Routes>
@@ -36,13 +38,34 @@ function App() {
         <Route path="/verify" element={<Verify />} />
         <Route path="/verify/request" element={<RequestVerification />} />
         <Route path="/sign-up" element={<Signup />} />
-        <Route path="/new-request" element={<NewRequestForm />} />
+        <Route
+          path="/new-request"
+          element={
+            <ProtectedRoute>
+              <NewRequestForm />
+            </ProtectedRoute>
+          }
+        />
         <Route path="*" element={<PageNotFound />} />
-        <Route path="/profile/gallery" element={<Gallery />} />
-        <Route path="/profile/settings" element={<ProfileForm />} />
+        <Route
+          path="/profile/gallery"
+          element={
+            <ProtectedRoute>
+              <Gallery />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile/settings"
+          element={
+            <ProtectedRoute>
+              <ProfileForm />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
       <ToastContainer />
-    </>
+    </AuthProvider>
   );
 }
 
