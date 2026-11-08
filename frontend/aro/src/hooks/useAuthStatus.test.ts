@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
+import { createElement, type ReactNode } from "react";
+import { act, renderHook, waitFor } from "@testing-library/react";
+import { onlineManager, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useAuthStatus } from "./useAuthStatus";
+import { ApiError } from "@/lib/apiClient";
 import { accessTokenStore } from "@/lib/authToken";
 import {
   calledUrls,
@@ -26,6 +29,16 @@ const user = {
 const renderSettled = async () => {
   const hook = renderHook(() => useAuthStatus(), { wrapper: createQueryWrapper() });
   await waitFor(() => expect(hook.result.current.isSuccess).toBe(true));
+  return hook;
+};
+
+/**
+ * @brief Render useAuthStatus and wait for it to fail.
+ * @return the renderHook result.
+ */
+const renderErrored = async () => {
+  const hook = renderHook(() => useAuthStatus(), { wrapper: createQueryWrapper() });
+  await waitFor(() => expect(hook.result.current.isError).toBe(true));
   return hook;
 };
 
@@ -78,11 +91,87 @@ describe("useAuthStatus", () => {
     expect(result.current.data).toBeNull();
   });
 
-  it("resolves to null when fetch rejects", async () => {
-    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("network"));
+  it("drops the refreshed token when the user lookup still rejects it", async () => {
+    mockFetchByPath({
+      "/auth/rotate_tokens": jsonResponse(200, tokenBody("inactive-user-token")),
+      "/auth/get_current_user": jsonResponse(401),
+    });
 
     const { result } = await renderSettled();
 
     expect(result.current.data).toBeNull();
+    expect(accessTokenStore.get()).toBeNull();
+  });
+
+  it("errors instead of signing out when the backend can't be reached", async () => {
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("network"));
+
+    const { result } = await renderErrored();
+
+    expect(result.current.data).toBeUndefined();
+  });
+
+  it("errors instead of signing out when the user lookup hits a server error", async () => {
+    accessTokenStore.set("abc");
+    mockFetchByPath({ "/auth/get_current_user": jsonResponse(500, { detail: "boom" }) });
+
+    const { result } = await renderErrored();
+
+    expect(result.current.error).toBeInstanceOf(ApiError);
+    expect(result.current.data).toBeUndefined();
+  });
+
+  it("keeps the signed-in user when a later refetch fails", async () => {
+    accessTokenStore.set("abc");
+    const lookup = vi
+      .fn<() => Response>()
+      .mockReturnValueOnce(jsonResponse(200, user))
+      .mockImplementation(() => {
+        throw new Error("network");
+      });
+    mockFetchByPath({ "/auth/get_current_user": lookup });
+    const { result } = await renderSettled();
+
+    await act(async () => {
+      await result.current.refetch();
+    });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(lookup).toHaveBeenCalledTimes(2);
+    expect(result.current.data).toEqual(user);
+  });
+
+  it("keeps a resolved status fresh, so window refocus doesn't re-check it", async () => {
+    accessTokenStore.set("abc");
+    mockFetchByPath({ "/auth/get_current_user": jsonResponse(200, user) });
+
+    const { result } = await renderSettled();
+
+    expect(result.current.isStale).toBe(false);
+  });
+
+  it("fails after one attempt even when the app's client retries queries", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("network"));
+    // App defaults (retry: 3), unlike createQueryWrapper.
+    const queryClient = new QueryClient();
+    const wrapper = ({ children }: { children: ReactNode }) =>
+      createElement(QueryClientProvider, { client: queryClient }, children);
+
+    const { result } = renderHook(() => useAuthStatus(), { wrapper });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    queryClient.clear();
+  });
+
+  it("errors instead of pausing while the browser is offline", async () => {
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new TypeError("Failed to fetch"));
+    onlineManager.setOnline(false);
+    try {
+      const { result } = await renderErrored();
+      expect(result.current.data).toBeUndefined();
+    } finally {
+      onlineManager.setOnline(true);
+    }
   });
 });
