@@ -10,8 +10,8 @@ import { Link } from "react-router-dom";
 function Home() {
   return (
     <div className="pt-8 w-full flex flex-col items-center">
-      <img src={logo} alt="aro-logo" className="w-3xs md:w-xs lg:w-xs"></img>
-      <h1 className="font-[Jaldi] font-bold -mt-5 md:-mt-9 lg:-mt-9 text-5xl md:text-6xl lg:text-8xl">
+      <img src={logo} alt="aro-logo" className="w-lg md:w-3xl lg:w-3xl"></img>
+      <h1 className="font-[Jaldi] font-bold text-5xl md:text-6xl lg:text-8xl">
         Amateur Radio Operator
       </h1>
       <p className="font-[Jaldi] font-light mt-4 text-2xl md:text-2xl lg:text-3xl">
