@@ -19,7 +19,7 @@ function Nav() {
       {/* Logo */}
       <div className="flex-1">
         <Link to="/" className="hover:opacity-80 transition-opacity">
-          <img src={orbital_logo} alt="orbital logo" className="h-10 w-auto" />
+          <img src={orbital_logo} alt="orbital logo" className="h-11 w-auto" />
         </Link>
       </div>
 

@@ -16,7 +16,7 @@ function Nav() {
       {/* Logo */}
       <div>
         <Link to="/" className="inline-block hover:opacity-80 transition-opacity">
-          <img src={orbital_logo} alt="orbital-logo" className="h-10 w-auto" />
+          <img src={orbital_logo} alt="orbital-logo" className="mt-1 h-11 w-auto" />
         </Link>
       </div>
 
