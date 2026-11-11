@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import orbital_logo from "../assets/orbital_logo.png";
+import LogoDark from "../assets/orbital_logo_white.png";
+import LogoLight from "../assets/orbital_logo_black.png";
 import { NAVIGATION_LINKS } from "../utils/nav-links";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
@@ -19,7 +20,11 @@ function Nav() {
       {/* Logo */}
       <div className="flex-1">
         <Link to="/" className="hover:opacity-80 transition-opacity">
-          <img src={orbital_logo} alt="orbital logo" className="h-11 w-auto" />
+          {theme === "light" ? (
+            <img src={LogoLight} alt="orbital logo" className="h-11 w-auto" />
+          ) : (
+            <img src={LogoDark} alt="orbital logo" className="h-11 w-auto" />
+          )}
         </Link>
       </div>
 
