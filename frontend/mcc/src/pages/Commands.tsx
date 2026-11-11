@@ -1,3 +1,4 @@
+import { features } from "../components/Table";
 import { createColumnHelper } from "@tanstack/react-table";
 import { useQueryClient } from "@tanstack/react-query";
 import Table from "../components/Table";
@@ -28,9 +29,9 @@ const statusColors: Record<string, string> = {
   completed: "text-teal-400",
 };
 
-const columnHelper = createColumnHelper<CommandRow>();
+const columnHelper = createColumnHelper<typeof features, CommandRow>();
 
-const columns = [
+const columns = columnHelper.columns([
   columnHelper.accessor("command", {
     header: "Command",
     cell: (info) => info.getValue(),
@@ -58,7 +59,7 @@ const columns = [
     header: "Response",
     cell: (info) => info.getValue(),
   }),
-];
+]);
 
 /**
  * @brief Commands component displaying the commands table
