@@ -1,4 +1,4 @@
-import { useState, type SubmitEventHandler } from "react";
+import { useState, type FormEventHandler } from "react";
 import { useNavigate } from "react-router-dom";
 import { useRegister } from "@/hooks/useAuthMutations";
 import toastService from "@/services/Toast.service";
@@ -18,7 +18,7 @@ function Signup() {
   const register = useRegister();
   const navigate = useNavigate();
 
-  const handleSubmit: SubmitEventHandler<HTMLFormElement> = async (event) => {
+  const handleSubmit: FormEventHandler<HTMLFormElement> = async (event) => {
     event.preventDefault();
     register.mutate(
       {

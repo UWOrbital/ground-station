@@ -1,4 +1,4 @@
-import { useState, type SubmitEventHandler } from "react";
+import { useState, type FormEventHandler } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import toastService from "@/services/Toast.service";
@@ -15,7 +15,7 @@ function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit: SubmitEventHandler<HTMLFormElement> = async (event) => {
+  const handleSubmit: FormEventHandler<HTMLFormElement> = async (event) => {
     event.preventDefault();
     setIsSubmitting(true);
     try {
