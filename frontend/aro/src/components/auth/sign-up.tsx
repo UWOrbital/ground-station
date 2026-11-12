@@ -65,7 +65,7 @@ function Signup() {
           </div>
           <div>
             <label htmlFor="last-name" className="text-black block mb-1">
-              Last Name
+              Last Name <span className="text-gray-400">(optional)</span>
             </label>
             <input
               type="text"
@@ -120,7 +120,7 @@ function Signup() {
           </div>
           <div>
             <label htmlFor="phone-number" className="text-black block mb-1">
-              Phone Number
+              Phone Number <span className="text-gray-400">(optional)</span>
             </label>
             <input
               type="tel"
