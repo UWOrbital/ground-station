@@ -71,13 +71,13 @@ async def test_list_aro_requests_returns_all_users(admin_client: AsyncClient) ->
 
 
 async def test_list_aro_requests_pagination(admin_client: AsyncClient) -> None:
-    """Test that count and offset page through the requests newest first."""
+    """Test that limit and offset page through the requests newest first."""
     user = await _make_user("paged@test.com")
     requests = [await _make_request(user.id, BASE_TIME + timedelta(hours=i)) for i in range(3)]
     newest_first = [str(r.id) for r in reversed(requests)]
 
-    page1 = await admin_client.get(REQUESTS_URL, params={"count": 2, "offset": 0})
-    page2 = await admin_client.get(REQUESTS_URL, params={"count": 2, "offset": 2})
+    page1 = await admin_client.get(REQUESTS_URL, params={"limit": 2, "offset": 0})
+    page2 = await admin_client.get(REQUESTS_URL, params={"limit": 2, "offset": 2})
 
     assert page1.status_code == 200
     assert page2.status_code == 200
@@ -87,7 +87,8 @@ async def test_list_aro_requests_pagination(admin_client: AsyncClient) -> None:
 
 async def test_list_aro_requests_invalid_pagination(admin_client: AsyncClient) -> None:
     """Test that out-of-range pagination params are rejected by validation."""
-    assert (await admin_client.get(REQUESTS_URL, params={"count": 0})).status_code == 422
+    assert (await admin_client.get(REQUESTS_URL, params={"limit": 0})).status_code == 422
+    assert (await admin_client.get(REQUESTS_URL, params={"limit": 10_000})).status_code == 422
     assert (await admin_client.get(REQUESTS_URL, params={"offset": -1})).status_code == 422
 
 
