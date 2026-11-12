@@ -4,7 +4,6 @@ import { useLatestImage } from "@/hooks/useLatestImage";
  * @brief Displays the latest satellite image on the MCC dashboard
  * @return tsx element of LatestImageCard component
  */
-
 function LatestImageCard(){
     const { data: image, isLoading, isError, error } = useLatestImage();
 
