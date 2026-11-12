@@ -1,3 +1,7 @@
+import { useState, type SubmitEventHandler } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import toastService from "@/services/Toast.service";
 import { Link } from "react-router-dom";
 
 /**
@@ -5,6 +9,26 @@ import { Link } from "react-router-dom";
  * @return tsx element of Login component
  */
 function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { login } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSubmit: SubmitEventHandler<HTMLFormElement> = async (event) => {
+    event.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await login(email, password);
+      toastService.success("Logged in successfully");
+      navigate("/");
+    } catch (err) {
+      toastService.error((err as Error).message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen px-4">
       <div className="w-full max-w-xl bg-white rounded-lg p-6 pt-6">
@@ -14,7 +38,7 @@ function Login() {
             Enter your email below to login to your account
           </h2>
         </div>
-        <form className="space-y-6">
+        <form className="space-y-6" onSubmit={handleSubmit}>
           <div>
             <label htmlFor="email" className="text-black block mb-1">
               Email
@@ -24,6 +48,9 @@ function Login() {
               id="email"
               className="w-full text-gray-600 px-4 py-2 rounded-lg border border-gray-600"
               placeholder="Enter Email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              required
             />
           </div>
           <div>
@@ -40,13 +67,16 @@ function Login() {
               id="password"
               className="w-full text-gray-600 px-4 py-2 rounded-lg border border-gray-600"
               placeholder="Enter Password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              required
             />
           </div>
           <button
             type="submit"
             className="w-full bg-black text-white py-2 rounded-lg hover:bg-gray-700 transition-colors cursor-pointer"
           >
-            Login
+            {isSubmitting ? "Logging in" : "Login"}
           </button>
         </form>
         <button
