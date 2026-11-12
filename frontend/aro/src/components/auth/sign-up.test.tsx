@@ -49,7 +49,9 @@ beforeEach(() => {
 
 describe("Signup", () => {
   it("registers with only the required fields and omits empty optionals", async () => {
-    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse(201, { id: "1" }));
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(jsonResponse(201, { id: "1" }));
     renderSignup();
 
     await fillRequiredFields();
@@ -69,7 +71,9 @@ describe("Signup", () => {
   });
 
   it("includes last name and phone number when provided", async () => {
-    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse(201, { id: "1" }));
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(jsonResponse(201, { id: "1" }));
     renderSignup();
 
     await fillRequiredFields();
@@ -108,7 +112,9 @@ describe("Signup", () => {
   });
 
   it("does not submit when a required field is empty", async () => {
-    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse(201, { id: "1" }));
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(jsonResponse(201, { id: "1" }));
     renderSignup();
 
     // Call sign deliberately left blank; the `required` attribute blocks submit.

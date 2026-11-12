@@ -89,7 +89,9 @@ describe("Login", () => {
     mockFetchByPath({
       "/auth/rotate_tokens": jsonResponse(401),
       "/auth/get_current_user": jsonResponse(401),
-      "/auth/login": jsonResponse(401, { detail: { message: "Invalid credentials.", code: "invalid_credentials" } }),
+      "/auth/login": jsonResponse(401, {
+        detail: { message: "Invalid credentials.", code: "invalid_credentials" },
+      }),
     });
     renderLogin();
 

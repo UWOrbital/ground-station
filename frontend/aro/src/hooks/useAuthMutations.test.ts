@@ -7,9 +7,9 @@ describe("useRegister", () => {
   beforeEach(() => vi.restoreAllMocks());
 
   it("omits empty optional fields from the request body", async () => {
-    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify({ id: "1" }), { status: 201 }),
-    );
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response(JSON.stringify({ id: "1" }), { status: 201 }));
     const { result } = renderHook(() => useRegister(), { wrapper: createQueryWrapper() });
 
     // last name and phone number intentionally absent
@@ -27,9 +27,9 @@ describe("useRegister", () => {
   });
 
   it("posts to the register endpoint and includes optional fields when present", async () => {
-    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify({ id: "1" }), { status: 201 }),
-    );
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response(JSON.stringify({ id: "1" }), { status: 201 }));
     const { result } = renderHook(() => useRegister(), { wrapper: createQueryWrapper() });
 
     await result.current.mutateAsync({
