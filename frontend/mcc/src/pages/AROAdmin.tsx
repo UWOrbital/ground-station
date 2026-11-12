@@ -1,3 +1,4 @@
+import { features } from "../components/Table";
 import { createColumnHelper } from "@tanstack/react-table";
 import { useAroRequests } from "../hooks/useAroRequests";
 import Table from "../components/Table";
@@ -12,9 +13,9 @@ const statusColors: Record<string, string> = {
   completed: "text-teal-400",
 };
 
-const columnHelper = createColumnHelper<ARORequest>();
+const columnHelper = createColumnHelper<typeof features, ARORequest>();
 
-const columns = [
+const columns = columnHelper.columns([
   columnHelper.accessor("status", {
     header: "Status",
     cell: (info) => {
@@ -38,7 +39,7 @@ const columns = [
     header: "ARO User",
     cell: (info) => info.getValue(),
   }),
-];
+]);
 
 /**
  * @brief AROAdmin component displaying the ARO admin table

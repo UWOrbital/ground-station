@@ -1,3 +1,4 @@
+import { features } from "../components/Table";
 import { createColumnHelper } from "@tanstack/react-table";
 import { useEffect, useState } from "react";
 import Table from "../components/Table";
@@ -11,9 +12,9 @@ const statusColors: Record<SessionStatus, string> = {
   completed: "text-teal-400",
 };
 
-const columnHelper = createColumnHelper<Session>();
+const columnHelper = createColumnHelper<typeof features, Session>();
 
-const columns = [
+const columns = columnHelper.columns([
   columnHelper.accessor("start_time", {
     header: "Start",
     cell: (info) => new Date(info.getValue()).toLocaleString(),
@@ -33,7 +34,7 @@ const columns = [
     header: "Session ID",
     cell: (info) => info.getValue(),
   }),
-];
+]);
 
 function LiveCard({ session }: { session: Session | null }) {
   if (!session)

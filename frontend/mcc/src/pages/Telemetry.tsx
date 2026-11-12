@@ -1,15 +1,22 @@
 import { useMemo, useState, useRef, useEffect } from "react";
 import {
+  useTable,
+  tableFeatures,
+  rowSortingFeature,
+  rowExpandingFeature,
+  columnFilteringFeature,
+  globalFilteringFeature,
+  columnVisibilityFeature,
+  createSortedRowModel,
+  createExpandedRowModel,
+  createFilteredRowModel,
+  sortFn_alphanumeric,
+  sortFn_basic,
   createColumnHelper,
   type ColumnFiltersState,
   type ExpandedState,
   flexRender,
-  getCoreRowModel,
-  getExpandedRowModel,
-  getFilteredRowModel,
-  getSortedRowModel,
   type SortingState,
-  useReactTable,
 } from "@tanstack/react-table";
 import { useTelemetry, type TelemetryEntry, type TelemetrySubrow } from "../hooks/useTelemetry";
 
@@ -27,9 +34,24 @@ type TelemetryRow = {
   subrows?: TelemetryRow[];
 };
 
-const columnHelper = createColumnHelper<TelemetryRow>();
+const telemetryFeatures = tableFeatures({
+  rowSortingFeature,
+  rowExpandingFeature,
+  columnFilteringFeature,
+  globalFilteringFeature,
+  columnVisibilityFeature,
+  sortedRowModel: createSortedRowModel(),
+  expandedRowModel: createExpandedRowModel(),
+  filteredRowModel: createFilteredRowModel(),
+  sortFns: {
+    alphanumeric: sortFn_alphanumeric,
+    basic: sortFn_basic,
+  },
+});
 
-const columns = [
+const columnHelper = createColumnHelper<typeof telemetryFeatures, TelemetryRow>();
+
+const columns = columnHelper.columns([
   columnHelper.accessor("type", {
     id: "type",
     header: "Type",
@@ -83,14 +105,14 @@ const columns = [
   columnHelper.accessor("timestamp", {
     header: "Timestamp",
     cell: (info) => info.row.original.timestamp,
-    sortingFn: "alphanumeric",
+    sortFn: "alphanumeric",
   }),
   columnHelper.accessor("value", {
     header: "Value",
     cell: (info) => info.row.original.value,
-    sortingFn: "basic",
+    sortFn: "basic",
   }),
-];
+]);
 
 function Telemetry() {
   const type: string = "< log >";
@@ -130,7 +152,8 @@ function Telemetry() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [expanded, setExpanded] = useState<ExpandedState>({});
 
-  const table = useReactTable({
+  const table = useTable({
+    features: telemetryFeatures,
     data,
     columns,
     state: { sorting, expanded, columnFilters, globalFilter },
@@ -140,10 +163,6 @@ function Telemetry() {
     onGlobalFilterChange: setGlobalFilter,
     getSubRows: (row) => row.subrows,
     autoResetExpanded: false,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getExpandedRowModel: getExpandedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     globalFilterFn: (row, _columnId, filterValue) => {
       const search = (filterValue as string).toLowerCase();
 
