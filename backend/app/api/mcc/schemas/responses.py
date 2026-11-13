@@ -5,6 +5,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 from app.data.enums.mcc_users import MCCAdminRequestStatus
+from app.data.enums.satellite import SatelliteStatus
 from app.data.enums.transactional import CommandStatus
 from app.data.models.main_models import MainCommand, MainTelemetry
 from app.data.models.transactional_models import ARORequest, CommsSession
@@ -92,7 +93,7 @@ class SatelliteStatusResponse(BaseModel):
     The Satellite Status Response model
     """
 
-    status: str
+    status: SatelliteStatus
     last_contact: str
     session_duration: str
     telemetry_data: list[TelemetryDataResponse]

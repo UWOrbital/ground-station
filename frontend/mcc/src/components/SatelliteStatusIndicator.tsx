@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export type SatelliteStatus = "online" | "idle" | "offline" | "error";
+export type SatelliteStatus = "pending" | "scheduled" | "online" | "completed" | "offline";
 
 export interface TelemetryData {
   label: string;
@@ -14,15 +14,24 @@ interface StatusConfig {
   textColor: string;
 }
 
-//TODO: Should have more states such as Pending , Scheduled , Completed instead of just idle for all of them
 const statusConfig: Record<SatelliteStatus, StatusConfig> = {
   online: {
     label: "ONLINE",
     accentColor: "bg-green-500",
     textColor: "text-green-400",
   },
-  idle: {
-    label: "IDLE",
+  pending: {
+    label: "PENDING",
+    accentColor: "bg-yellow-500",
+    textColor: "text-yellow-400",
+  },
+  scheduled: {
+    label: "SCHEDULED",
+    accentColor: "bg-yellow-500",
+    textColor: "text-yellow-400",
+  },
+  completed: {
+    label: "COMPLETED",
     accentColor: "bg-yellow-500",
     textColor: "text-yellow-400",
   },
@@ -30,11 +39,6 @@ const statusConfig: Record<SatelliteStatus, StatusConfig> = {
     label: "OFFLINE",
     accentColor: "bg-red-500",
     textColor: "text-red-400",
-  },
-  error: {
-    label: "ERROR",
-    accentColor: "bg-red-600",
-    textColor: "text-red-500",
   },
 };
 
