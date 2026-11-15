@@ -1,5 +1,4 @@
 from collections.abc import Awaitable, Callable, Sequence
-from datetime import datetime
 from time import perf_counter
 
 from fastapi import Request, Response
@@ -10,7 +9,7 @@ from starlette.status import HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERRO
 from starlette.types import ASGIApp
 
 
-def _content_length(headers: Headers) -> str:
+def _content_length(headers: Headers) -> int | None:
     """
     Read the ``Content-Length`` header, or ``"unknown"`` when it is absent.
 
@@ -43,31 +42,24 @@ class LoggerMiddleware(BaseHTTPMiddleware):
         :param call_next: callable that runs the rest of the stack and returns the response.
         :return: the response produced by the wrapped handler, untouched.
         """
-        request_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         request_id = getattr(request.state, "request_id", None)
         if request_id is None:
             logger.warning("request_id missing from request.state; RequestIDMiddleware not installed upstream")
             request_id = "not-available"
         # Names only — a value can be a secret (e.g. the Keycloak OAuth `code`).
-        param_keys = sorted(request.query_params.keys())
+        param_keys = ",".join(sorted(request.query_params.keys()))
         # Size from the header so the (possibly sensitive) body is never read.
         request_size = _content_length(request.headers)
         # From UserIdMiddleware (app.config.user_id_middleware)
         request_user_id = getattr(request.state, "user_id", None)
 
-        logger.info(
-            " | ".join(
-                [
-                    f"REQUEST | Method: {request.method}",
-                    f"Request ID: {request_id}",
-                    f"URL: {request.url.path}",
-                    f"User id: {request_user_id}",
-                    f"Param keys: {param_keys}",
-                    f"Time: {request_time}",
-                    f"Bytes: {request_size}.",
-                ]
-            )
-        )
+        logger.bind(
+            method=request.method,
+            path=request.url.path,
+            user_id=request_user_id,
+            param_keys=param_keys,
+            request_content_length=request_size,
+        ).info("Request")
 
         start_time = perf_counter()
         response = await call_next(request)
@@ -77,21 +69,17 @@ class LoggerMiddleware(BaseHTTPMiddleware):
             return response
 
         if response.status_code >= HTTP_500_INTERNAL_SERVER_ERROR:
-            logger_severity = logger.critical
+            logger_severity = "CRITICAL"
         elif response.status_code >= HTTP_400_BAD_REQUEST:
-            logger_severity = logger.error
+            logger_severity = "ERROR"
         else:
-            logger_severity = logger.info
+            logger_severity = "INFO"
 
-        logger_severity(
-            " | ".join(
-                [
-                    f"RESPONSE | Status: {response.status_code}",
-                    f"Request ID: {request_id}",
-                    f"Bytes: {_content_length(response.headers)}",
-                    f"ms Elapsed: {process_time * 1000:.2f}.",
-                ]
-            )
-        )
+        logger.bind(
+            status=response.status_code,
+            response_content_length=_content_length(response.headers),
+            duration_ms=round(process_time * 1000, 2),
+        ).log(logger_severity, "Response")
 
+        
         return response

@@ -83,7 +83,7 @@ class AROUserManager(UUIDIDMixin, BaseUserManager[AROUserRecord, UUID]):
         :param user: the now-verified ARO user.
         :param request: optional FastAPI request that triggered the operation.
         """
-        logger.info(f"ARO email verified | User id: {user.id}")
+        logger.bind(user_id=str(user.id)).info("ARO email verified")
 
 
 async def get_user_db() -> AsyncGenerator[AROUserDatabaseAdapter, None]:
