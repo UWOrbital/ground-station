@@ -182,13 +182,11 @@ async def send_many(emails: list[Email]) -> None:
 
     fm = _create_fastmail()
 
-
     for email in emails:
         logger.bind(
             type=email.type,
             recipient_count=len(email.recipients),  # count only, addresses are PII
         ).info("Email send start")
-        
 
         try:
             await fm.send_message(MessageSchema(**_create_message_schema_fields(email)))
@@ -197,7 +195,6 @@ async def send_many(emails: list[Email]) -> None:
                 type=email.type,
                 recipient_count=len(email.recipients),  # count only, addresses are PII
             ).exception("Email send fail")
-            
         else:
             logger.bind(
                 type=email.type,

@@ -11,15 +11,21 @@ from starlette.types import ASGIApp
 
 def _content_length(headers: Headers) -> int | None:
     """
-    Read the ``Content-Length`` header, or ``"unknown"`` when it is absent.
+    Read the ``Content-Length`` header as an int, or None when it is absent or not an integer.
 
     Used instead of buffering the body so request/response sizes can be logged
     without ever reading (potentially sensitive) body bytes.
 
     :param headers: the request or response headers.
-    :return: the content length as a string, or ``"unknown"`` if not provided.
+    :return: the content length as an int, or None if absent or not an integer.
     """
-    return headers.get("content-length", "unknown")
+    value = headers.get("content-length")
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except ValueError:
+        return None
 
 
 class LoggerMiddleware(BaseHTTPMiddleware):
@@ -42,10 +48,6 @@ class LoggerMiddleware(BaseHTTPMiddleware):
         :param call_next: callable that runs the rest of the stack and returns the response.
         :return: the response produced by the wrapped handler, untouched.
         """
-        request_id = getattr(request.state, "request_id", None)
-        if request_id is None:
-            logger.warning("request_id missing from request.state; RequestIDMiddleware not installed upstream")
-            request_id = "not-available"
         # Names only — a value can be a secret (e.g. the Keycloak OAuth `code`).
         param_keys = ",".join(sorted(request.query_params.keys()))
         # Size from the header so the (possibly sensitive) body is never read.
@@ -81,5 +83,4 @@ class LoggerMiddleware(BaseHTTPMiddleware):
             duration_ms=round(process_time * 1000, 2),
         ).log(logger_severity, "Response")
 
-        
         return response

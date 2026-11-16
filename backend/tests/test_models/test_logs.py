@@ -12,14 +12,19 @@ def log_repo():
 
 @pytest.fixture
 def log_row():
-    """A representative logs.api row payload."""
+    """A representative logs.api row payload: a LoggerMiddleware 4xx "Response" record as the DB sink stores it."""
     return {
-        "priority": "ERROR",
-        "message": "something went wrong",
-        "module": "app.api.middleware",
+        "priority": "ERROR",  # 4xx responses log at ERROR
+        "message": "Response",
+        "module": "app.config.logger_middleware",
         "function": "dispatch",
-        "line": 42,
-        "extra": {"request_id": "abc-123", "user_id": "anon"},
+        "line": 82,  # illustrative; the line of the .log(...) call in dispatch when this was written
+        "extra": {
+            "request_id": "3f2b8c1e-0d4a-4e8b-9a6f-1c2d3e4f5a6b",  # bound by RequestIDMiddleware's contextualize
+            "status": 404,  # int: kept as-is by _json_safe
+            "response_content_length": 22,
+            "duration_ms": 1.23,  # float: kept as-is by _json_safe
+        },
     }
 
 
