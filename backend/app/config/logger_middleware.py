@@ -1,4 +1,5 @@
 from collections.abc import Awaitable, Callable, Sequence
+from datetime import datetime
 from time import perf_counter
 
 from fastapi import Request, Response
@@ -9,23 +10,17 @@ from starlette.status import HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERRO
 from starlette.types import ASGIApp
 
 
-def _content_length(headers: Headers) -> int | None:
+def _content_length(headers: Headers) -> str:
     """
-    Read the ``Content-Length`` header as an int, or None when it is absent or not an integer.
+    Read the ``Content-Length`` header, or ``"unknown"`` when it is absent or not an integer.
 
     Used instead of buffering the body so request/response sizes can be logged
     without ever reading (potentially sensitive) body bytes.
 
     :param headers: the request or response headers.
-    :return: the content length as an int, or None if absent or not an integer.
+    :return: the content length as a string, or ``"unknown"`` if not provided.
     """
-    value = headers.get("content-length")
-    if value is None:
-        return None
-    try:
-        return int(value)
-    except ValueError:
-        return None
+    return headers.get("content-length", "unknown")
 
 
 class LoggerMiddleware(BaseHTTPMiddleware):
@@ -48,6 +43,7 @@ class LoggerMiddleware(BaseHTTPMiddleware):
         :param call_next: callable that runs the rest of the stack and returns the response.
         :return: the response produced by the wrapped handler, untouched.
         """
+        request_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         # Names only — a value can be a secret (e.g. the Keycloak OAuth `code`).
         param_keys = ",".join(sorted(request.query_params.keys()))
         # Size from the header so the (possibly sensitive) body is never read.
@@ -56,6 +52,7 @@ class LoggerMiddleware(BaseHTTPMiddleware):
         request_user_id = getattr(request.state, "user_id", None)
 
         logger.bind(
+            request_received_at=request_time,
             method=request.method,
             path=request.url.path,
             user_id=request_user_id,

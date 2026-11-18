@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pytest
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
@@ -44,6 +46,16 @@ def _response_extra_without_duration(record: dict[str, object]) -> dict[str, obj
     return extra
 
 
+def _request_extra_without_received_at(record: dict[str, object]) -> dict[str, object]:
+    """Return a Request record's extra minus request_received_at (wall-clock time), after checking its format."""
+    extra = dict(record["extra"])
+    assert "request_received_at" in extra
+    received_at = extra.pop("request_received_at")
+    assert isinstance(received_at, str)
+    datetime.strptime(received_at, "%Y-%m-%d %H:%M:%S")  # raises if the format differs
+    return extra
+
+
 def _app_with_marker_response() -> FastAPI:
     """Build a tiny app behind LoggerMiddleware whose response body carries a marker."""
     app = FastAPI()
@@ -73,10 +85,10 @@ def _app_with_status_routes(excluded_endpoints: tuple[str, ...] = ()) -> FastAPI
 
 
 def test_content_length_helper():
-    """The helper returns the header value as an int, or None when it is absent or not an integer."""
-    assert _content_length(Headers({"content-length": "42"})) == 42
-    assert _content_length(Headers({})) is None
-    assert _content_length(Headers({"content-length": "abc"})) is None
+    """The helper returns the raw header string, or "unknown" when it is absent."""
+    assert _content_length(Headers({"content-length": "42"})) == "42"
+    assert _content_length(Headers({})) == "unknown"
+    assert _content_length(Headers({"content-length": "abc"})) == "abc"
 
 
 async def test_middleware_logs_metadata_only(captured_logs):
@@ -93,20 +105,17 @@ async def test_middleware_logs_metadata_only(captured_logs):
 
     # Metadata is present, as exact bound fields. No RequestIDMiddleware here, so no request_id in extra.
     requests = _middleware_records(captured_logs, "Request")
-    assert requests == [
-        {
-            "message": "Request",
-            "level": "INFO",
-            "extra": {
-                "method": "POST",
-                "path": "/thing",
-                "user_id": None,  # no UserIdMiddleware, so request.state.user_id is unset
-                "param_keys": "code,state",
-                # 29 = len(b'{"password":"BODY-SECRET-PW"}')
-                "request_content_length": 29,
-            },
-        }
-    ]
+    assert len(requests) == 1
+    assert requests[0]["message"] == "Request"
+    assert requests[0]["level"] == "INFO"
+    assert _request_extra_without_received_at(requests[0]) == {
+        "method": "POST",
+        "path": "/thing",
+        "user_id": None,  # no UserIdMiddleware, so request.state.user_id is unset
+        "param_keys": "code,state",
+        # 29 = len(b'{"password":"BODY-SECRET-PW"}')
+        "request_content_length": "29",
+    }
 
     responses = _middleware_records(captured_logs, "Response")
     assert len(responses) == 1
@@ -115,7 +124,7 @@ async def test_middleware_logs_metadata_only(captured_logs):
         "status": 200,
         # 33 = len('{"leak_marker":"RESP-SECRET-XYZ"}'),
         # FastAPI's compact JSON rendering of the handler's return value
-        "response_content_length": 33,
+        "response_content_length": "33",
     }
 
     # Nothing sensitive is present in any message or bound field:
@@ -171,13 +180,13 @@ async def test_logger_uses_shared_request_id_when_chained(captured_logs):
 
     requests = _middleware_records(captured_logs, "Request")
     assert len(requests) == 1
-    assert requests[0]["extra"] == {
+    assert _request_extra_without_received_at(requests[0]) == {
         "request_id": request_id,
         "method": "GET",
         "path": "/thing",
         "user_id": None,
         "param_keys": "",
-        "request_content_length": None,  # None when the header is absent (a GET has none)
+        "request_content_length": "unknown",  # "unknown" when the header is absent (a GET has none)
     }
 
     responses = _middleware_records(captured_logs, "Response")
@@ -185,7 +194,7 @@ async def test_logger_uses_shared_request_id_when_chained(captured_logs):
     assert _response_extra_without_duration(responses[0]) == {
         "request_id": request_id,  # same id as the Request record
         "status": 200,
-        "response_content_length": 12,  # 12 = len('{"ok":"yes"}')
+        "response_content_length": "12",  # 12 = len('{"ok":"yes"}')
     }
 
 
@@ -201,7 +210,7 @@ async def test_error_responses_log_at_error_level(captured_logs):
     assert responses[0]["level"] == "ERROR"
     assert _response_extra_without_duration(responses[0]) == {
         "status": 404,
-        "response_content_length": 22,  # 22 = len('{"detail":"Not Found"}')
+        "response_content_length": "22",  # 22 = len('{"detail":"Not Found"}')
     }
 
 
@@ -217,7 +226,7 @@ async def test_server_error_responses_log_at_critical_level(captured_logs):
     assert responses[0]["level"] == "CRITICAL"
     assert _response_extra_without_duration(responses[0]) == {
         "status": 503,
-        "response_content_length": 16,  # 16 = len('{"error":"down"}')
+        "response_content_length": "16",  # 16 = len('{"error":"down"}')
     }
 
 

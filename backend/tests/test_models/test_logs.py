@@ -22,7 +22,7 @@ def log_row():
         "extra": {
             "request_id": "3f2b8c1e-0d4a-4e8b-9a6f-1c2d3e4f5a6b",  # bound by RequestIDMiddleware's contextualize
             "status": 404,  # int: kept as-is by _json_safe
-            "response_content_length": 22,
+            "response_content_length": "22",
             "duration_ms": 1.23,  # float: kept as-is by _json_safe
         },
     }

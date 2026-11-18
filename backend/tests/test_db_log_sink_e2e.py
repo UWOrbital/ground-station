@@ -18,6 +18,7 @@ on teardown so nothing leaks into the shared session-scoped container.
 
 import asyncio
 from contextlib import asynccontextmanager
+from datetime import datetime
 from uuid import uuid4
 
 import pytest_asyncio
@@ -167,13 +168,18 @@ async def test_request_logs_persist_through_middleware(sink_on_container, db_eng
         # The path is a bound field, so exactly one row (the Request row) carries it.
         path_rows = await _logs_with_extra(db_engine, "path", path)
         assert [(row.message, row.priority) for row in path_rows] == [("Request", "INFO")]
-        assert path_rows[0].extra == {
+        request_extra = dict(path_rows[0].extra or {})
+        assert "request_received_at" in request_extra
+        received_at = request_extra.pop("request_received_at")
+        assert isinstance(received_at, str)
+        datetime.strptime(received_at, "%Y-%m-%d %H:%M:%S")  # raises if the format differs
+        assert request_extra == {
             "request_id": request_id,  # from RequestIDMiddleware's logger.contextualize
             "method": "GET",
             "path": path,
             "user_id": None,  # unauthenticated request: UserIdMiddleware leaves state.user_id unset
             "param_keys": "",
-            "request_content_length": None,  # None when the header is absent
+            "request_content_length": "unknown",  # "unknown" when the header is absent
         }
 
         # Its Response counterpart shares the request_id (the response row has no path).
@@ -185,7 +191,7 @@ async def test_request_logs_persist_through_middleware(sink_on_container, db_eng
         assert response_extra == {
             "request_id": request_id,
             "status": 200,  # ints survive _json_safe and the JSON column unchanged
-            "response_content_length": 13,  # 13 = len('{"ok":"true"}')
+            "response_content_length": "13",  # 13 = len('{"ok":"true"}')
         }
     finally:
         await _delete_logs_with_extra(db_engine, "path", path)

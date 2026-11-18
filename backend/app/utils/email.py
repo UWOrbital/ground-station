@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
 from typing import Any
@@ -182,10 +183,14 @@ async def send_many(emails: list[Email]) -> None:
 
     fm = _create_fastmail()
 
+    def t() -> str:
+        return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
     for email in emails:
         logger.bind(
             type=email.type,
             recipient_count=len(email.recipients),  # count only, addresses are PII
+            time=t(),
         ).info("Email send start")
 
         try:
@@ -194,11 +199,13 @@ async def send_many(emails: list[Email]) -> None:
             logger.bind(
                 type=email.type,
                 recipient_count=len(email.recipients),  # count only, addresses are PII
+                time=t(),
             ).exception("Email send fail")
         else:
             logger.bind(
                 type=email.type,
                 recipient_count=len(email.recipients),  # count only, addresses are PII
+                time=t(),
             ).info("Email send success")
 
 

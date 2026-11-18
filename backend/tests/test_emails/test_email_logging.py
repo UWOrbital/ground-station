@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pytest
 from loguru import logger
 from pydantic import NameEmail
@@ -30,6 +32,16 @@ def captured_logs():
 def _email_records(records: list[dict[str, object]]) -> list[dict[str, object]]:
     """Keep only the send_many records so unrelated logs can't affect the assertions."""
     return [r for r in records if r["message"] in ("Email send start", "Email send success", "Email send fail")]
+
+
+def _extra_without_time(record: dict[str, object]) -> dict[str, object]:
+    """Return a record's extra minus time (wall-clock time), after checking its format."""
+    extra = dict(record["extra"])
+    assert "time" in extra
+    time = extra.pop("time")
+    assert isinstance(time, str)
+    datetime.strptime(time, "%Y-%m-%d %H:%M:%S")  # raises if the format differs
+    return extra
 
 
 def _all_text(records: list[dict[str, object]]) -> str:
@@ -83,7 +95,7 @@ async def test_send_many_logs_recipient_count_not_addresses(monkeypatch, capture
     await send_many([_two_recipient_email()])
 
     records = _email_records(captured_logs)
-    assert [(r["message"], r["level"], r["extra"]) for r in records] == [
+    assert [(r["message"], r["level"], _extra_without_time(r)) for r in records] == [
         ("Email send start", "INFO", {"type": _TEST_TYPE, "recipient_count": 2}),  # 2 = len(recipients), not the list
         ("Email send success", "INFO", {"type": _TEST_TYPE, "recipient_count": 2}),
     ]
@@ -103,7 +115,7 @@ async def test_send_many_logs_failure_with_count_not_addresses(monkeypatch, capt
     await send_many([_two_recipient_email()])
 
     records = _email_records(captured_logs)
-    assert [(r["message"], r["level"], r["extra"]) for r in records] == [
+    assert [(r["message"], r["level"], _extra_without_time(r)) for r in records] == [
         ("Email send start", "INFO", {"type": _TEST_TYPE, "recipient_count": 2}),
         # logger.exception logs at ERROR and attaches the caught exception.
         ("Email send fail", "ERROR", {"type": _TEST_TYPE, "recipient_count": 2}),
