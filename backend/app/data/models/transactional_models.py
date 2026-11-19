@@ -232,12 +232,12 @@ class OrbitElement(BaseSQLModel, table=True):
     Holds one set of orbit elements (CCSDS OMM record) for a satellite
     """
 
-    id: UUID = Field(default_factory=uuid4, primary_key=True, index=True)
-    norad_cat_id: int = Field(index=True)
-    epoch: datetime = Field(sa_column=Column(DateTime(timezone=True), nulllable=False))
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    norad_cat_id: int
+    epoch: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
     omm: dict[str, Any] = Field(sa_column=Column(JSONB, nullable=False))  # Raw CelesTrak JSON OMM record
     source: OrbitElementSource = Field(default=OrbitElementSource.CELESTRAK)
-    fetched_at: datetime = Field(
+    created_at: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
         sa_column=Column(DateTime(timezone=True), server_default=func.now(), nullable=False),
     )
