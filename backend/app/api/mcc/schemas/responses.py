@@ -63,6 +63,21 @@ class SessionsResponse(BaseModel):
     data: Annotated[list[Session], Field(description="A list containing Session objects")]
 
 
+class SessionResponse(BaseModel):
+    """Response model wrapping a single Session."""
+
+    data: Annotated[Session, Field(description="The requested Session")]
+
+
+class CurrentSessionResponse(BaseModel):
+    """Response model for the session in progress or the next upcoming one."""
+
+    data: Annotated[
+        Session | None,
+        Field(description="The session in progress, else the next upcoming session, else null"),
+    ]
+
+
 class MainTelemetriesResponse(BaseModel):
     """Response model for wrapping a list of main telemetries"""
 
