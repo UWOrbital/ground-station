@@ -8,6 +8,7 @@ from sqlmodel import col, select
 from app.api.mcc.schemas.responses import TelemetryEntry, TelemetrySubrow
 from app.config.data_values import SESSION_LOCKOUT_SECONDS
 from app.data.database.engine import get_db_session
+from app.data.enums.transactional import SessionSource, SessionStatus
 from app.data.models.aro_user_models import AROUserAuthToken, AROUserCallsigns, AROUserLogin, AROUsers
 from app.data.models.logs_models import APILog
 from app.data.models.main_models import MainCommand, MainTelemetry
@@ -16,6 +17,7 @@ from app.data.models.transactional_models import (
     ARORequest,
     Command,
     Image,
+    OrbitElement,
     Packet,
     Session,
     Telemetry,
@@ -233,25 +235,26 @@ class SessionRepository(AbstractRepository[Session, UUID]):
 
     model = Session
 
-    async def get_most_recent_session(self) -> Session | None:
-        """
-
-        Retrieves the session if there is one with the most recent start_time
-
-        :return: Session | None
-        """
-        async with get_db_session() as db:
-            return (await db.exec(select(Session).order_by(col(Session.start_time).desc()))).first()
-
     async def get_in_range(
-        self, start_after: datetime | None, start_before: datetime | None, limit: int = 100
+        self,
+        start_after: datetime | None,
+        start_before: datetime | None,
+        limit: int = 100,
+        offset: int = 0,
+        end_after: datetime | None = None,
+        source: SessionSource | None = None,
+        status: SessionStatus | None = None,
     ) -> list[Session]:
         """
-        Retrieves sessions whose start_time falls within the given range
+        Retrieves sessions matching the given time range and filters
 
         :param start_after: only return sessions starting at or after this time
         :param start_before: only return sessions starting before this time
         :param limit: maximum number of rows to return
+        :param offset: number of rows to skip
+        :param end_after: only return sessions ending after this time
+        :param source: only return sessions with this source
+        :param status: only return sessions with this status
         :return: matching session entries, ordered by start_time ascending
         """
         async with get_db_session() as db:
@@ -260,7 +263,26 @@ class SessionRepository(AbstractRepository[Session, UUID]):
                 query = query.where(Session.start_time >= start_after)
             if start_before:
                 query = query.where(Session.start_time < start_before)
-            return list((await db.exec(query.order_by(col(Session.start_time).asc()).limit(limit))).all())
+            if end_after:
+                query = query.where(Session.end_time > end_after)
+            if source:
+                query = query.where(Session.source == source)
+            if status:
+                query = query.where(Session.status == status)
+            query = query.order_by(col(Session.start_time).asc()).offset(offset).limit(limit)
+            return list((await db.exec(query)).all())
+
+    async def get_current_or_next(self, now: datetime | None = None) -> Session | None:
+        """
+        Retrieves the session in progress, or the next upcoming session
+
+        :param now: reference time (defaults to the current UTC time)
+        :return: the current or next session, or None if no session ends after now
+        """
+        reference = now or datetime.now(UTC)
+        async with get_db_session() as db:
+            query = select(Session).where(Session.end_time > reference).order_by(col(Session.start_time).asc()).limit(1)
+            return (await db.exec(query)).first()
 
     def is_locked_out(self, session: Session) -> bool:
         """
@@ -271,6 +293,30 @@ class SessionRepository(AbstractRepository[Session, UUID]):
         :raises ValueError: if no session with the given ID exists."""
         lockout_start = session.start_time - timedelta(seconds=SESSION_LOCKOUT_SECONDS)
         return datetime.now(UTC) >= lockout_start
+
+
+class OrbitElementRepository(AbstractRepository[OrbitElement, UUID]):
+    """
+    Repository for OrbitElement table.
+    """
+
+    model = OrbitElement
+
+    async def get_latest(self, norad_cat_id: int) -> OrbitElement | None:
+        """
+        Retrieves the orbit elements with the most recent epoch for a satellite
+
+        :param norad_cat_id: NORAD catalog number of the satellite
+        :return: the newest orbit elements, or None if none exist
+        """
+        async with get_db_session() as db:
+            query = (
+                select(OrbitElement)
+                .where(OrbitElement.norad_cat_id == norad_cat_id)
+                .order_by(col(OrbitElement.epoch).desc())
+                .limit(1)
+            )
+            return (await db.exec(query)).first()
 
 
 class PacketRepository(AbstractRepository[Packet, UUID]):
