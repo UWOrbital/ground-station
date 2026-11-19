@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
@@ -22,6 +22,9 @@ STATUS_MAP = {
     SessionStatus.SCHEDULED: "idle",
 }
 
+# Shown when there is no session in progress to report a value from
+NOT_AVAILABLE = "--"
+
 # NOTE : This is fragile and might change with the change of IDS in the spreadsheet referenced below
 TELEMETRY_IDS = {
     1: "CSP Packets Received",
@@ -43,31 +46,34 @@ async def get_satellite_status(
 
     this endpoint references the telemetry IDs of the sensors in this spreadsheet : https://docs.google.com/spreadsheets/d/1XWXgp3--NHZ4XlxOyBYPS-M_LOU_ai-I6TcvotKhR1s/edit?gid=0#gid=0
 
+    Status comes from the session in progress, or else the next upcoming one.
+    While a session is in progress, the duration is the time elapsed so far.
+    Before the next session starts, the last contact and session_duration appear as "--".
+
     :param sessions: injected Session repository.
     :param telemetry_repo: injected Telemetry repository.
     :return: SatelliteStatusResponse with status, last contact, session duration, and telemetry data
     """
-
-    session = await sessions.get_most_recent_session()
+    now = datetime.now(UTC)
+    session = await sessions.get_current_or_next(now)
 
     if session is None:
         return SatelliteStatusResponse(
             status="offline",
-            last_contact="Never",
-            session_duration="--",
+            last_contact=NOT_AVAILABLE,
+            session_duration=NOT_AVAILABLE,
             telemetry_data=[],
         )
 
     frontend_status = STATUS_MAP.get(session.status, "error")
 
-    now = datetime.now()
-    contact_time = session.end_time if session.end_time is not None else session.start_time
-    diff = now - contact_time
-    minutes = int(diff.total_seconds() / 60)
-
-    end_or_now = session.end_time if session.end_time is not None else now
-    duration = end_or_now - session.start_time
-    minutes_duration = int(duration.total_seconds() / 60)
+    if session.start_time <= now:
+        elapsed_minutes = int((now - session.start_time).total_seconds() // 60)
+        last_contact = "Now"
+        session_duration = "Less than a minute" if elapsed_minutes == 0 else f"{elapsed_minutes} min"
+    else:
+        last_contact = NOT_AVAILABLE
+        session_duration = NOT_AVAILABLE
 
     telemetry_data = []
     for telemetry_id, label in TELEMETRY_IDS.items():
@@ -82,8 +88,8 @@ async def get_satellite_status(
 
     satellite_response = SatelliteStatusResponse(
         status=frontend_status,
-        last_contact="Less than a minute ago" if minutes == 0 else f"{minutes} min ago",
-        session_duration=f"{minutes_duration} min",
+        last_contact=last_contact,
+        session_duration=session_duration,
         telemetry_data=telemetry_data,
     )
 
