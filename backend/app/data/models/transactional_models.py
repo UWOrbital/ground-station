@@ -181,13 +181,50 @@ class Session(BaseSQLModel, table=True):
     """
 
     id: UUID = Field(default_factory=uuid4, primary_key=True, index=True)
-    start_time: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
-    end_time: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
+    # Padded start: rise_time minus padding for predicted sessions
+    start_time: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False, index=True))
+    # Padded end: set_time plus padding for predicted sessions
+    end_time: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False, index=True))
     status: SessionStatus = Field(default=SessionStatus.PENDING)
+    source: SessionSource = Field(default=SessionSource.MANUAL)
 
-    # table information
+    # Pass data from the pass predictor (null for manual sessions)
+    rise_time: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
+    peak_time: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
+    set_time: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
+    min_elevation_deg: float | None = Field(default=None)
+    max_elevation_deg: float | None = Field(default=None)
+    rise_azimuth_deg: float | None = Field(default=None)
+    set_azimuth_deg: float | None = Field(default=None)
+    orbit_element_id: UUID | None = Field(
+        default=None,
+        foreign_key=to_foreign_key_value(TRANSACTIONAL_SCHEMA_NAME, ORBIT_ELEMENTS_TABLE_NAME),
+        ondelete="RESTRICT",
+    )
+    # Set when a predicted pass disappeared and the session already had commands,
+    # or it moved beyond the padding after the schedule freeze
+    orphaned_at: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
+
     __tablename__ = SESSIONS_TABLE_NAME
-    __table_args__ = {"schema": TRANSACTIONAL_SCHEMA_NAME}
+    __table_args__ = (
+        CheckConstraint("start_time < end_time", name="ck_sessions_start_before_end"),
+        CheckConstraint(
+            "source <> 'PREDICTED' OR (rise_time IS NOT NULL AND peak_time IS NOT NULL AND set_time IS NOT NULL"
+            " AND min_elevation_deg IS NOT NULL AND max_elevation_deg IS NOT NULL AND rise_azimuth_deg IS NOT NULL"
+            " AND set_azimuth_deg IS NOT NULL AND orbit_element_id IS NOT NULL)",
+            name="ck_sessions_predicted_fields",
+        ),
+        CheckConstraint("rise_time < peak_time AND peak_time < set_time", name="ck_sessions_pass_order"),
+        CheckConstraint("start_time <= rise_time AND set_time <= end_time", name="ck_sessions_padding_outside_pass"),
+        CheckConstraint("min_elevation_deg >= 0 AND min_elevation_deg <= 90", name="ck_sessions_min_elevation_range"),
+        CheckConstraint("max_elevation_deg >= 0 AND max_elevation_deg <= 90", name="ck_sessions_max_elevation_range"),
+        CheckConstraint("max_elevation_deg > min_elevation_deg", name="ck_sessions_peak_above_cutoff"),
+        CheckConstraint(
+            "rise_azimuth_deg >= 0 AND rise_azimuth_deg < 360 AND set_azimuth_deg >= 0 AND set_azimuth_deg < 360",
+            name="ck_sessions_azimuth_range",
+        ),
+        {"schema": TRANSACTIONAL_SCHEMA_NAME},
+    )
 
 
 class OrbitElement(BaseSQLModel, table=True):

@@ -22,7 +22,7 @@ class SessionStatus(StrEnum):
     """
 
     PENDING = auto()  # Initial state of a session until schedule freeze begins
-    SCHEDULED = auto()  # Times are final, set by the pass predictor at schedule freeze. Manual sessions start here
+    SCHEDULED = auto()  # Times are final, set by the pass predictor at schedule freeze
     ONGOING = auto()  # Session is in progress, set at start_time
     COMPLETED = auto()  # Session is complete, set at end_time. Final state of session
 
