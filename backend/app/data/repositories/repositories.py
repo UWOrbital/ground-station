@@ -373,7 +373,13 @@ class TelemetryRepository(AbstractRepository[Telemetry, UUID]):
         """
 
         async with get_db_session() as db:
-            return (await db.exec(select(Telemetry).where(Telemetry.type_ == telemetry_id))).first()
+            query = (
+                select(Telemetry)
+                .where(Telemetry.type_ == telemetry_id)
+                .order_by(col(Telemetry.timestamp).desc())
+                .limit(1)
+            )
+            return (await db.exec(query)).first()
 
     async def get_all_by_type(self, telemetry_id: int) -> list[Telemetry]:
         """
