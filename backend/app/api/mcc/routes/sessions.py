@@ -59,7 +59,7 @@ async def get_current_session(sessions: SessionRepo) -> CurrentSessionResponse:
 
 
 @sessions_router.get("/{session_id}", dependencies=[keycloak.require_auth])
-async def get_session_by_id(session_id: UUID, sessions: SessionRepo) -> CurrentSessionResponse:
+async def get_session_by_id(session_id: UUID, sessions: SessionRepo) -> SessionResponse:
     """
     Retrieve a single session by ID
 
