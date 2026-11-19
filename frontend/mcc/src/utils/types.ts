@@ -6,6 +6,8 @@ export type CommandStatus =
 
 export type SessionStatus = "pending" | "scheduled" | "ongoing" | "completed";
 
+export type SessionSource = "predicted" | "manual";
+
 export type ARORequestStatus =
   "pending" | "scheduled" | "taken" | "cancelled" | "failed" | "completed";
 
@@ -15,8 +17,19 @@ export type MainPacketType = "uplink" | "downlink";
 export interface Session {
   id: string;
   start_time: string; // ISO datetime string
-  end_time: string | null;
+  end_time: string; // ISO datetime string
   status: SessionStatus;
+  source: SessionSource;
+  // Pass data from the pass predictor, null for manual sessions
+  rise_time: string | null;
+  peak_time: string | null;
+  set_time: string | null;
+  min_elevation_deg: number | null;
+  max_elevation_deg: number | null;
+  rise_azimuth_deg: number | null;
+  set_azimuth_deg: number | null;
+  orbit_element_id: string | null;
+  orphaned_at: string | null; // set when the predictor needs operator to review this session
 }
 
 export interface Packet {
