@@ -15,9 +15,9 @@ from app.data.models.mcc_user_models import MCCUsers
 from app.data.models.transactional_models import (
     ARORequest,
     Command,
-    CommsSession,
     Image,
     Packet,
+    Session,
     Telemetry,
 )
 from app.data.repositories.abstract_repository import AbstractRepository  # SEE abstract_repository.py FOR LOGIC
@@ -45,8 +45,8 @@ class AROUsersRepository(AbstractRepository[AROUsers, UUID]):
         :email pydantic.EmailStr
         :returns AROUsers | None
         """
-        async with get_db_session() as session:
-            found_user = (await session.exec(select(AROUsers).where(AROUsers.email == email))).first()
+        async with get_db_session() as db:
+            found_user = (await db.exec(select(AROUsers).where(AROUsers.email == email))).first()
         return found_user
 
 
@@ -71,14 +71,14 @@ class AROUserAuthTokenRepository(AbstractRepository[AROUserAuthToken, UUID]):
         now = datetime.now(UTC)
         token_table = AROUserAuthToken
 
-        async with get_db_session() as session:
-            r = await session.exec(
+        async with get_db_session() as db:
+            r = await db.exec(
                 update(AROUserAuthToken)
                 .where(col(token_table.id) == pk)
                 .where(col(token_table.rotated_at).is_(None))
                 .values(rotated_at=now)
             )
-            await session.commit()
+            await db.commit()
             return r.rowcount == 1
 
     async def revoke_by_family_id(self, family_id: UUID) -> int:
@@ -91,11 +91,11 @@ class AROUserAuthTokenRepository(AbstractRepository[AROUserAuthToken, UUID]):
         now = datetime.now(UTC)
         token_table = AROUserAuthToken
 
-        async with get_db_session() as session:
-            r = await session.exec(
+        async with get_db_session() as db:
+            r = await db.exec(
                 update(AROUserAuthToken).where(col(token_table.family_id) == family_id).values(revoked_at=now)
             )
-            await session.commit()
+            await db.commit()
             return r.rowcount
 
     async def get_row_by_user_id(self, user_id: UUID) -> AROUserAuthToken | None:
@@ -105,9 +105,9 @@ class AROUserAuthTokenRepository(AbstractRepository[AROUserAuthToken, UUID]):
         :param user_id: UUID
         :returns: AROUserAuthToken | None
         """
-        async with get_db_session() as session:
+        async with get_db_session() as db:
             return (
-                await session.exec(
+                await db.exec(
                     select(AROUserAuthToken)
                     .where(AROUserAuthToken.user_id == user_id)
                     .where(AROUserAuthToken.expiry > datetime.now(UTC))
@@ -121,9 +121,9 @@ class AROUserAuthTokenRepository(AbstractRepository[AROUserAuthToken, UUID]):
         :param user_id: UUID
         :returns: int: number of rows deleted
         """
-        async with get_db_session() as session:
-            r = await session.exec(delete(AROUserAuthToken).where(col(AROUserAuthToken.user_id) == user_id))
-            await session.commit()
+        async with get_db_session() as db:
+            r = await db.exec(delete(AROUserAuthToken).where(col(AROUserAuthToken.user_id) == user_id))
+            await db.commit()
             return r.rowcount
 
 
@@ -139,8 +139,8 @@ class AROUserCallsignRepository(AbstractRepository[AROUserCallsigns, UUID]):
         :user_cs str
         return AROUserCallsigns | None
         """
-        async with get_db_session() as session:
-            return (await session.exec(select(AROUserCallsigns).where(AROUserCallsigns.call_sign == user_cs))).first()
+        async with get_db_session() as db:
+            return (await db.exec(select(AROUserCallsigns).where(AROUserCallsigns.call_sign == user_cs))).first()
 
 
 class AROUserLoginRepository(AbstractRepository[AROUserLogin, UUID]):
@@ -157,9 +157,9 @@ class AROUserLoginRepository(AbstractRepository[AROUserLogin, UUID]):
         :param user_id: UUID
         :returns: int: number of rows deleted
         """
-        async with get_db_session() as session:
-            r = await session.exec(delete(AROUserLogin).where(col(AROUserLogin.user_id) == user_id))
-            await session.commit()
+        async with get_db_session() as db:
+            r = await db.exec(delete(AROUserLogin).where(col(AROUserLogin.user_id) == user_id))
+            await db.commit()
             return r.rowcount
 
 
@@ -179,10 +179,10 @@ class ARORequestRepository(AbstractRepository[ARORequest, UUID]):
         :param offset: number of most-recent requests to skip (for paging).
         :return: the requested page of ARORequest rows, newest first.
         """
-        async with get_db_session() as session:
+        async with get_db_session() as db:
             return list(
                 (
-                    await session.exec(
+                    await db.exec(
                         select(ARORequest)
                         .where(ARORequest.aro_id == aro_id)
                         .order_by(col(ARORequest.created_on).desc())
@@ -200,10 +200,10 @@ class ARORequestRepository(AbstractRepository[ARORequest, UUID]):
         :param offset: number of most-recent requests to skip (for paging).
         :return: the requested page of ARORequest rows, newest first.
         """
-        async with get_db_session() as session:
+        async with get_db_session() as db:
             return list(
                 (
-                    await session.exec(
+                    await db.exec(
                         select(ARORequest).order_by(col(ARORequest.created_on).desc()).limit(count).offset(offset)
                     )
                 ).all()
@@ -226,26 +226,26 @@ class MainTelemetryRepository(AbstractRepository[MainTelemetry, int]):
     model = MainTelemetry
 
 
-class CommsSessionRepository(AbstractRepository[CommsSession, UUID]):
+class SessionRepository(AbstractRepository[Session, UUID]):
     """
-    Repository for CommsSession table.
+    Repository for Session table.
     """
 
-    model = CommsSession
+    model = Session
 
-    async def get_most_recent_session(self) -> CommsSession | None:
+    async def get_most_recent_session(self) -> Session | None:
         """
 
-        Retrieves the Comms session if there is one with the most recent start_time
+        Retrieves the session if there is one with the most recent start_time
 
-        :return: CommsSession | None
+        :return: Session | None
         """
-        async with get_db_session() as session:
-            return (await session.exec(select(CommsSession).order_by(col(CommsSession.start_time).desc()))).first()
+        async with get_db_session() as db:
+            return (await db.exec(select(Session).order_by(col(Session.start_time).desc()))).first()
 
     async def get_in_range(
         self, start_after: datetime | None, start_before: datetime | None, limit: int = 100
-    ) -> list[CommsSession]:
+    ) -> list[Session]:
         """
         Retrieves sessions whose start_time falls within the given range
 
@@ -254,15 +254,15 @@ class CommsSessionRepository(AbstractRepository[CommsSession, UUID]):
         :param limit: maximum number of rows to return
         :return: matching session entries, ordered by start_time ascending
         """
-        async with get_db_session() as session:
-            query = select(CommsSession)
+        async with get_db_session() as db:
+            query = select(Session)
             if start_after:
-                query = query.where(CommsSession.start_time >= start_after)
+                query = query.where(Session.start_time >= start_after)
             if start_before:
-                query = query.where(CommsSession.start_time < start_before)
-            return list((await session.exec(query.order_by(col(CommsSession.start_time).asc()).limit(limit))).all())
+                query = query.where(Session.start_time < start_before)
+            return list((await db.exec(query.order_by(col(Session.start_time).asc()).limit(limit))).all())
 
-    def is_locked_out(self, session: CommsSession) -> bool:
+    def is_locked_out(self, session: Session) -> bool:
         """
         Checks whether the given session is within its lockout window.
 
@@ -295,8 +295,8 @@ class CommandsRepository(AbstractRepository[Command, UUID]):
         :param session_id: UUID of the target session.
         :return: list of Command entries tied to that session.
         """
-        async with get_db_session() as session:
-            return list((await session.exec(select(Command).where(Command.session_id == session_id))).all())
+        async with get_db_session() as db:
+            return list((await db.exec(select(Command).where(Command.session_id == session_id))).all())
 
     async def retrieve_floating_commands(self) -> list[Command]:
         """
@@ -326,8 +326,8 @@ class TelemetryRepository(AbstractRepository[Telemetry, UUID]):
         :return: Telemetry | None
         """
 
-        async with get_db_session() as session:
-            return (await session.exec(select(Telemetry).where(Telemetry.type_ == telemetry_id))).first()
+        async with get_db_session() as db:
+            return (await db.exec(select(Telemetry).where(Telemetry.type_ == telemetry_id))).first()
 
     async def get_all_by_type(self, telemetry_id: int) -> list[Telemetry]:
         """
@@ -342,25 +342,25 @@ class TelemetryRepository(AbstractRepository[Telemetry, UUID]):
         """
         Retrieves all telemetry entries, joined with MainTelemetry to expose the type name.
 
-        Uses left outer joins for Packet and CommsSession so that telemetry rows
+        Uses left outer joins for Packet and Session so that telemetry rows
         without a packet or session assignment are still returned (with subrows
         set to None).
 
         :return: list[TelemetryEntry]
         """
-        async with get_db_session() as session:
+        async with get_db_session() as db:
             query = (
-                select(Telemetry, MainTelemetry.name, Packet.session_id, CommsSession.status)
+                select(Telemetry, MainTelemetry.name, Packet.session_id, Session.status)
                 .join(MainTelemetry, Telemetry.type_ == MainTelemetry.id)  # type: ignore[arg-type]
                 .join(Packet, Telemetry.packet_id == Packet.id, isouter=True)  # type: ignore[arg-type]
-                .join(CommsSession, Packet.session_id == CommsSession.id, isouter=True)  # type: ignore[arg-type]
+                .join(Session, Packet.session_id == Session.id, isouter=True)  # type: ignore[arg-type]
                 .order_by(col(Telemetry.id))
             )
             if offset:
                 query = query.offset(offset)
             if limit is not None:
                 query = query.limit(limit)
-            results = (await session.exec(query)).all()
+            results = (await db.exec(query)).all()
             return [
                 TelemetryEntry(
                     id=t.id,
@@ -396,8 +396,8 @@ class APILogRepository(AbstractRepository[APILog, UUID]):
         :param limit: maximum number of rows to return.
         :return: the newest APILog rows, ordered by time descending.
         """
-        async with get_db_session() as session:
-            return list((await session.exec(select(APILog).order_by(col(APILog.time).desc()).limit(limit))).all())
+        async with get_db_session() as db:
+            return list((await db.exec(select(APILog).order_by(col(APILog.time).desc()).limit(limit))).all())
 
 
 class ImageRepository(AbstractRepository[Image, UUID]):
@@ -413,5 +413,5 @@ class ImageRepository(AbstractRepository[Image, UUID]):
 
         :return: the newest Image row, or None.
         """
-        async with get_db_session() as session:
-            return (await session.exec(select(Image).order_by(col(Image.id).desc()))).first()
+        async with get_db_session() as db:
+            return (await db.exec(select(Image).order_by(col(Image.id).desc()))).first()

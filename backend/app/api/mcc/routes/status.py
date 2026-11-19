@@ -6,11 +6,11 @@ from fastapi import APIRouter, Depends
 from app.api.mcc.schemas.responses import SatelliteStatusResponse, TelemetryDataResponse
 from app.data.enums.transactional import SessionStatus
 from app.data.repositories.dal import DAL
-from app.data.repositories.repositories import CommsSessionRepository, TelemetryRepository
+from app.data.repositories.repositories import SessionRepository, TelemetryRepository
 
 status_router = APIRouter(tags=["MCC", "Status"])
 
-CommsSessionRepo = Annotated[CommsSessionRepository, Depends(DAL.get_repo(DAL.comms_sessions))]
+SessionRepo = Annotated[SessionRepository, Depends(DAL.get_repo(DAL.sessions))]
 TelemetryRepo = Annotated[TelemetryRepository, Depends(DAL.get_repo(DAL.telemetry))]
 
 # TODO : Expand the states of the backend to have a status of pending,
@@ -34,7 +34,7 @@ TELEMETRY_IDS = {
 
 @status_router.get("/status")
 async def get_satellite_status(
-    comms_sessions: CommsSessionRepo,
+    sessions: SessionRepo,
     telemetry_repo: TelemetryRepo,
 ) -> SatelliteStatusResponse:
     """
@@ -43,12 +43,12 @@ async def get_satellite_status(
 
     this endpoint references the telemetry IDs of the sensors in this spreadsheet : https://docs.google.com/spreadsheets/d/1XWXgp3--NHZ4XlxOyBYPS-M_LOU_ai-I6TcvotKhR1s/edit?gid=0#gid=0
 
-    :param comms_sessions: injected CommsSession repository.
+    :param sessions: injected Session repository.
     :param telemetry_repo: injected Telemetry repository.
     :return: SatelliteStatusResponse with status, last contact, session duration, and telemetry data
     """
 
-    session = await comms_sessions.get_most_recent_session()
+    session = await sessions.get_most_recent_session()
 
     if session is None:
         return SatelliteStatusResponse(

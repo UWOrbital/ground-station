@@ -9,7 +9,7 @@ from app.data.models.main_models import MainCommand, MainTelemetry
 from app.data.models.transactional_models import (
     ARORequest,
     Command,
-    CommsSession,
+    Session,
     Image,
     Packet,
     Telemetry,
@@ -18,9 +18,9 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 
-async def test_commands_basic(db_session: AsyncSession, default_comms_session: CommsSession):
-    # Setup the comms session
-    db_session.add(default_comms_session)
+async def test_commands_basic(db_session: AsyncSession, default_session: Session):
+    # Setup the session
+    db_session.add(default_session)
     await db_session.commit()
 
     # Setup the MainCommand table
@@ -35,7 +35,7 @@ async def test_commands_basic(db_session: AsyncSession, default_comms_session: C
 
     # Test the commands table
     id = uuid4()
-    command1 = Command(id=id, type_=main_command1.id, params="1234567", session_id=default_comms_session.id)
+    command1 = Command(id=id, type_=main_command1.id, params="1234567", session_id=default_session.id)
     db_session.add(command1)
     await db_session.commit()
 
@@ -95,35 +95,35 @@ async def test_telemetry_basic(db_session: AsyncSession):
     assert len(commands_items) == 0
 
 
-async def test_comms_session_basic(
-    db_session: AsyncSession, default_start_time: datetime, default_comms_session: CommsSession
+async def test_session_basic(
+    db_session: AsyncSession, default_start_time: datetime, default_session: Session
 ):
     # Setup
-    id = default_comms_session.id  # sqlmodel generates the uuid before it's sent to the db
+    id = default_session.id  # sqlmodel generates the uuid before it's sent to the db
 
     # Db actions
-    db_session.add(default_comms_session)
+    db_session.add(default_session)
     await db_session.commit()
-    comms_session_query = select(CommsSession)
-    comms_session_items = (await db_session.exec(comms_session_query)).all()
+    session_query = select(Session)
+    session_items = (await db_session.exec(session_query)).all()
 
     # Assertions
-    assert len(comms_session_items) == 1
-    returned_item1 = comms_session_items[0]
+    assert len(session_items) == 1
+    returned_item1 = session_items[0]
     assert returned_item1.id == id
     assert returned_item1.start_time == default_start_time
     assert returned_item1.end_time == default_start_time + timedelta(minutes=5)
     assert returned_item1.status == SessionStatus.PENDING
 
 
-async def test_packet_basic(db_session: AsyncSession, default_comms_session: CommsSession):
-    # Setup the comms session table
-    db_session.add(default_comms_session)
+async def test_packet_basic(db_session: AsyncSession, default_session: Session):
+    # Setup the session table
+    db_session.add(default_session)
     await db_session.commit()
-    comms_session_query = select(CommsSession)
-    comms_session_items = (await db_session.exec(comms_session_query)).all()
-    assert len(comms_session_items) == 1  # Make sure it was inserted into the db
-    id = comms_session_items[0].id
+    session_query = select(Session)
+    session_items = (await db_session.exec(session_query)).all()
+    assert len(session_items) == 1  # Make sure it was inserted into the db
+    id = session_items[0].id
 
     # Test the packet
     # TODO: Move this data to a fixture
@@ -147,10 +147,10 @@ async def test_packet_basic(db_session: AsyncSession, default_comms_session: Com
     assert returned_items1.offset == 1
 
     # Test the delete cascading
-    await db_session.delete(default_comms_session)
+    await db_session.delete(default_session)
     await db_session.commit()
-    comms_session_items = (await db_session.exec(comms_session_query)).all()
-    assert len(comms_session_items) == 0
+    session_items = (await db_session.exec(session_query)).all()
+    assert len(session_items) == 0
 
     packet_items = (await db_session.exec(packet_query)).all()
     assert len(packet_items) == 0
@@ -180,13 +180,13 @@ async def test_aro_requests_no_packet(db_session: AsyncSession):
     assert data_returned1.longitude == Decimal(40)
 
 
-async def _make_packet(db_session: AsyncSession, default_comms_session: CommsSession) -> Packet:
-    """Persist a comms session and a downlink packet, returning the packet."""
-    db_session.add(default_comms_session)
+async def _make_packet(db_session: AsyncSession, default_session: Session) -> Packet:
+    """Persist a session and a downlink packet, returning the packet."""
+    db_session.add(default_session)
     await db_session.commit()
 
     packet = Packet(
-        session_id=default_comms_session.id,
+        session_id=default_session.id,
         raw_data=b"Hello world",
         type_=MainPacketType.DOWNLINK,
         payload_data=b"Hello world. Extra info.",
@@ -197,9 +197,9 @@ async def _make_packet(db_session: AsyncSession, default_comms_session: CommsSes
     return packet
 
 
-async def test_packet_subtype_defaults_none(db_session: AsyncSession, default_comms_session: CommsSession):
+async def test_packet_subtype_defaults_none(db_session: AsyncSession, default_session: Session):
     # Setup
-    packet = await _make_packet(db_session, default_comms_session)
+    packet = await _make_packet(db_session, default_session)
 
     # subtype is optional and defaults to None
     returned = (await db_session.exec(select(Packet).where(Packet.id == packet.id))).one()
@@ -213,13 +213,13 @@ async def test_packet_subtype_defaults_none(db_session: AsyncSession, default_co
     assert refetched.subtype == "image-chunk"
 
 
-async def test_telemetry_packet_link(db_session: AsyncSession, default_comms_session: CommsSession):
+async def test_telemetry_packet_link(db_session: AsyncSession, default_session: Session):
     # Setup the database
     main_telemetry = MainTelemetry(id=1, name="Test 1", data_size=1, total_size=2, format="int 7 bytes")
     db_session.add(main_telemetry)
     await db_session.commit()
 
-    packet = await _make_packet(db_session, default_comms_session)
+    packet = await _make_packet(db_session, default_session)
 
     # Telemetry now links directly to a packet with a sequence index and a timestamp
     id = uuid4()
@@ -240,18 +240,18 @@ async def test_telemetry_packet_link(db_session: AsyncSession, default_comms_ses
     assert survivor.packet_id is None
 
 
-async def test_commands_packet_link(db_session: AsyncSession, default_comms_session: CommsSession):
+async def test_commands_packet_link(db_session: AsyncSession, default_session: Session):
     # Setup the database
     main_command = MainCommand(id=1, name="Test 1", data_size=1, total_size=2, format="int", params="time")
     db_session.add(main_command)
     await db_session.commit()
 
-    packet = await _make_packet(db_session, default_comms_session)
+    packet = await _make_packet(db_session, default_session)
 
     # Commands now link directly to a packet with a sequence index
     id = uuid4()
     command = Command(
-        id=id, type_=main_command.id, packet_id=packet.id, sequence_index=0, session_id=default_comms_session.id
+        id=id, type_=main_command.id, packet_id=packet.id, sequence_index=0, session_id=default_session.id
     )
     db_session.add(command)
     await db_session.commit()
@@ -269,17 +269,17 @@ async def test_commands_packet_link(db_session: AsyncSession, default_comms_sess
     assert survivor.packet_id is None
 
 
-async def test_command_response_defaults_none(db_session: AsyncSession, default_comms_session: CommsSession):
+async def test_command_response_defaults_none(db_session: AsyncSession, default_session: Session):
     # Setup the database
     main_command = MainCommand(id=1, name="Test 1", data_size=1, total_size=2, format="int", params="time")
     db_session.add(main_command)
     await db_session.commit()
-    db_session.add(default_comms_session)
+    db_session.add(default_session)
     await db_session.commit()
 
     # A command is queued before the OBC has replied, so response starts empty
     id = uuid4()
-    command = Command(id=id, type_=main_command.id, params="1234567", session_id=default_comms_session.id)
+    command = Command(id=id, type_=main_command.id, params="1234567", session_id=default_session.id)
     db_session.add(command)
     await db_session.commit()
 
@@ -306,9 +306,9 @@ async def _make_aro_request(db_session: AsyncSession) -> ARORequest:
     return aro_request
 
 
-async def test_image_basic(db_session: AsyncSession, default_comms_session: CommsSession):
+async def test_image_basic(db_session: AsyncSession, default_session: Session):
     # Setup the database
-    packet = await _make_packet(db_session, default_comms_session)
+    packet = await _make_packet(db_session, default_session)
     aro_request = await _make_aro_request(db_session)
 
     # Test the images table
@@ -335,9 +335,9 @@ async def test_image_links_default_none(db_session: AsyncSession):
     assert returned.aro_id is None
 
 
-async def test_image_survives_packet_and_request_delete(db_session: AsyncSession, default_comms_session: CommsSession):
+async def test_image_survives_packet_and_request_delete(db_session: AsyncSession, default_session: Session):
     # Setup the database
-    packet = await _make_packet(db_session, default_comms_session)
+    packet = await _make_packet(db_session, default_session)
     aro_request = await _make_aro_request(db_session)
 
     id = uuid4()

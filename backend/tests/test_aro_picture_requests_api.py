@@ -116,7 +116,7 @@ async def test_list_is_scoped_to_current_user(client, user_a, user_b, payload):
 
 async def _seed_request_with_packet(aro_id) -> tuple[str, bytes]:
     """Create a request whose packet is populated, returning (request_id, raw bytes)."""
-    session = await DAL.comms_sessions().create(
+    session = await DAL.sessions().create(
         {
             "start_time": datetime.now(UTC),
             "end_time": datetime.now(UTC) + timedelta(minutes=5),

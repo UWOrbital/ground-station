@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 from app.data.enums.mcc_users import MCCAdminRequestStatus
 from app.data.enums.transactional import CommandStatus
 from app.data.models.main_models import MainCommand, MainTelemetry
-from app.data.models.transactional_models import ARORequest, CommsSession
+from app.data.models.transactional_models import ARORequest, Session
 
 
 class CommandItem(BaseModel):
@@ -57,10 +57,10 @@ class DeleteCommandResponse(BaseModel):
     message: Annotated[str, Field(description="Confirmation message including the deleted command ID")]
 
 
-class CommsSessionsResponse(BaseModel):
-    """Response model wrapping a list of CommsSessions."""
+class SessionsResponse(BaseModel):
+    """Response model wrapping a list of Sessions."""
 
-    data: Annotated[list[CommsSession], Field(description="A list containing CommsSession objects")]
+    data: Annotated[list[Session], Field(description="A list containing Session objects")]
 
 
 class MainTelemetriesResponse(BaseModel):

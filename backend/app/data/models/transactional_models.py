@@ -171,12 +171,9 @@ class Telemetry(BaseSQLModel, table=True):
     )  # Since the table is in a different schema sqlmodel can't find the table normally
 
 
-# Communcation session information
-
-
-class CommsSession(BaseSQLModel, table=True):
+class Session(BaseSQLModel, table=True):
     """
-    Holds basic information related to a downlink/uplink transmit cycle
+    Holds information regarding an uplink/downlink transmit cycle
     """
 
     id: UUID = Field(default_factory=uuid4, primary_key=True, index=True)

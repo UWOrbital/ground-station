@@ -17,7 +17,7 @@ os.environ.setdefault("KEYCLOAK_CLIENT_SECRET", "dummy")
 
 import pytest
 import pytest_asyncio
-from app.data.models.transactional_models import CommsSession
+from app.data.models.transactional_models import Session
 from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -102,13 +102,13 @@ def default_start_time() -> datetime:
 
 
 @pytest.fixture
-def default_comms_session(default_start_time: datetime) -> CommsSession:
+def default_session(default_start_time: datetime) -> Session:
     """
-    Creates the comms session
+    Creates the session
     This is a function level fixture.
     """
-    comms_session_item = CommsSession(start_time=default_start_time, end_time=default_start_time + timedelta(minutes=5))
-    return comms_session_item
+    session_item = Session(start_time=default_start_time, end_time=default_start_time + timedelta(minutes=5))
+    return session_item
 
 
 @pytest.fixture(autouse=True)
