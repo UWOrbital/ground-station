@@ -18,13 +18,31 @@ class CommandStatus(StrEnum):
 
 class SessionStatus(StrEnum):
     """
-    Represents the possible states that a session can be in
+    Represents the lifecycle of a session. Status changes at schedule freeze, start_time, and end_time.
     """
 
-    PENDING = auto()  # Initial state of a session. Optional or can start at SCHEDULED status
-    SCHEDULED = auto()  # Session has been scheduled. GS has not received any data yet but the start time is known
-    ONGOING = auto()  # Session has been started. GS is receiving data
-    COMPLETED = auto()  # Session is complete. GS has received all the data for the session. Final state of session
+    PENDING = auto()  # Initial state of a session until schedule freeze begins
+    SCHEDULED = auto()  # Times are final, set by the pass predictor at schedule freeze. Manual sessions start here
+    ONGOING = auto()  # Session is in progress, set at start_time
+    COMPLETED = auto()  # Session is complete, set at end_time. Final state of session
+
+
+class SessionSource(StrEnum):
+    """
+    Represents who created a session
+    """
+
+    PREDICTED = auto()  # Created and kept in sync by the pass predictor
+    MANUAL = auto()  # Created by an operator, never modified by the pass predictor
+
+
+class OrbitElementSource(StrEnum):
+    """
+    Represents where a set of orbit elements came from
+    """
+
+    CELESTRAK = auto()  # Downloaded from CelesTrak
+    MANUAL = auto()  # Manually inserted
 
 
 class MainPacketType(Enum):
