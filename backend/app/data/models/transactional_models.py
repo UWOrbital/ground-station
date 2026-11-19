@@ -1,11 +1,12 @@
 from datetime import UTC, datetime
 from decimal import Decimal
-from typing import Final
+from typing import Any, Final
 from uuid import UUID, uuid4
 
 from sqlalchemy import Column, DateTime, func
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as DB_UUID
-from sqlalchemy.schema import ForeignKey, ForeignKeyConstraint
+from sqlalchemy.schema import CheckConstraint, ForeignKey, ForeignKeyConstraint, UniqueConstraint
 from sqlmodel import Field
 
 from app.config.data_values import (
@@ -20,6 +21,8 @@ from app.data.enums.aro_requests import ARORequestStatus
 from app.data.enums.transactional import (
     CommandStatus,
     MainPacketType,
+    OrbitElementSource,
+    SessionSource,
     SessionStatus,
 )
 from app.data.models.aro_user_models import AROUsers
@@ -38,6 +41,7 @@ TRANSACTIONAL_SCHEMA_NAME: Final[str] = "transactional"
 # Table names in database
 ARO_REQUESTS_TABLE_NAME: Final[str] = "aro_requests"
 SESSIONS_TABLE_NAME: Final[str] = "sessions"
+ORBIT_ELEMENTS_TABLE_NAME: Final[str] = "orbit_elements"
 PACKETS_TABLE_NAME: Final[str] = "packets"
 TELEMETRY_TABLE_NAME: Final[str] = "telemetry"
 COMMANDS_TABLE_NAME: Final[str] = "commands"
@@ -186,7 +190,26 @@ class Session(BaseSQLModel, table=True):
     __table_args__ = {"schema": TRANSACTIONAL_SCHEMA_NAME}
 
 
-# Raw packet data
+class OrbitElement(BaseSQLModel, table=True):
+    """
+    Holds one set of orbit elements (CCSDS OMM record) for a satellite
+    """
+
+    id: UUID = Field(default_factory=uuid4, primary_key=True, index=True)
+    norad_cat_id: int = Field(index=True)
+    epoch: datetime = Field(sa_column=Column(DateTime(timezone=True), nulllable=False))
+    omm: dict[str, Any] = Field(sa_column=Column(JSONB, nullable=False))  # Raw CelesTrak JSON OMM record
+    source: OrbitElementSource = Field(default=OrbitElementSource.CELESTRAK)
+    fetched_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(DateTime(timezone=True), server_default=func.now(), nullable=False),
+    )
+
+    __tablename__ = ORBIT_ELEMENTS_TABLE_NAME
+    __table_args__ = (
+        UniqueConstraint("norad_cat_id", "epoch", name="uq_orbit_elements_norad_cat_id_epoch"),
+        {"schema": TRANSACTIONAL_SCHEMA_NAME},
+    )
 
 
 class Packet(BaseSQLModel, table=True):
