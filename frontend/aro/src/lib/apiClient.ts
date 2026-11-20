@@ -9,7 +9,9 @@
  * intentional difference is 401 handling: ARO authenticates via a
  * POST-only `/api/aro/auth/login` (JWT access token plus refresh cookie),
  * so there is no backend redirect endpoint to send the browser to. On 401
- * we redirect to the ARO frontend `/login` route instead.
+ * we notify the handler registered via {@link setUnauthorizedHandler}
+ * (AuthProvider), which marks the user signed out so `ProtectedRoute` can
+ * redirect client-side and remember where the user was going.
  *
  * ARO endpoints authenticate with a short-lived bearer access token (held in
  * memory by `authToken.ts`) rather than a session cookie, so authenticated
@@ -21,7 +23,15 @@ import { accessTokenStore } from "@/lib/authToken";
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api/aro";
 
-const LOGIN_ROUTE = "/login";
+let unauthorizedHandler: (() => void) | null = null;
+
+/**
+ * @brief Register the callback run when an API call reports the session is gone.
+ * @param handler the callback, or null to unregister.
+ */
+export function setUnauthorizedHandler(handler: (() => void) | null): void {
+  unauthorizedHandler = handler;
+}
 
 /**
  * Error thrown by {@link parseOrThrow} carrying the HTTP status code.
@@ -38,6 +48,20 @@ export class ApiError extends Error {
     super(message);
     this.status = status;
   }
+}
+
+/**
+ * @brief React Query retry rule: retry a failure up to 3 times, except a 401.
+ *
+ * A 401 means the session is gone and the user has already been signed out
+ * (see {@link throwIfError}), so a retry can't succeed.
+ *
+ * @param failureCount how many times the query has failed so far.
+ * @param error the error the query failed with.
+ * @return true when the query should be retried.
+ */
+export function shouldRetry(failureCount: number, error: unknown): boolean {
+  return !(error instanceof ApiError && error.status === 401) && failureCount < 3;
 }
 
 /**
@@ -174,13 +198,17 @@ export function errorMessage(body: unknown, status: number): string {
 }
 
 /**
- * @brief Parse a fetch Response, redirecting to login on 401 and throwing on other errors.
- * @param res the fetch Response to parse.
- * @return the parsed JSON body typed as T.
+ * @brief Throw an ApiError if a fetch Response failed.
+ *
+ * A 401 also drops the access token and notifies the unauthorized handler, so
+ * the app marks the user signed out and `ProtectedRoute` redirects to login.
+ *
+ * @param res the fetch Response to check.
  */
 export async function throwIfError(res: Response): Promise<void> {
   if (res.status === 401) {
-    window.location.href = LOGIN_ROUTE;
+    accessTokenStore.clear();
+    unauthorizedHandler?.();
     throw new ApiError(401, "Not authenticated");
   }
   if (!res.ok) {
@@ -190,7 +218,7 @@ export async function throwIfError(res: Response): Promise<void> {
 }
 
 /**
- * @brief Parse a fetch Response, redirecting to login on 401 and throwing on other errors.
+ * @brief Parse a fetch Response's JSON body, failing as {@link throwIfError} does.
  * @param res the fetch Response to parse.
  * @return the parsed JSON body typed as T.
  */
