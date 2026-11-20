@@ -179,7 +179,8 @@ export async function authFetch(url: string, init: AuthFetchInit = {}): Promise<
  * @brief Pull a human-readable message out of a FastAPI error body.
  *
  * Custom backend errors (app/exceptions) use a top-level `message`, ARO auth
- * errors use `detail: { message, code }`, and other errors use a plain string
+ * errors use `detail: { message, code }`, request-validation errors (422) use
+ * a list `detail: [{ msg, loc, ... }]`, and other errors use a plain string
  * `detail`.
  *
  * @param body the parsed JSON error body (may be empty).
@@ -191,6 +192,10 @@ export function errorMessage(body: unknown, status: number): string {
   if (typeof message === "string") return message;
   const detail = (body as { detail?: unknown } | null)?.detail;
   if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) {
+    const msg = (detail[0] as { msg?: unknown } | undefined)?.msg;
+    if (typeof msg === "string") return msg;
+  }
   if (detail && typeof detail === "object" && "message" in detail) {
     return String((detail as { message: unknown }).message);
   }

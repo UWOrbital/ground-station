@@ -70,6 +70,52 @@ async def test_create_returns_data_and_delete_operation(client, user_a, payload)
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("latitude", "longitude"),
+    [
+        # JSON numbers, as the frontend sends them.
+        (90, -180),
+        (-90.0, 179.999),
+        # Strings are accepted too.
+        ("90.000", "180.000"),
+    ],
+)
+async def test_create_accepts_coordinates_at_range_bounds(
+    client: AsyncClient, user_a: AROUsers, latitude: float | str, longitude: float | str
+) -> None:
+    """Coordinates on the inclusive range bounds are accepted, whether sent as numbers or strings."""
+    response = await client.post(
+        REQUESTS_URL, json={"latitude": latitude, "longitude": longitude}, headers=_headers(user_a)
+    )
+
+    assert response.status_code == 200
+    body = response.json()["data"]
+    assert Decimal(body["latitude"]) == Decimal(str(latitude))
+    assert Decimal(body["longitude"]) == Decimal(str(longitude))
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("latitude", "longitude"),
+    [
+        ("90.001", "0"),
+        ("-90.001", "0"),
+        ("0", "180.001"),
+        ("0", "-180.001"),
+    ],
+)
+async def test_create_rejects_out_of_range_coordinates(
+    client: AsyncClient, user_a: AROUsers, latitude: str, longitude: str
+) -> None:
+    """Coordinates outside [-90, 90] / [-180, 180] are rejected."""
+    response = await client.post(
+        REQUESTS_URL, json={"latitude": latitude, "longitude": longitude}, headers=_headers(user_a)
+    )
+
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
 async def test_create_requires_auth(client, payload):
     response = await client.post(REQUESTS_URL, json=payload)
     assert response.status_code == 401

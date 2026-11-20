@@ -18,9 +18,11 @@ function LocationSelector() {
     click(e) {
       const event = e.originalEvent as MouseEvent;
       if (event.shiftKey) {
+        // The map repeats horizontally, so wrap longitude back into [-180, 180].
+        const { lat, lng } = e.latlng.wrap();
         queryClient.setQueryData<{ latitude: number; longitude: number }>(["coords"], {
-          latitude: e.latlng.lat,
-          longitude: e.latlng.lng,
+          latitude: lat,
+          longitude: lng,
         });
       }
     },

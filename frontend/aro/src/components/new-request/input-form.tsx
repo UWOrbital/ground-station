@@ -1,11 +1,19 @@
 import React, { type ChangeEvent, useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-interface MapViewProps {
+interface InputFormProps {
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  /** True while a submitted request is in flight; disables the submit button. */
+  isSubmitting: boolean;
 }
 
-const InputForm: React.FC<MapViewProps> = ({ handleSubmit }) => {
+/**
+ * @brief Latitude/longitude form for a new picture request.
+ * @param handleSubmit called for both the "Validate" and "Submit" buttons.
+ * @param isSubmitting whether a request is currently being submitted.
+ * @return tsx element of the input form.
+ */
+const InputForm: React.FC<InputFormProps> = ({ handleSubmit, isSubmitting }) => {
   const queryClient = useQueryClient();
   const [localLat, setLocalLat] = useState<number | "">("");
   const [localLng, setLocalLng] = useState<number | "">("");
@@ -82,9 +90,10 @@ const InputForm: React.FC<MapViewProps> = ({ handleSubmit }) => {
               type="submit"
               name="action"
               value="Submit"
-              className="w-full border border-gray-300 text-black font-medium py-3 rounded-lg shadow-sm hover:bg-gray-50 transition text-lg"
+              disabled={isSubmitting}
+              className="w-full border border-gray-300 text-black font-medium py-3 rounded-lg shadow-sm hover:bg-gray-50 transition text-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Submit Request
+              {isSubmitting ? "Submitting…" : "Submit Request"}
             </button>
           </div>
         </form>
