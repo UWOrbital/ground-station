@@ -356,6 +356,30 @@ class OrbitElementRepository(AbstractRepository[OrbitElement, UUID]):
             return inserted
 
 
+class OrbitFetchAttemptRepository(AbstractRepository[OrbitFetchAttempt, UUID]):
+    """
+    Repository for OrbitFetchElement table.
+    """
+
+    model = OrbitFetchAttempt
+
+    async def get_latest(self, norad_cat_id: int) -> OrbitFetchAttempt | None:
+        """
+        Retrieves the most recent fetch attempt for a satellite
+        
+        :param norad_cat_id: NORAD catalog number of the satellite
+        :return: the latest attempt, or None if none exists
+        """
+        async with get_db_session() as db:
+            query = (
+                select(OrbitFetchAttempt)
+                .where(OrbitFetchAttempt.norad_cat_id == norad_cat_id)
+                .order_by(col(OrbitFetchAttempt.attempted_at).desc())
+                .limit(1)
+            )
+            return (await db.exec(query)).first()
+
+
 class PacketRepository(AbstractRepository[Packet, UUID]):
     """
     Repository for Packet table.
