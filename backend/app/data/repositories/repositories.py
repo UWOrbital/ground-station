@@ -329,7 +329,7 @@ class OrbitElementRepository(AbstractRepository[OrbitElement, UUID]):
 
         Since CelesTrak serves the same element set until the next update, re-downloading is normal
         and should not create a duplicate row
-        
+
         :param norad_cat_id: NORAD catalog number of the satellite
         :param epoch: epoch of the elements (with timezone)
         :param omm: the OMM record
@@ -366,7 +366,7 @@ class OrbitFetchAttemptRepository(AbstractRepository[OrbitFetchAttempt, UUID]):
     async def get_latest(self, norad_cat_id: int) -> OrbitFetchAttempt | None:
         """
         Retrieves the most recent fetch attempt for a satellite
-        
+
         :param norad_cat_id: NORAD catalog number of the satellite
         :return: the latest attempt, or None if none exists
         """
