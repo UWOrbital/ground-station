@@ -87,7 +87,7 @@ async def test_list_returns_newest_first_and_paginates(client, user_a, payload):
         assert (await client.post(REQUESTS_URL, json=payload, headers=headers)).status_code == 200
 
     # First page of 2 -> newest first, a `next` link, no `previous`.
-    page1 = (await client.get(REQUESTS_URL, params={"count": 2, "offset": 0}, headers=headers)).json()
+    page1 = (await client.get(REQUESTS_URL, params={"limit": 2, "offset": 0}, headers=headers)).json()
     assert len(page1["data"]) == 2
     created = [datetime.fromisoformat(item["created_on"]) for item in page1["data"]]
     assert created == sorted(created, reverse=True)
@@ -95,7 +95,7 @@ async def test_list_returns_newest_first_and_paginates(client, user_a, payload):
     assert "previous" not in page1["operations"]
 
     # Second page -> remaining item, a `previous` link, no `next`.
-    page2 = (await client.get(REQUESTS_URL, params={"count": 2, "offset": 2}, headers=headers)).json()
+    page2 = (await client.get(REQUESTS_URL, params={"limit": 2, "offset": 2}, headers=headers)).json()
     assert len(page2["data"]) == 1
     assert "previous" in page2["operations"]
     assert "next" not in page2["operations"]
@@ -116,7 +116,7 @@ async def test_list_is_scoped_to_current_user(client, user_a, user_b, payload):
 
 async def _seed_request_with_packet(aro_id) -> tuple[str, bytes]:
     """Create a request whose packet is populated, returning (request_id, raw bytes)."""
-    session = await DAL.comms_sessions().create(
+    session = await DAL.sessions().create(
         {
             "start_time": datetime.now(UTC),
             "end_time": datetime.now(UTC) + timedelta(minutes=5),

@@ -12,6 +12,15 @@ describe("Background", () => {
   it("has correct CSS classes", () => {
     render(<Background />);
     const image = screen.getByAltText("background-image");
-    expect(image).toHaveClass("fixed inset-0 w-full h-full object-cover -z-10");
+    expect(image).toHaveClass(
+      "fixed inset-0 w-full h-full object-cover -z-20 blur-[0.4px] scale-105",
+    );
+  });
+
+  it("renders a dark overlay", () => {
+    render(<Background />);
+    const overlay = screen.getByTestId("background-overlay");
+    expect(overlay).toBeInTheDocument();
+    expect(overlay).toHaveClass("fixed inset-0 -z-10");
   });
 });

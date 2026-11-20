@@ -4,7 +4,7 @@ from uuid import uuid4
 import pytest_asyncio
 from app.data.enums.transactional import SessionStatus
 from app.data.models.main_models import MainTelemetry
-from app.data.models.transactional_models import CommsSession, Packet, Telemetry
+from app.data.models.transactional_models import Session, Packet, Telemetry
 from httpx import ASGITransport, AsyncClient
 from main import app
 
@@ -30,9 +30,9 @@ async def setup_main_telemetries(db_session):
 
 
 @pytest_asyncio.fixture
-async def comms_session(db_session) -> CommsSession:
-    """Create a test comms session."""
-    session = CommsSession(
+async def session(db_session) -> Session:
+    """Create a test session."""
+    session = Session(
         id=uuid4(),
         start_time=datetime(2025, 6, 1, 12, 0, 0, tzinfo=UTC),
         end_time=datetime(2025, 6, 1, 12, 10, 0, tzinfo=UTC),
@@ -44,11 +44,11 @@ async def comms_session(db_session) -> CommsSession:
 
 
 @pytest_asyncio.fixture
-async def packet(db_session, comms_session: CommsSession) -> Packet:
-    """Create a test packet linked to the comms session."""
+async def packet(db_session, session: Session) -> Packet:
+    """Create a test packet linked to the session."""
     pkt = Packet(
         id=uuid4(),
-        session_id=comms_session.id,
+        session_id=session.id,
         raw_data=b"\x01\x02\x03",
         type_=2,  # DOWNLINK
         payload_data=b"\xab\xcd",
@@ -128,6 +128,33 @@ async def test_get_telemetry_success(client: AsyncClient, db_session) -> None:
     assert data[0]["value"] == "3.7"
 
 
+async def test_get_telemetry_respects_limits(client: AsyncClient, db_session) -> None:
+    """Test that the limit query param caps the number of returned telemetry entries."""
+    for type_ in (1, 2, 3):
+        telemetry = Telemetry(
+            id=uuid4(),
+            type_=type_,
+            value="3.7",
+            timestamp=datetime(2025, 6, 1, 12, 0, 5, tzinfo=UTC),
+        )
+        db_session.add(telemetry)
+    await db_session.commit()
+
+    first_page = await client.get("/api/mcc/telemetry/", params={"limit": 2, "offset": 0})
+    second_page = await client.get("/api/mcc/telemetry/", params={"limit": 2, "offset": 2})
+    assert first_page.status_code == 200
+    assert second_page.status_code == 200
+
+    first_ids = {data["id"] for data in first_page.json()["data"]}
+    second_ids = {data["id"] for data in second_page.json()["data"]}
+    assert len(first_ids) == 2
+    assert len(second_ids) == 1
+    assert first_ids.isdisjoint(second_ids)
+
+    assert (await client.get("/api/mcc/telemetry/", params={"offset": -1})).status_code == 422
+    assert (await client.get("/api/mcc/telemetry/", params={"limit": 10_000})).status_code == 422
+
+
 async def test_get_telemetry_empty(client: AsyncClient) -> None:
     """Test that an empty telemetry table returns an empty list."""
     response = await client.get("/api/mcc/telemetry/")
@@ -164,7 +191,7 @@ async def test_get_telemetry_multiple_types(client: AsyncClient, db_session) -> 
 
 
 async def test_get_telemetry_with_packet_and_session(
-    client: AsyncClient, db_session, comms_session: CommsSession, packet: Packet
+    client: AsyncClient, db_session, session: Session, packet: Packet
 ) -> None:
     """Test that telemetry with a packet/session chain populates subrows."""
     telemetry = Telemetry(
@@ -191,7 +218,7 @@ async def test_get_telemetry_with_packet_and_session(
     assert len(entry["subrows"]) == 1
     sub = entry["subrows"][0]
     assert sub["packet"] == str(packet.id)
-    assert sub["session"] == str(comms_session.id)
+    assert sub["session"] == str(session.id)
     assert sub["obc_state"] == "completed"
 
 

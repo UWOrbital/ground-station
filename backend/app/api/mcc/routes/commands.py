@@ -1,50 +1,57 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from app.api.mcc.schemas.requests import CreateCommandRequest, UpdateCommandRequest
 from app.api.mcc.schemas.responses import CommandResponse, CommandsResponse, DeleteCommandResponse
 from app.api.mcc.services.scheduling import assert_not_locked_out
+from app.config.data_values import DEFAULT_PAGE_LIMIT, DEFAULT_PAGE_OFFSET, MAX_PAGE_LIMIT
 from app.data.models.mcc_user_models import MCCUsers
 from app.data.repositories.dal import DAL
-from app.data.repositories.repositories import CommandsRepository, CommsSessionRepository
+from app.data.repositories.repositories import CommandsRepository, SessionRepository
 from app.exceptions import InvalidArgumentError, InvalidStateError, NotFoundError
 from app.mcc_keycloak.client import keycloak
 
 commands_router = APIRouter(tags=["MCC", "Commands"])
 
 CommandsRepo = Annotated[CommandsRepository, Depends(DAL.get_repo(DAL.commands))]
-CommsSessionRepo = Annotated[CommsSessionRepository, Depends(DAL.get_repo(DAL.comms_sessions))]
+SessionRepo = Annotated[SessionRepository, Depends(DAL.get_repo(DAL.sessions))]
 
 
 @commands_router.get("/", dependencies=[keycloak.require_auth])
-async def get_commands(commands: CommandsRepo) -> CommandsResponse:
+async def get_commands(
+    commands: CommandsRepo,
+    limit: int = Query(default=DEFAULT_PAGE_LIMIT, ge=1, le=MAX_PAGE_LIMIT),
+    offset: int = Query(default=DEFAULT_PAGE_OFFSET, ge=0),
+) -> CommandsResponse:
     """
     Retrieve all commands from the database.
 
     :param commands: injected Command repository.
+    :param limit: max rows to return
+    :param offset: number of rows to skip
     :return: All command entries.
     """
-    return CommandsResponse(data=await commands.get_all())
+    return CommandsResponse(data=await commands.get_all(limit=limit, offset=offset))
 
 
 @commands_router.get("/session/{session_id}", dependencies=[keycloak.require_auth])
 async def get_commands_by_session(
     session_id: UUID,
     commands: CommandsRepo,
-    comms_sessions: CommsSessionRepo,
+    sessions: SessionRepo,
 ) -> CommandsResponse:
     """
     Retrieve all commands associated with a given session.
 
     :param session_id: UUID of the target session.
     :param commands: injected Command repository.
-    :param comms_sessions: injected CommsSession repository.
+    :param sessions: injected Session repository.
     :return: All commands tied to that session.
     """
     try:
-        await comms_sessions.get_by_id(session_id)
+        await sessions.get_by_id(session_id)
     except ValueError as e:
         raise NotFoundError(str(e)) from e
     return CommandsResponse(data=await commands.get_by_session(session_id))
@@ -55,7 +62,7 @@ async def create_command(
     request: CreateCommandRequest,
     current_user: Annotated[MCCUsers, Depends(keycloak.get_current_user)],
     commands: CommandsRepo,
-    comms_sessions: CommsSessionRepo,
+    sessions: SessionRepo,
 ) -> CommandResponse:
     """
     Create a new command entry with status set to pending.
@@ -63,11 +70,11 @@ async def create_command(
     :param request: Typed fields identifying the command type, session, and optional parameters.
     :param current_user: Authenticated MCC user; their ID is recorded on the command.
     :param commands: injected Command repository.
-    :param comms_sessions: injected CommsSession repository.
+    :param sessions: injected Session repository.
     :return: The newly created command.
     """
     try:
-        session = await comms_sessions.get_by_id(request.session_id)
+        session = await sessions.get_by_id(request.session_id)
     except ValueError as e:
         raise NotFoundError(str(e)) from e
 
@@ -109,7 +116,7 @@ async def update_command(
     command_id: UUID,
     request: UpdateCommandRequest,
     commands: CommandsRepo,
-    comms_sessions: CommsSessionRepo,
+    sessions: SessionRepo,
 ) -> CommandResponse:
     """
     Partially update a command's status, type, or parameters.
@@ -117,7 +124,7 @@ async def update_command(
     :param command_id: UUID of the command to update.
     :param request: Fields to overwrite; omitted fields are left unchanged.
     :param commands: injected Command repository.
-    :param comms_sessions: injected CommsSession repository.
+    :param sessions: injected Session repository.
     :return: The updated command entry.
     """
     updates = request.model_dump(exclude_none=True)
@@ -128,7 +135,7 @@ async def update_command(
     except ValueError as e:
         raise NotFoundError(str(e)) from e
     try:
-        session = await comms_sessions.get_by_id(existing_command.session_id)
+        session = await sessions.get_by_id(existing_command.session_id)
     except ValueError as e:
         raise NotFoundError(str(e)) from e
     try:
@@ -143,14 +150,14 @@ async def update_command(
 async def delete_command(
     command_id: UUID,
     commands: CommandsRepo,
-    comms_sessions: CommsSessionRepo,
+    sessions: SessionRepo,
 ) -> DeleteCommandResponse:
     """
     Delete a command by ID.
 
     :param command_id: UUID of the command to delete.
     :param commands: injected Command repository.
-    :param comms_sessions: injected CommsSession repository.
+    :param sessions: injected Session repository.
     :return: Confirmation message with the deleted command ID.
     """
     try:
@@ -158,7 +165,7 @@ async def delete_command(
     except ValueError as e:
         raise NotFoundError(str(e)) from e
     try:
-        session = await comms_sessions.get_by_id(existing_command.session_id)
+        session = await sessions.get_by_id(existing_command.session_id)
     except ValueError as e:
         raise NotFoundError(str(e)) from e
     try:

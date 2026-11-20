@@ -7,6 +7,7 @@ import { useSessionsInRange } from "@/hooks/useSessions";
 import { useMainCommands } from "@/hooks/useMainCommands";
 import { useCommandsBySession, useCreateCommand } from "@/hooks/useCommands";
 import type { Command, MainCommand, Session } from "@/utils/types";
+import { makeSession } from "@/__tests__/testUtils";
 
 vi.mock("@/hooks/useSessions", () => ({ useSessionsInRange: vi.fn() }));
 vi.mock("@/hooks/useMainCommands", () => ({ useMainCommands: vi.fn() }));
@@ -16,8 +17,18 @@ vi.mock("@/hooks/useCommands", () => ({
 }));
 
 const sessions: Session[] = [
-  { id: "ses-1", start_time: "2099-01-01T00:00:00Z", end_time: null, status: "scheduled" },
-  { id: "ses-2", start_time: "2099-01-02T00:00:00Z", end_time: null, status: "pending" },
+  makeSession({
+    id: "ses-1",
+    start_time: "2099-01-01T00:00:00Z",
+    end_time: "2099-01-01T00:10:00Z",
+    status: "scheduled",
+  }),
+  makeSession({
+    id: "ses-2",
+    start_time: "2099-01-02T00:00:00Z",
+    end_time: "2099-01-02T00:10:00Z",
+    status: "pending",
+  }),
 ];
 
 const mainCommands: MainCommand[] = [

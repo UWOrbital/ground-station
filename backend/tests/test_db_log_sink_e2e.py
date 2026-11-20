@@ -46,14 +46,14 @@ async def sink_on_container(monkeypatch, db_engine: AsyncEngine):
     """
 
     @asynccontextmanager
-    async def _session():
-        session = AsyncSession(db_engine, expire_on_commit=False)
+    async def _get_db_session():
+        db = AsyncSession(db_engine, expire_on_commit=False)
         try:
-            yield session
+            yield db
         finally:
-            await session.close()
+            await db.close()
 
-    monkeypatch.setattr(db_log_sink, "get_db_session", _session, raising=True)
+    monkeypatch.setattr(db_log_sink, "get_db_session", _get_db_session, raising=True)
     yield
     if db_log_sink._sink_id is not None:
         await stop_db_log_sink()
@@ -61,8 +61,8 @@ async def sink_on_container(monkeypatch, db_engine: AsyncEngine):
 
 async def _logs_matching(db_engine: AsyncEngine, needle: str) -> list[APILog]:
     """Return every persisted APILog whose message contains ``needle``, oldest first."""
-    async with AsyncSession(db_engine, expire_on_commit=False) as session:
-        result = await session.exec(
+    async with AsyncSession(db_engine, expire_on_commit=False) as db:
+        result = await db.exec(
             select(APILog).where(col(APILog.message).contains(needle)).order_by(col(APILog.time))
         )
         return list(result.all())
@@ -70,9 +70,9 @@ async def _logs_matching(db_engine: AsyncEngine, needle: str) -> list[APILog]:
 
 async def _delete_logs_matching(db_engine: AsyncEngine, needle: str) -> None:
     """Delete the rows a test created so the shared container stays clean."""
-    async with AsyncSession(db_engine, expire_on_commit=False) as session:
-        await session.exec(delete(APILog).where(col(APILog.message).contains(needle)))
-        await session.commit()
+    async with AsyncSession(db_engine, expire_on_commit=False) as db:
+        await db.exec(delete(APILog).where(col(APILog.message).contains(needle)))
+        await db.commit()
 
 
 async def test_log_line_persists_end_to_end(sink_on_container, db_engine: AsyncEngine):

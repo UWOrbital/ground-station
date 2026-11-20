@@ -14,7 +14,12 @@ from app.api.aro.schemas.picture_requests.responses import (
     PictureRequestResponse,
     PictureRequestsResponse,
 )
-from app.config.data_values import PICTURE_REQUEST_DELETE_WINDOW
+from app.config.data_values import (
+    DEFAULT_PAGE_LIMIT,
+    DEFAULT_PAGE_OFFSET,
+    MAX_PAGE_LIMIT,
+    PICTURE_REQUEST_DELETE_WINDOW,
+)
 from app.data.enums.aro_requests import ARORequestStatus
 from app.data.models.aro_user_models import AROUsers
 from app.data.models.transactional_models import ARORequest
@@ -111,8 +116,8 @@ async def _get_owned_request(request_id: UUID, user: AROUsers, aro_requests: ARO
 async def list_picture_requests(
     request: Request,
     aro_requests: ARORequestsRepo,
-    count: int = Query(default=100, ge=1),
-    offset: int = Query(default=0, ge=0),
+    limit: int = Query(default=DEFAULT_PAGE_LIMIT, ge=1, le=MAX_PAGE_LIMIT),
+    offset: int = Query(default=DEFAULT_PAGE_OFFSET, ge=0),
     user: AROUsers = Depends(get_user_by_token),
 ) -> PictureRequestsResponse:
     """
@@ -120,21 +125,21 @@ async def list_picture_requests(
 
     :param request: the incoming request, used to resolve route URLs.
     :param aro_requests: injected ARORequest repository.
-    :param count: maximum number of most recent requests to return.
+    :param limit: maximum number of most recent requests to return.
     :param offset: number of most recent requests to skip, for paging.
     :param user: the authenticated ARO user (injected).
     :return: a page of the user's requests plus pagination operations.
     """
-    requests = await aro_requests.get_recent_by_aro(user.id, count, offset)
+    requests = await aro_requests.get_recent_by_aro(user.id, limit, offset)
     items = [_to_item(request, req) for req in requests]
 
     operations: dict[str, PageLink] = {}
     list_url = request.url_for("aro_list_picture_requests")
-    if len(requests) == count:
-        operations["next"] = PageLink(url=str(list_url.include_query_params(count=count, offset=offset + count)))
+    if len(requests) == limit:
+        operations["next"] = PageLink(url=str(list_url.include_query_params(limit=limit, offset=offset + limit)))
     if offset > 0:
         operations["previous"] = PageLink(
-            url=str(list_url.include_query_params(count=count, offset=max(offset - count, 0)))
+            url=str(list_url.include_query_params(limit=limit, offset=max(offset - limit, 0)))
         )
 
     return PictureRequestsResponse(data=items, operations=operations)

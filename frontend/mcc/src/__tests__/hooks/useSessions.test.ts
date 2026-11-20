@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { useSessionsInRange } from "@/hooks/useSessions";
 import { ApiError } from "@/lib/apiClient";
-import { createQueryWrapper } from "@/__tests__/testUtils";
+import { createQueryWrapper, makeSession } from "@/__tests__/testUtils";
 
 beforeEach(() => {
   vi.restoreAllMocks();
@@ -10,7 +10,7 @@ beforeEach(() => {
 
 describe("useSessionsInRange", () => {
   it("returns the unwrapped session list and encodes the range in the query string", async () => {
-    const sessions = [{ id: "s1", start_time: "2026-01-01T00:00:00Z", end_time: null }];
+    const sessions = [makeSession({ id: "s1" })];
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue({
       ok: true,
       status: 200,

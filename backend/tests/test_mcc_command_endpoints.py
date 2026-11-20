@@ -6,7 +6,7 @@ import pytest_asyncio
 from app.data.enums.transactional import CommandStatus
 from app.data.models.main_models import MainCommand
 from app.data.models.mcc_user_models import MCCUsers
-from app.data.models.transactional_models import CommsSession
+from app.data.models.transactional_models import Session
 from httpx import ASGITransport, AsyncClient
 from main import app
 from app.mcc_keycloak.client import keycloak
@@ -32,29 +32,29 @@ async def client(mcc_user):
 
 
 @pytest_asyncio.fixture
-async def comms_session(db_session):
-    """Create a test comms session in the database."""
-    comms_session = CommsSession(
+async def session(db_session):
+    """Create a test session in the database."""
+    session = Session(
         id=uuid4(),
         start_time=datetime.now(UTC) + timedelta(minutes=30),
         end_time=datetime.now(UTC) + timedelta(minutes=40),
     )
-    db_session.add(comms_session)
+    db_session.add(session)
     await db_session.commit()
-    return comms_session
+    return session
 
 
 @pytest_asyncio.fixture
-async def locked_comms_session(db_session):
-    """Create a test comms session currently within its lockout window."""
-    comms_session = CommsSession(
+async def locked_session(db_session):
+    """Create a test session currently within its lockout window."""
+    session = Session(
         id=uuid4(),
         start_time=datetime.now(UTC) + timedelta(seconds=5),
         end_time=datetime.now(UTC) + timedelta(minutes=10),
     )
-    db_session.add(comms_session)
+    db_session.add(session)
     await db_session.commit()
-    return comms_session
+    return session
 
 
 @pytest_asyncio.fixture(autouse=True)
@@ -75,15 +75,60 @@ async def setup_main_commands(db_session):
     await db_session.commit()
 
 
+# ---------------------------------------------Testing the GET-all endpoint--------------------------------------------- #
+
+
+async def test_get_commands_empty(client: AsyncClient) -> None:
+    """Test that GET-all returns an empty list when no commands exist."""
+    response = await client.get("/api/mcc/commands/")
+
+    assert response.status_code == 200
+    assert response.json()["data"] == []
+
+
+async def test_get_commands_returns_all_by_default(client: AsyncClient, session: Session) -> None:
+    """Test that GET-all returns every command when no pagination params are given."""
+    for type_ in (1, 2, 3):
+        resp = await client.post("/api/mcc/commands/", json={"type_": type_, "session_id": str(session.id)})
+        assert resp.status_code == 200
+
+    response = await client.get("/api/mcc/commands/")
+
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert len(data) == 3
+    assert all({"id", "session_id", "status", "type_"} <= cmd.keys() for cmd in data)
+
+
+async def test_get_commands_respects_limit(client: AsyncClient, session: Session) -> None:
+    """Test that the limit query param caps the number of returned commands."""
+    for type_ in (1, 2, 3):
+        await client.post("/api/mcc/commands/", json={"type_": type_, "session_id": str(session.id)})
+
+    first_page = await client.get("/api/mcc/commands/", params={"limit": 2, "offset": 0})
+    second_page = await client.get("/api/mcc/commands/", params={"limit": 2, "offset": 2})
+    assert first_page.status_code == 200
+    assert second_page.status_code == 200
+
+    first_ids = {cmd["id"] for cmd in first_page.json()["data"]}
+    second_ids = {cmd["id"] for cmd in second_page.json()["data"]}
+    assert len(first_ids) == 2
+    assert len(second_ids) == 1
+    assert first_ids.isdisjoint(second_ids)
+
+    assert (await client.get("/api/mcc/commands/", params={"offset": -1})).status_code == 422
+    assert (await client.get("/api/mcc/commands/", params={"limit": 10_000})).status_code == 422
+
+
 # ---------------------------------------------Testing the POST endpoint--------------------------------------------- #
 
 
-async def test_create_command_success(client: AsyncClient, comms_session: CommsSession) -> None:
+async def test_create_command_success(client: AsyncClient, session: Session) -> None:
     """Test successful creation of a new command."""
     payload = {
         "type_": 1,
         "params": "test_params",
-        "session_id": str(comms_session.id)
+        "session_id": str(session.id)
     }
 
     response = await client.post("/api/mcc/commands/", json=payload)
@@ -97,12 +142,12 @@ async def test_create_command_success(client: AsyncClient, comms_session: CommsS
     UUID(data["id"])
 
 
-async def test_create_command_duplicate(client: AsyncClient, comms_session: CommsSession) -> None:
+async def test_create_command_duplicate(client: AsyncClient, session: Session) -> None:
     """Test that creating a duplicate command is allowed and succeeds."""
     payload = {
         "type_": 2,
         "params": "duplicate_test",
-        "session_id": str(comms_session.id)
+        "session_id": str(session.id)
     }
 
     response1 = await client.post("/api/mcc/commands/", json=payload)
@@ -119,12 +164,12 @@ async def test_create_command_duplicate(client: AsyncClient, comms_session: Comm
     assert response2.json()["data"]["params"] == "duplicate_test"
 
 
-async def test_create_command_with_null_params(client: AsyncClient, comms_session: CommsSession) -> None:
+async def test_create_command_with_null_params(client: AsyncClient, session: Session) -> None:
     """Test creating a command with null params."""
     payload = {
         "type_": 3,
         "params": None,
-        "session_id": str(comms_session.id),
+        "session_id": str(session.id),
     }
 
     response = await client.post("/api/mcc/commands/", json=payload)
@@ -135,11 +180,11 @@ async def test_create_command_with_null_params(client: AsyncClient, comms_sessio
     assert data["status"] == CommandStatus.PENDING
 
 
-async def test_create_command_missing_type(client: AsyncClient, comms_session: CommsSession) -> None:
+async def test_create_command_missing_type(client: AsyncClient, session: Session) -> None:
     """Test that omitting the required type_ field returns a validation error."""
     payload = {
         "params": "some_params",
-        "session_id": str(comms_session.id),
+        "session_id": str(session.id),
     }
 
     response = await client.post("/api/mcc/commands/", json=payload)
@@ -159,12 +204,12 @@ async def test_create_command_missing_session(client: AsyncClient) -> None:
     assert response.status_code == 422
 
 
-async def test_create_command_session_locked_out(client: AsyncClient, locked_comms_session: CommsSession) -> None:
+async def test_create_command_session_locked_out(client: AsyncClient, locked_session: Session) -> None:
     """Test that creating a command for a session within its lockout window fails."""
     payload = {
         "type_": 1,
         "params": "test_params",
-        "session_id": str(locked_comms_session.id),
+        "session_id": str(locked_session.id),
     }
 
     response = await client.post("/api/mcc/commands/", json=payload)
@@ -188,14 +233,14 @@ async def test_create_command_session_not_found(client: AsyncClient) -> None:
 # ---------------------------------------------Testing the PATCH endpoint--------------------------------------------- #
 
 
-async def test_update_command_session_locked_out(client: AsyncClient, comms_session: CommsSession, db_session) -> None:
+async def test_update_command_session_locked_out(client: AsyncClient, session: Session, db_session) -> None:
     """Test that updating a command whose session has since entered lockout fails."""
-    create_response = await client.post("/api/mcc/commands/", json={"type_": 4, "session_id": str(comms_session.id)})
+    create_response = await client.post("/api/mcc/commands/", json={"type_": 4, "session_id": str(session.id)})
     assert create_response.status_code == 200
     command_id = create_response.json()["data"]["id"]
 
-    comms_session.start_time = datetime.now(UTC) + timedelta(seconds=5)
-    db_session.add(comms_session)
+    session.start_time = datetime.now(UTC) + timedelta(seconds=5)
+    db_session.add(session)
     await db_session.commit()
 
     response = await client.patch(f"/api/mcc/commands/{command_id}", json={"params": "updated"})
@@ -213,9 +258,9 @@ async def test_update_command_not_found(client: AsyncClient) -> None:
 # ---------------------------------------------Testing the DELETE endpoint--------------------------------------------- #
 
 
-async def test_delete_command_success(client: AsyncClient, comms_session: CommsSession) -> None:
+async def test_delete_command_success(client: AsyncClient, session: Session) -> None:
     """Test successful deletion of an existing command."""
-    create_response = await client.post("/api/mcc/commands/", json={"type_": 10, "session_id": str(comms_session.id)})
+    create_response = await client.post("/api/mcc/commands/", json={"type_": 10, "session_id": str(session.id)})
     assert create_response.status_code == 200
     command_id = create_response.json()["data"]["id"]
 
@@ -242,9 +287,9 @@ async def test_delete_command_invalid_uuid(client: AsyncClient) -> None:
     assert response.status_code == 422
 
 
-async def test_delete_command_twice(client: AsyncClient, comms_session: CommsSession) -> None:
+async def test_delete_command_twice(client: AsyncClient, session: Session) -> None:
     """Test that deleting the same command twice fails on the second attempt."""
-    create_response = await client.post("/api/mcc/commands/", json={"type_": 11, "session_id": str(comms_session.id)})
+    create_response = await client.post("/api/mcc/commands/", json={"type_": 11, "session_id": str(session.id)})
     assert create_response.status_code == 200
     command_id = create_response.json()["data"]["id"]
 
@@ -255,14 +300,14 @@ async def test_delete_command_twice(client: AsyncClient, comms_session: CommsSes
     assert delete_response2.status_code == 404
 
 
-async def test_delete_command_session_locked_out(client: AsyncClient, comms_session: CommsSession, db_session) -> None:
+async def test_delete_command_session_locked_out(client: AsyncClient, session: Session, db_session) -> None:
     """Test that deleting a command whose session has since entered lockout fails."""
-    create_response = await client.post("/api/mcc/commands/", json={"type_": 5, "session_id": str(comms_session.id)})
+    create_response = await client.post("/api/mcc/commands/", json={"type_": 5, "session_id": str(session.id)})
     assert create_response.status_code == 200
     command_id = create_response.json()["data"]["id"]
 
-    comms_session.start_time = datetime.now(UTC) + timedelta(seconds=5)
-    db_session.add(comms_session)
+    session.start_time = datetime.now(UTC) + timedelta(seconds=5)
+    db_session.add(session)
     await db_session.commit()
 
     response = await client.delete(f"/api/mcc/commands/{command_id}")
@@ -273,22 +318,22 @@ async def test_delete_command_session_locked_out(client: AsyncClient, comms_sess
 # ---------------------------------------------Testing the GET by session endpoint--------------------------------------------- #
 
 
-async def test_get_commands_by_session(client: AsyncClient, comms_session: CommsSession) -> None:
+async def test_get_commands_by_session(client: AsyncClient, session: Session) -> None:
     """Test retrieving all commands for a given session."""
-    await client.post("/api/mcc/commands/", json={"type_": 1, "session_id": str(comms_session.id)})
-    await client.post("/api/mcc/commands/", json={"type_": 2, "session_id": str(comms_session.id)})
+    await client.post("/api/mcc/commands/", json={"type_": 1, "session_id": str(session.id)})
+    await client.post("/api/mcc/commands/", json={"type_": 2, "session_id": str(session.id)})
 
-    response = await client.get(f"/api/mcc/commands/session/{comms_session.id}")
+    response = await client.get(f"/api/mcc/commands/session/{session.id}")
 
     assert response.status_code == 200
     data = response.json()["data"]
     assert len(data) == 2
-    assert all(cmd["session_id"] == str(comms_session.id) for cmd in data)
+    assert all(cmd["session_id"] == str(session.id) for cmd in data)
 
 
-async def test_get_commands_by_session_empty(client: AsyncClient, comms_session: CommsSession) -> None:
+async def test_get_commands_by_session_empty(client: AsyncClient, session: Session) -> None:
     """Test that a session with no commands returns an empty list."""
-    response = await client.get(f"/api/mcc/commands/session/{comms_session.id}")
+    response = await client.get(f"/api/mcc/commands/session/{session.id}")
 
     assert response.status_code == 200
     assert response.json()["data"] == []
