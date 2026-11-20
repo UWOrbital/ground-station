@@ -28,6 +28,7 @@ dependencies = [
     "pydantic-extra-types>=2.11.0",
     "phonenumbers>=9.0.0",
     "fastapi-mail>=1.6.5",
+    "skyfield>=1.55",
 ]
 
 # install with `uv sync --extra dev` from the repo root
