@@ -187,41 +187,26 @@ async def send_many(emails: list[Email]) -> None:
         return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     for email in emails:
-        logger.info(
-            " | ".join(
-                [
-                    "EMAIL SEND START",
-                    f"Type: {email.type}",
-                    f"Recipients: {len(email.recipients)}",  # count only; addresses are PII
-                    f"Time: {t()}",
-                ]
-            )
-        )
+        logger.bind(
+            type=email.type,
+            recipient_count=len(email.recipients),  # count only, addresses are PII
+            time=t(),
+        ).info("Email send start")
 
         try:
             await fm.send_message(MessageSchema(**_create_message_schema_fields(email)))
         except Exception:
-            logger.exception(
-                " | ".join(
-                    [
-                        "EMAIL SEND FAIL",
-                        f"Type: {email.type}",
-                        f"Recipients: {len(email.recipients)}",  # count only; addresses are PII
-                        f"Time: {t()}",
-                    ]
-                )
-            )
+            logger.bind(
+                type=email.type,
+                recipient_count=len(email.recipients),  # count only, addresses are PII
+                time=t(),
+            ).exception("Email send fail")
         else:
-            logger.info(
-                " | ".join(
-                    [
-                        "EMAIL SEND SUCCESS",
-                        f"Type: {email.type}",
-                        f"Recipients: {len(email.recipients)}",  # count only; addresses are PII
-                        f"Time: {t()}",
-                    ]
-                )
-            )
+            logger.bind(
+                type=email.type,
+                recipient_count=len(email.recipients),  # count only, addresses are PII
+                time=t(),
+            ).info("Email send success")
 
 
 def render_email_template(template_name: str, **context: object) -> str:

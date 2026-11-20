@@ -30,7 +30,7 @@ async def callsign_verified(qual_levels: tuple[bool, ...], user_call_sign: str) 
     for i, expected in enumerate(expected_levels):
         if qual_levels[i] != expected:
             # Log the mismatched level only; the callsign itself is omitted as PII.
-            logger.warning(f"Callsign qualification mismatch at qual_level_{chr(ord('a') + i)}")
+            logger.bind(qual_level=chr(ord("a") + i)).warning("Callsign qualification mismatch")
 
     return True
 
