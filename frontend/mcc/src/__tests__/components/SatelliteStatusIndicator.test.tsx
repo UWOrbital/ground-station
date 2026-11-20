@@ -19,21 +19,27 @@ describe("SatelliteStatusIndicator", () => {
       expect(statusLabels.length).toBeGreaterThan(0);
     });
 
-    it("displays IDLE status label", () => {
-      render(<SatelliteStatusIndicator status="idle" />);
-      const statusLabels = screen.getAllByText("IDLE");
+    it("displays PENDING status label", () => {
+      render(<SatelliteStatusIndicator status="pending" />);
+      const statusLabels = screen.getAllByText("PENDING");
+      expect(statusLabels.length).toBeGreaterThan(0);
+    });
+
+    it("displays SCHEDULED status label", () => {
+      render(<SatelliteStatusIndicator status="scheduled" />);
+      const statusLabels = screen.getAllByText("SCHEDULED");
+      expect(statusLabels.length).toBeGreaterThan(0);
+    });
+
+    it("displays COMPLETED status label", () => {
+      render(<SatelliteStatusIndicator status="completed" />);
+      const statusLabels = screen.getAllByText("COMPLETED");
       expect(statusLabels.length).toBeGreaterThan(0);
     });
 
     it("displays OFFLINE status label", () => {
       render(<SatelliteStatusIndicator status="offline" />);
       const statusLabels = screen.getAllByText("OFFLINE");
-      expect(statusLabels.length).toBeGreaterThan(0);
-    });
-
-    it("displays ERROR status label", () => {
-      render(<SatelliteStatusIndicator status="error" />);
-      const statusLabels = screen.getAllByText("ERROR");
       expect(statusLabels.length).toBeGreaterThan(0);
     });
 
@@ -57,9 +63,21 @@ describe("SatelliteStatusIndicator", () => {
       expect(statusText).toHaveClass("text-green-400");
     });
 
-    it("applies yellow color classes for idle status", () => {
-      render(<SatelliteStatusIndicator status="idle" />);
-      const statusText = screen.getAllByText("IDLE")[0];
+    it("applies yellow color classes for pending status", () => {
+      render(<SatelliteStatusIndicator status="pending" />);
+      const statusText = screen.getAllByText("PENDING")[0];
+      expect(statusText).toHaveClass("text-yellow-400");
+    });
+
+    it("applies yellow color classes for scheduled status", () => {
+      render(<SatelliteStatusIndicator status="scheduled" />);
+      const statusText = screen.getAllByText("SCHEDULED")[0];
+      expect(statusText).toHaveClass("text-yellow-400");
+    });
+
+    it("applies yellow color classes for completed status", () => {
+      render(<SatelliteStatusIndicator status="completed" />);
+      const statusText = screen.getAllByText("COMPLETED")[0];
       expect(statusText).toHaveClass("text-yellow-400");
     });
 
@@ -67,12 +85,6 @@ describe("SatelliteStatusIndicator", () => {
       render(<SatelliteStatusIndicator status="offline" />);
       const statusText = screen.getAllByText("OFFLINE")[0];
       expect(statusText).toHaveClass("text-red-400");
-    });
-
-    it("applies dark red color classes for error status", () => {
-      render(<SatelliteStatusIndicator status="error" />);
-      const statusText = screen.getAllByText("ERROR")[0];
-      expect(statusText).toHaveClass("text-red-500");
     });
   });
 
@@ -217,13 +229,33 @@ describe("SatelliteStatusIndicator", () => {
       expect(statusLabels.length).toBeGreaterThan(1);
     });
 
-    it("displays correct status in modal for idle state", () => {
-      render(<SatelliteStatusIndicator status="idle" />);
+        it("displays correct status in modal for pending state", () => {
+      render(<SatelliteStatusIndicator status="pending" />);
 
-      const button = screen.getByRole("button", { name: /Satellite status: IDLE/i });
+      const button = screen.getByRole("button", { name: /Satellite status: PENDING/i });
       fireEvent.click(button);
 
-      const statusLabels = screen.getAllByText("IDLE");
+      const statusLabels = screen.getAllByText("PENDING");
+      expect(statusLabels.length).toBeGreaterThan(1);
+    });
+
+    it("displays correct status in modal for scheduled state", () => {
+      render(<SatelliteStatusIndicator status="scheduled" />);
+
+      const button = screen.getByRole("button", { name: /Satellite status: SCHEDULED/i });
+      fireEvent.click(button);
+
+      const statusLabels = screen.getAllByText("SCHEDULED");
+      expect(statusLabels.length).toBeGreaterThan(1);
+    });
+
+    it("displays correct status in modal for completed state", () => {
+      render(<SatelliteStatusIndicator status="completed" />);
+
+      const button = screen.getByRole("button", { name: /Satellite status: COMPLETED/i });
+      fireEvent.click(button);
+
+      const statusLabels = screen.getAllByText("COMPLETED");
       expect(statusLabels.length).toBeGreaterThan(1);
     });
 
@@ -234,16 +266,6 @@ describe("SatelliteStatusIndicator", () => {
       fireEvent.click(button);
 
       const statusLabels = screen.getAllByText("OFFLINE");
-      expect(statusLabels.length).toBeGreaterThan(1);
-    });
-
-    it("displays correct status in modal for error state", () => {
-      render(<SatelliteStatusIndicator status="error" />);
-
-      const button = screen.getByRole("button", { name: /Satellite status: ERROR/i });
-      fireEvent.click(button);
-
-      const statusLabels = screen.getAllByText("ERROR");
       expect(statusLabels.length).toBeGreaterThan(1);
     });
   });
