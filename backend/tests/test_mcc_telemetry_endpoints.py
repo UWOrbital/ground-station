@@ -128,6 +128,33 @@ async def test_get_telemetry_success(client: AsyncClient, db_session) -> None:
     assert data[0]["value"] == "3.7"
 
 
+async def test_get_telemetry_respects_limits(client: AsyncClient, db_session) -> None:
+    """Test that the limit query param caps the number of returned telemetry entries."""
+    for type_ in (1, 2, 3):
+        telemetry = Telemetry(
+            id=uuid4(),
+            type_=type_,
+            value="3.7",
+            timestamp=datetime(2025, 6, 1, 12, 0, 5, tzinfo=UTC),
+        )
+        db_session.add(telemetry)
+    await db_session.commit()
+
+    first_page = await client.get("/api/mcc/telemetry/", params={"limit": 2, "offset": 0})
+    second_page = await client.get("/api/mcc/telemetry/", params={"limit": 2, "offset": 2})
+    assert first_page.status_code == 200
+    assert second_page.status_code == 200
+
+    first_ids = {data["id"] for data in first_page.json()["data"]}
+    second_ids = {data["id"] for data in second_page.json()["data"]}
+    assert len(first_ids) == 2
+    assert len(second_ids) == 1
+    assert first_ids.isdisjoint(second_ids)
+
+    assert (await client.get("/api/mcc/telemetry/", params={"offset": -1})).status_code == 422
+    assert (await client.get("/api/mcc/telemetry/", params={"limit": 10_000})).status_code == 422
+
+
 async def test_get_telemetry_empty(client: AsyncClient) -> None:
     """Test that an empty telemetry table returns an empty list."""
     response = await client.get("/api/mcc/telemetry/")

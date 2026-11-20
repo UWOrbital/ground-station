@@ -1,11 +1,12 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from app.api.mcc.schemas.requests import CreateCommandRequest, UpdateCommandRequest
 from app.api.mcc.schemas.responses import CommandResponse, CommandsResponse, DeleteCommandResponse
 from app.api.mcc.services.scheduling import assert_not_locked_out
+from app.config.data_values import DEFAULT_PAGE_LIMIT, DEFAULT_PAGE_OFFSET, MAX_PAGE_LIMIT
 from app.data.models.mcc_user_models import MCCUsers
 from app.data.repositories.dal import DAL
 from app.data.repositories.repositories import CommandsRepository, CommsSessionRepository
@@ -19,14 +20,20 @@ CommsSessionRepo = Annotated[CommsSessionRepository, Depends(DAL.get_repo(DAL.co
 
 
 @commands_router.get("/", dependencies=[keycloak.require_auth])
-async def get_commands(commands: CommandsRepo) -> CommandsResponse:
+async def get_commands(
+    commands: CommandsRepo,
+    limit: int = Query(default=DEFAULT_PAGE_LIMIT, ge=1, le=MAX_PAGE_LIMIT),
+    offset: int = Query(default=DEFAULT_PAGE_OFFSET, ge=0),
+) -> CommandsResponse:
     """
     Retrieve all commands from the database.
 
     :param commands: injected Command repository.
+    :param limit: max rows to return
+    :param offset: number of rows to skip
     :return: All command entries.
     """
-    return CommandsResponse(data=await commands.get_all())
+    return CommandsResponse(data=await commands.get_all(limit=limit, offset=offset))
 
 
 @commands_router.get("/session/{session_id}", dependencies=[keycloak.require_auth])

@@ -1,3 +1,4 @@
+import { features } from "../components/Table";
 import { createColumnHelper } from "@tanstack/react-table";
 import Table from "../components/Table";
 
@@ -8,9 +9,9 @@ type DashboardData = {
   packet: string;
 };
 
-const columnHelper = createColumnHelper<DashboardData>();
+const columnHelper = createColumnHelper<typeof features, DashboardData>();
 
-const columns = [
+const columns = columnHelper.columns([
   columnHelper.accessor("session", {
     header: "Session",
     cell: (info) => info.getValue(),
@@ -27,7 +28,7 @@ const columns = [
     header: "Packet",
     cell: (info) => info.getValue(),
   }),
-];
+]);
 
 // Demo data
 const data: DashboardData[] = [

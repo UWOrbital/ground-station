@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { createColumnHelper } from "@tanstack/react-table";
+import { features } from "@/components/Table";
 import Table from "@/components/Table";
 
 type TestData = {
@@ -9,9 +10,9 @@ type TestData = {
   status: string;
 };
 
-const columnHelper = createColumnHelper<TestData>();
+const columnHelper = createColumnHelper<typeof features, TestData>();
 
-const columns = [
+const columns = columnHelper.columns([
   columnHelper.accessor("id", {
     header: "ID",
     cell: (info) => info.getValue(),
@@ -24,7 +25,7 @@ const columns = [
     header: "Status",
     cell: (info) => info.getValue(),
   }),
-];
+]);
 
 const testData: TestData[] = [
   { id: 1, name: "Test 1", status: "Active" },

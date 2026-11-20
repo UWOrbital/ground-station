@@ -1,17 +1,31 @@
 import {
-  useReactTable,
-  getCoreRowModel,
+  useTable,
+  tableFeatures,
+  rowSortingFeature,
+  columnFilteringFeature,
+  columnVisibilityFeature,
+  globalFilteringFeature,
+  createSortedRowModel,
+  createFilteredRowModel,
   flexRender,
-  getSortedRowModel,
-  getFilteredRowModel,
 } from "@tanstack/react-table";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef, RowData, SortingState } from "@tanstack/react-table";
 import { useState } from "react";
 
-interface TableProps<T> {
+// Register features that Table uses
+export const features = tableFeatures({
+  rowSortingFeature,
+  columnFilteringFeature,
+  globalFilteringFeature,
+  columnVisibilityFeature,
+  sortedRowModel: createSortedRowModel(),
+  filteredRowModel: createFilteredRowModel(),
+});
+
+interface TableProps<T extends RowData> {
   data: T[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  columns: ColumnDef<T, any>[];
+  columns: ColumnDef<typeof features, T, any>[];
   onRowClick?: (row: T) => void;
   showFilters?: boolean;
   containerClassName?: string;
@@ -26,7 +40,7 @@ interface TableProps<T> {
  * @param containerClassName - Optional custom className for the container
  * @return tsx element of Table component
  */
-function Table<T>({
+function Table<T extends RowData>({
   data,
   columns,
   onRowClick,
@@ -34,17 +48,18 @@ function Table<T>({
   containerClassName = "w-full max-w-5xl",
 }: TableProps<T>) {
   const [globalFilter, setGlobalFilter] = useState("");
+  const [sorting, setSorting] = useState<SortingState>([]);
 
-  const table = useReactTable({
+  const table = useTable({
+    features,
     data,
     columns,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     state: {
       globalFilter,
+      sorting,
     },
     onGlobalFilterChange: setGlobalFilter,
+    onSortingChange: setSorting,
   });
 
   return (
@@ -68,16 +83,31 @@ function Table<T>({
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id} className="border-b border-border">
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    className="text-left px-6 py-4 font-normal text-muted-foreground"
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
-                  </th>
-                ))}
+                {headerGroup.headers.map((header) => {
+                  const canSort = header.column.getCanSort();
+                  const isSorted = header.column.getIsSorted();
+                  return (
+                    <th
+                      key={header.id}
+                      className={`text-left px-6 py-4 font-normal text-muted-foreground ${
+                        canSort ? "cursor-pointer select-none hover:text-foreground" : ""
+                      }`}
+                      onClick={header.column.getToggleSortingHandler()}
+                    >
+                      <div className="flex items-center gap-2">
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(header.column.columnDef.header, header.getContext())}
+                        <span className="w-4 inline-block text-xs">
+                          {{
+                            asc: "▲",
+                            desc: "▼",
+                          }[isSorted as string] ?? ""}
+                        </span>
+                      </div>
+                    </th>
+                  );
+                })}
               </tr>
             ))}
           </thead>
