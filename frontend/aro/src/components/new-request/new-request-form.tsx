@@ -2,7 +2,7 @@ import "./new-request-form.css";
 import InputForm from "./input-form";
 import MapView from "./map-view";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import React, { useEffect } from "react";
+import React from "react";
 import { useCreatePictureRequest } from "@/hooks/usePictureRequests";
 import { ApiError } from "@/lib/apiClient";
 import toastService from "@/services/Toast.service";
@@ -30,12 +30,6 @@ export async function getUserLocation(): Promise<{ latitude: number; longitude: 
 }
 
 const NewRequestForm = () => {
-  useEffect(() => {
-    alert(
-      "Welcome to the new request form! Enter your coordinates on the left or select them on the map by holding Shift and clicking your desired location.",
-    );
-  }, []);
-
   const queryClient = useQueryClient();
   const createRequest = useCreatePictureRequest();
   const {

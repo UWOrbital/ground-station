@@ -64,7 +64,6 @@ function postedBodies(fetchSpy: { mock: { calls: unknown[][] } }): unknown[] {
 }
 
 beforeEach(() => {
-  vi.spyOn(window, "alert").mockImplementation(() => {});
   mockGeolocation(43.47234, -80.54489);
   accessTokenStore.set("abc");
 });
@@ -156,6 +155,31 @@ describe("NewRequestForm", () => {
 
     expect(toast.success).toHaveBeenCalledWith("Coordinates validated and saved!");
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("shows how to pick a location without a blocking alert", async () => {
+    const alertSpy = vi.spyOn(window, "alert");
+    await renderForm();
+
+    expect(screen.getByText(/hold Shift and click a location on the map/)).toBeInTheDocument();
+    expect(alertSpy).not.toHaveBeenCalled();
+  });
+
+  it("shows the rounded value even when it matches the saved coordinates", async () => {
+    const user = userEvent.setup();
+    const { latitude } = await renderForm();
+    const validate = screen.getByRole("button", { name: "Validate Coordinates" });
+
+    // Saves the rounded location, 43.472.
+    await user.click(validate);
+    expect(latitude).toHaveValue(43.472);
+
+    // Rounds to the same 43.472, so the saved coordinates don't change.
+    await user.clear(latitude);
+    await user.type(latitude, "43.4724");
+    await user.click(validate);
+
+    expect(latitude).toHaveValue(43.472);
   });
 
   it("blocks out-of-range coordinates before sending anything", async () => {
