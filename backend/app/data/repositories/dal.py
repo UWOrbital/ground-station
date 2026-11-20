@@ -10,12 +10,13 @@ from app.data.repositories.repositories import (
     AROUserLoginRepository,
     AROUsersRepository,
     CommandsRepository,
-    CommsSessionRepository,
     ImageRepository,
     MainCommandRepository,
     MainTelemetryRepository,
     MCCUsersRepository,
+    OrbitElementRepository,
     PacketRepository,
+    SessionRepository,
     TelemetryRepository,
 )
 
@@ -46,7 +47,8 @@ class DAL:
     aro_requests = ARORequestRepository
     main_commands = MainCommandRepository
     main_telemetries = MainTelemetryRepository
-    comms_sessions = CommsSessionRepository
+    sessions = SessionRepository
+    orbit_elements = OrbitElementRepository
     packets = PacketRepository
     commands = CommandsRepository
     telemetry = TelemetryRepository

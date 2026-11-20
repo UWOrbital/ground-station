@@ -1,9 +1,10 @@
 import os
 import subprocess
 import sys
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Callable
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 os.environ.setdefault("ARO_AUTH_JWT_SECRET", "dummy" * 8)
 os.environ.setdefault("ARO_AUTH_SESSION_SECRET", "dummy" * 8)
@@ -17,7 +18,8 @@ os.environ.setdefault("KEYCLOAK_CLIENT_SECRET", "dummy")
 
 import pytest
 import pytest_asyncio
-from app.data.models.transactional_models import CommsSession
+from app.data.enums.transactional import SessionSource
+from app.data.models.transactional_models import OrbitElement, Session
 from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -102,13 +104,75 @@ def default_start_time() -> datetime:
 
 
 @pytest.fixture
-def default_comms_session(default_start_time: datetime) -> CommsSession:
+def default_session(default_start_time: datetime) -> Session:
     """
-    Creates the comms session
+    Creates the session
     This is a function level fixture.
     """
-    comms_session_item = CommsSession(start_time=default_start_time, end_time=default_start_time + timedelta(minutes=5))
-    return comms_session_item
+    session_item = Session(start_time=default_start_time, end_time=default_start_time + timedelta(minutes=5))
+    return session_item
+
+
+ISS_NORAD_CAT_ID = 25544
+# Trimmed CelesTrak JSON OMM record
+# Only stored as JSONB, not parsed by the backend
+ISS_OMM: dict[str, Any] = {
+    "OBJECT_NAME": "ISS (ZARYA)",
+    "OBJECT_ID": "1998-067A",
+    "EPOCH": "2026-11-19T04:55:07.676544",
+    "NORAD_CAT_ID": ISS_NORAD_CAT_ID,
+}
+
+
+@pytest_asyncio.fixture
+async def orbit_element(db_session: AsyncSession) -> OrbitElement:
+    """Insert and return a minimal orbit element row for the ISS.
+
+    :param db_session: test database session.
+    :return: the persisted OrbitElement.
+    """
+    element = OrbitElement(
+        norad_cat_id=ISS_NORAD_CAT_ID, epoch=datetime(2026, 11, 19, 4, 55, 7, 676544, tzinfo=UTC), omm=ISS_OMM
+    )
+    db_session.add(element)
+    await db_session.commit()
+    return element
+
+
+@pytest.fixture
+def make_predicted_session(orbit_element: OrbitElement) -> Callable[..., Session]:
+    """Return a factory that builds valid, unsaved predicted sessions.
+
+    :param orbit_element: orbit element the predictions reference
+    :return: factory taking the padded window start plus field overrides.
+    """
+
+    def _make(start: datetime, **overrides: Any) -> Session:
+        """Build a predicted session starting at the given padded start time.
+
+        :param start: padded window start.
+        :param overrides: Session fields to replace in the default pass.
+        :return: an unsaved Session.
+        """
+        rise_time = start + timedelta(seconds=60)
+        set_time = rise_time + timedelta(minutes=8)
+        fields: dict[str, Any] = {
+            "start_time": start,
+            "end_time": set_time + timedelta(seconds=60),
+            "source": SessionSource.PREDICTED,
+            "rise_time": rise_time,
+            "peak_time": rise_time + timedelta(minutes=4),
+            "set_time": set_time,
+            "min_elevation_deg": 15.0,
+            "max_elevation_deg": 63.2,
+            "rise_azimuth_deg": 215.0,
+            "set_azimuth_deg": 40.5,
+            "orbit_element_id": orbit_element.id,
+        }
+        fields.update(overrides)
+        return Session(**fields)
+
+    return _make
 
 
 @pytest.fixture(autouse=True)

@@ -28,14 +28,14 @@ class AbstractRepository[T, PK](ABC):
         :param offset: number of rows to skip
         :return: a list of all model instances
         """
-        async with get_db_session() as session:
+        async with get_db_session() as db:
             pk = class_mapper(self.model).primary_key[0]
             query = select(self.model).order_by(pk)
             if offset:
                 query = query.offset(offset)
             if limit is not None:
                 query = query.limit(limit)
-            return list((await session.exec(query)).all())
+            return list((await db.exec(query)).all())
 
     async def get_first_by(self, **kwargs: object) -> T | None:
         """
@@ -44,8 +44,8 @@ class AbstractRepository[T, PK](ABC):
         :param kwargs: fields to search by
         :return: the first matching instance, or None
         """
-        async with get_db_session() as session:
-            return (await session.exec(select(self.model).filter_by(**kwargs))).first()
+        async with get_db_session() as db:
+            return (await db.exec(select(self.model).filter_by(**kwargs))).first()
 
     async def get_all_by(self, **kwargs: object) -> list[T]:
         """
@@ -54,8 +54,8 @@ class AbstractRepository[T, PK](ABC):
         :param kwargs: fields to search by
         :return: a list of all model instances matching the fields
         """
-        async with get_db_session() as session:
-            return list((await session.exec(select(self.model).filter_by(**kwargs))).all())
+        async with get_db_session() as db:
+            return list((await db.exec(select(self.model).filter_by(**kwargs))).all())
 
     async def get_by_id(self, obj_id: PK) -> T:
         """
@@ -64,8 +64,8 @@ class AbstractRepository[T, PK](ABC):
         :param obj_id: PK of the model instance to be retrieved
         :return: the retrieved instance
         """
-        async with get_db_session() as session:
-            obj = await session.get(self.model, obj_id)
+        async with get_db_session() as db:
+            obj = await db.get(self.model, obj_id)
             if not obj:
                 raise ValueError(f"{self.model.__name__} with ID {obj_id} not found.")
             return obj
@@ -77,11 +77,11 @@ class AbstractRepository[T, PK](ABC):
         :param data: the JSON object of the model instance to be created
         :return: the newly created instance
         """
-        async with get_db_session() as session:
+        async with get_db_session() as db:
             obj = self.model(**data)
-            session.add(obj)
-            await session.commit()
-            await session.refresh(obj)
+            db.add(obj)
+            await db.commit()
+            await db.refresh(obj)
             return obj
 
     async def delete_by_id(self, obj_id: PK) -> T:
@@ -91,12 +91,12 @@ class AbstractRepository[T, PK](ABC):
         :param obj_id: PK of the model instance to be deleted
         :return: the deleted instance
         """
-        async with get_db_session() as session:
-            obj = await session.get(self.model, obj_id)
+        async with get_db_session() as db:
+            obj = await db.get(self.model, obj_id)
             if not obj:
                 raise ValueError(f"{self.model.__name__} with ID {obj_id} not found.")
-            await session.delete(obj)
-            await session.commit()
+            await db.delete(obj)
+            await db.commit()
             return obj
 
     async def update(self, obj_id: PK, data: dict[str, Any]) -> T:
@@ -107,8 +107,8 @@ class AbstractRepository[T, PK](ABC):
         :param data: dictionary of field names and new values
         :return: the updated instance
         """
-        async with get_db_session() as session:
-            obj = await session.get(self.model, obj_id)
+        async with get_db_session() as db:
+            obj = await db.get(self.model, obj_id)
             if not obj:
                 raise ValueError(f"{self.model.__name__} with ID {obj_id} not found.")
 
@@ -131,5 +131,5 @@ class AbstractRepository[T, PK](ABC):
                 except Exception as e:
                     raise RuntimeError(f"Failed to update {self.model.__name__}: {e}") from e
 
-            await session.commit()
+            await db.commit()
             return obj

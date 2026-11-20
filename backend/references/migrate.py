@@ -25,8 +25,8 @@ async def _run(seeder: Callable[[AsyncSession], Awaitable[None]]) -> None:
 
     :param seeder: async function that populates the database using the given session.
     """
-    async with get_db_session() as session:
-        await seeder(session)
+    async with get_db_session() as db:
+        await seeder(db)
 
 
 async def main() -> None:

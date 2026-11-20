@@ -3,21 +3,22 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import LiveSession from "./LiveSession";
+import { makeSession } from "@/__tests__/testUtils";
 
 const mockSessions = {
   data: [
-    {
+    makeSession({
       id: "a1b2c3d4-0000-0000-0000-000000000001",
       start_time: "2026-09-13T10:00:00Z",
       end_time: "2026-09-13T10:30:00Z",
       status: "completed",
-    },
-    {
+    }),
+    makeSession({
       id: "a1b2c3d4-0000-0000-0000-000000000002",
       start_time: "2026-09-14T12:00:00Z",
       end_time: "2026-09-14T12:45:00Z",
       status: "ongoing",
-    },
+    }),
   ],
 };
 

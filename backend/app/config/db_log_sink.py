@@ -160,9 +160,9 @@ async def _write_batch(rows: list[dict[str, Any]]) -> None:
     if not rows:
         return
     try:
-        async with get_db_session() as session:
-            session.add_all([APILog(**row) for row in rows])
-            await session.commit()
+        async with get_db_session() as db:
+            db.add_all([APILog(**row) for row in rows])
+            await db.commit()
     except Exception as exc:  # noqa: BLE001 - logging must never crash the app
         print(
             f"[db_log_sink] batch insert of {len(rows)} log row(s) failed ({exc!r}); retrying individually",
@@ -182,9 +182,9 @@ async def _write_rows_individually(rows: list[dict[str, Any]]) -> None:
     """
     for row in rows:
         try:
-            async with get_db_session() as session:
-                session.add(APILog(**row))
-                await session.commit()
+            async with get_db_session() as db:
+                db.add(APILog(**row))
+                await db.commit()
         except Exception as exc:  # noqa: BLE001 - logging must never crash the app
             print(f"[db_log_sink] dropping 1 unwritable log row: {exc!r}", file=sys.stderr)
 

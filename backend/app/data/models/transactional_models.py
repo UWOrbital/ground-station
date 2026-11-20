@@ -1,11 +1,12 @@
 from datetime import UTC, datetime
 from decimal import Decimal
-from typing import Final
+from typing import Any, Final
 from uuid import UUID, uuid4
 
 from sqlalchemy import Column, DateTime, func
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as DB_UUID
-from sqlalchemy.schema import ForeignKey, ForeignKeyConstraint
+from sqlalchemy.schema import CheckConstraint, ForeignKey, ForeignKeyConstraint, UniqueConstraint
 from sqlmodel import Field
 
 from app.config.data_values import (
@@ -20,6 +21,8 @@ from app.data.enums.aro_requests import ARORequestStatus
 from app.data.enums.transactional import (
     CommandStatus,
     MainPacketType,
+    OrbitElementSource,
+    SessionSource,
     SessionStatus,
 )
 from app.data.models.aro_user_models import AROUsers
@@ -38,6 +41,7 @@ TRANSACTIONAL_SCHEMA_NAME: Final[str] = "transactional"
 # Table names in database
 ARO_REQUESTS_TABLE_NAME: Final[str] = "aro_requests"
 SESSIONS_TABLE_NAME: Final[str] = "sessions"
+ORBIT_ELEMENTS_TABLE_NAME: Final[str] = "orbit_elements"
 PACKETS_TABLE_NAME: Final[str] = "packets"
 TELEMETRY_TABLE_NAME: Final[str] = "telemetry"
 COMMANDS_TABLE_NAME: Final[str] = "commands"
@@ -171,25 +175,78 @@ class Telemetry(BaseSQLModel, table=True):
     )  # Since the table is in a different schema sqlmodel can't find the table normally
 
 
-# Communcation session information
-
-
-class CommsSession(BaseSQLModel, table=True):
+class Session(BaseSQLModel, table=True):
     """
-    Holds basic information related to a downlink/uplink transmit cycle
+    Holds information regarding an uplink/downlink transmit cycle
     """
 
     id: UUID = Field(default_factory=uuid4, primary_key=True, index=True)
-    start_time: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
-    end_time: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
+    # Padded start: rise_time minus padding for predicted sessions
+    start_time: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False, index=True))
+    # Padded end: set_time plus padding for predicted sessions
+    end_time: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False, index=True))
     status: SessionStatus = Field(default=SessionStatus.PENDING)
+    source: SessionSource = Field(default=SessionSource.MANUAL)
 
-    # table information
+    # Pass data from the pass predictor (null for manual sessions)
+    rise_time: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
+    peak_time: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
+    set_time: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
+    min_elevation_deg: float | None = Field(default=None)
+    max_elevation_deg: float | None = Field(default=None)
+    rise_azimuth_deg: float | None = Field(default=None)
+    set_azimuth_deg: float | None = Field(default=None)
+    orbit_element_id: UUID | None = Field(
+        default=None,
+        foreign_key=to_foreign_key_value(TRANSACTIONAL_SCHEMA_NAME, ORBIT_ELEMENTS_TABLE_NAME),
+        ondelete="RESTRICT",
+    )
+    # Set when a predicted pass disappeared and the session already had commands,
+    # or it moved beyond the padding after the schedule freeze
+    orphaned_at: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
+
     __tablename__ = SESSIONS_TABLE_NAME
-    __table_args__ = {"schema": TRANSACTIONAL_SCHEMA_NAME}
+    __table_args__ = (
+        CheckConstraint("start_time < end_time", name="ck_sessions_start_before_end"),
+        CheckConstraint(
+            "source <> 'PREDICTED' OR (rise_time IS NOT NULL AND peak_time IS NOT NULL AND set_time IS NOT NULL"
+            " AND min_elevation_deg IS NOT NULL AND max_elevation_deg IS NOT NULL AND rise_azimuth_deg IS NOT NULL"
+            " AND set_azimuth_deg IS NOT NULL AND orbit_element_id IS NOT NULL)",
+            name="ck_sessions_predicted_fields",
+        ),
+        CheckConstraint("rise_time < peak_time AND peak_time < set_time", name="ck_sessions_pass_order"),
+        CheckConstraint("start_time <= rise_time AND set_time <= end_time", name="ck_sessions_padding_outside_pass"),
+        CheckConstraint("min_elevation_deg >= 0 AND min_elevation_deg <= 90", name="ck_sessions_min_elevation_range"),
+        CheckConstraint("max_elevation_deg >= 0 AND max_elevation_deg <= 90", name="ck_sessions_max_elevation_range"),
+        CheckConstraint("max_elevation_deg > min_elevation_deg", name="ck_sessions_peak_above_cutoff"),
+        CheckConstraint(
+            "rise_azimuth_deg >= 0 AND rise_azimuth_deg < 360 AND set_azimuth_deg >= 0 AND set_azimuth_deg < 360",
+            name="ck_sessions_azimuth_range",
+        ),
+        {"schema": TRANSACTIONAL_SCHEMA_NAME},
+    )
 
 
-# Raw packet data
+class OrbitElement(BaseSQLModel, table=True):
+    """
+    Holds one set of orbit elements (CCSDS OMM record) for a satellite
+    """
+
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    norad_cat_id: int
+    epoch: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
+    omm: dict[str, Any] = Field(sa_column=Column(JSONB, nullable=False))  # Raw CelesTrak JSON OMM record
+    source: OrbitElementSource = Field(default=OrbitElementSource.CELESTRAK)
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC),
+        sa_column=Column(DateTime(timezone=True), server_default=func.now(), nullable=False),
+    )
+
+    __tablename__ = ORBIT_ELEMENTS_TABLE_NAME
+    __table_args__ = (
+        UniqueConstraint("norad_cat_id", "epoch", name="uq_orbit_elements_norad_cat_id_epoch"),
+        {"schema": TRANSACTIONAL_SCHEMA_NAME},
+    )
 
 
 class Packet(BaseSQLModel, table=True):
