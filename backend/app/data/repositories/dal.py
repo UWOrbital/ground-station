@@ -15,6 +15,7 @@ from app.data.repositories.repositories import (
     MainTelemetryRepository,
     MCCUsersRepository,
     OrbitElementRepository,
+    OrbitFetchAttemptRepository,
     PacketRepository,
     SessionRepository,
     TelemetryRepository,
@@ -49,6 +50,7 @@ class DAL:
     main_telemetries = MainTelemetryRepository
     sessions = SessionRepository
     orbit_elements = OrbitElementRepository
+    orbit_fetch_attempts = OrbitFetchAttemptRepository
     packets = PacketRepository
     commands = CommandsRepository
     telemetry = TelemetryRepository
