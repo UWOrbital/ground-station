@@ -34,7 +34,8 @@ def sent_emails(monkeypatch: pytest.MonkeyPatch) -> list[Any]:
 @pytest_asyncio.fixture
 async def registered_user(client: AsyncClient) -> dict[str, str]:
     res = await client.post(
-        "/api/aro/auth/register", json={"email": EMAIL, "password": PASSWORD, "first_name": "Verify"}
+        "/api/aro/auth/register",
+        json={"email": EMAIL, "password": PASSWORD, "first_name": "Verify", "call_sign": "VA3ABC"},
     )
     assert res.status_code == 201, res.text
     return res.json()

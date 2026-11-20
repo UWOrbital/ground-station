@@ -39,7 +39,8 @@ def sent_tokens(monkeypatch: pytest.MonkeyPatch) -> list[tuple[str, str]]:
 @pytest_asyncio.fixture
 async def registered_user(client: AsyncClient) -> dict[str, str]:
     res = await client.post(
-        "/api/aro/auth/register", json={"email": EMAIL, "password": OLD_PASSWORD, "first_name": "Reset"}
+        "/api/aro/auth/register",
+        json={"email": EMAIL, "password": OLD_PASSWORD, "first_name": "Reset", "call_sign": "VA3ABC"},
     )
     assert res.status_code == 201, res.text
     return res.json()

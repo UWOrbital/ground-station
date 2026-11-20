@@ -3,14 +3,17 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { createQueryWrapper } from "@/hooks/testUtils";
+import { AuthProvider } from "@/contexts/AuthContext";
 import App from "./App";
 
 describe("App", () => {
   it("opens password recovery directly by its route", () => {
     render(
-      <MemoryRouter initialEntries={["/forgot-password"]}>
-        <App />
-      </MemoryRouter>,
+      <AuthProvider>
+        <MemoryRouter initialEntries={["/forgot-password"]}>
+          <App />
+        </MemoryRouter>
+      </AuthProvider>,
       { wrapper: createQueryWrapper() },
     );
     expect(screen.getByRole("heading", { name: "Reset your password" })).toBeInTheDocument();
@@ -19,9 +22,11 @@ describe("App", () => {
   it("navigates from login to password recovery and back", async () => {
     const user = userEvent.setup();
     render(
-      <MemoryRouter initialEntries={["/login"]}>
-        <App />
-      </MemoryRouter>,
+      <AuthProvider>
+        <MemoryRouter initialEntries={["/login"]}>
+          <App />
+        </MemoryRouter>
+      </AuthProvider>,
       { wrapper: createQueryWrapper() },
     );
     const link = screen.getByRole("link", { name: "Forgot Your Password?" });
@@ -34,9 +39,12 @@ describe("App", () => {
 
   it("renders the App component", () => {
     render(
-      <MemoryRouter>
-        <App />
-      </MemoryRouter>,
+      <AuthProvider>
+        <MemoryRouter>
+          <App />
+        </MemoryRouter>
+      </AuthProvider>,
+      { wrapper: createQueryWrapper() },
     );
 
     screen.debug(); // prints out the jsx in the App component unto the command line

@@ -18,6 +18,18 @@ export interface LoginCredentials {
 }
 
 /**
+ * Fields submitted from the ARO registration form.
+ */
+export interface RegisterData {
+  first_name: string;
+  last_name?: string;
+  email: string;
+  password: string;
+  call_sign: string;
+  phone_number?: string;
+}
+
+/**
  * @brief Log in with email and password, storing the returned access token.
  *
  * Uses plain fetch rather than `parseOrThrow` so a 401 (bad credentials)
@@ -97,3 +109,43 @@ async function postForgotPassword(email: string): Promise<void> {
 }
 
 export const useForgotPassword = () => useMutation({ mutationFn: postForgotPassword });
+
+/**
+ * @brief Register a new ARO account.
+ *
+ * Hits the fastapi-users `POST /auth/register` route, which expects a JSON
+ * body. Optional fields are omitted when empty so the backend validators
+ * (e.g. the phone-number parser) don't reject blank strings.
+ *
+ * @param data the registration fields collected from the signup form.
+ * @throws ApiError when the backend rejects the registration.
+ */
+async function postRegister(data: RegisterData): Promise<void> {
+  const body: Record<string, string> = {
+    first_name: data.first_name,
+    email: data.email,
+    password: data.password,
+    call_sign: data.call_sign,
+  };
+  if (data.last_name) body.last_name = data.last_name;
+  if (data.phone_number) body.phone_number = data.phone_number;
+
+  const res = await fetch(`${API_BASE_URL}/auth/register`, {
+    method: "POST",
+    credentials: "include",
+    headers: jsonHeaders(),
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const errBody = await res.json().catch(() => ({}));
+    throw new ApiError(res.status, errorMessage(errBody, res.status));
+  }
+}
+
+/**
+ * @brief Mutation hook that registers a new ARO account.
+ * @return useMutation result object; call `mutateAsync(data)`.
+ */
+export const useRegister = () => {
+  return useMutation({ mutationFn: postRegister });
+};
