@@ -1,16 +1,27 @@
 import React, { type ChangeEvent, useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-interface MapViewProps {
+interface InputFormProps {
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  /** True while a submitted request is in flight; disables the submit button. */
+  isSubmitting: boolean;
 }
 
-const InputForm: React.FC<MapViewProps> = ({ handleSubmit }) => {
+/**
+ * @brief Latitude/longitude form for a new picture request.
+ * @param handleSubmit called for both the "Validate" and "Submit" buttons.
+ * @param isSubmitting whether a request is currently being submitted.
+ * @return tsx element of the input form.
+ */
+const InputForm: React.FC<InputFormProps> = ({ handleSubmit, isSubmitting }) => {
   const queryClient = useQueryClient();
   const [localLat, setLocalLat] = useState<number | "">("");
   const [localLng, setLocalLng] = useState<number | "">("");
 
-  const { data: location } = useQuery<{ latitude: number; longitude: number }, Error>({
+  const { data: location, dataUpdatedAt } = useQuery<
+    { latitude: number; longitude: number },
+    Error
+  >({
     queryKey: ["coords"],
     queryFn: async () => {
       const cached = queryClient.getQueryData<{ latitude: number; longitude: number }>(["coords"]);
@@ -21,12 +32,15 @@ const InputForm: React.FC<MapViewProps> = ({ handleSubmit }) => {
     retry: true,
   });
 
+  // Also re-sync on dataUpdatedAt: when the saved (rounded) coordinates equal the
+  // previous ones, React Query keeps the same `location` object, but the inputs
+  // may still show the unrounded text the user typed.
   useEffect(() => {
     if (location) {
       setLocalLat(location.latitude);
       setLocalLng(location.longitude);
     }
-  }, [location]);
+  }, [location, dataUpdatedAt]);
 
   const handleLatitudeChange = (event: ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
@@ -41,7 +55,10 @@ const InputForm: React.FC<MapViewProps> = ({ handleSubmit }) => {
   return (
     <div className="flex flex-col items-center justify-start min-h-screen bg-white text-lg pt-24">
       <div className="w-full max-w-lg p-8 bg-white rounded-lg">
-        <h1 className="text-3xl text-center -mt-11 mb-10">New Request Form</h1>
+        <h1 className="text-3xl text-center -mt-11 mb-4">New Request Form</h1>
+        <p className="text-base text-gray-600 text-center mb-10">
+          Enter coordinates below, or hold Shift and click a location on the map.
+        </p>
         <form onSubmit={handleSubmit} className="flex flex-col space-y-6 w-full">
           <div className="flex flex-col w-full">
             <label className="text-base font-medium text-gray-700 mb-2">Latitude</label>
@@ -82,9 +99,10 @@ const InputForm: React.FC<MapViewProps> = ({ handleSubmit }) => {
               type="submit"
               name="action"
               value="Submit"
-              className="w-full border border-gray-300 text-black font-medium py-3 rounded-lg shadow-sm hover:bg-gray-50 transition text-lg"
+              disabled={isSubmitting}
+              className="w-full border border-gray-300 text-black font-medium py-3 rounded-lg shadow-sm hover:bg-gray-50 transition text-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Submit Request
+              {isSubmitting ? "Submitting…" : "Submit Request"}
             </button>
           </div>
         </form>

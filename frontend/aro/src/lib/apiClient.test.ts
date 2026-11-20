@@ -251,6 +251,29 @@ describe("errorMessage", () => {
     expect(errorMessage({ detail: "boom" }, 500)).toBe("boom");
   });
 
+  it("reads the first validation message from a 422 detail list", () => {
+    expect(
+      errorMessage(
+        {
+          detail: [
+            {
+              type: "less_than_equal",
+              loc: ["body", "latitude"],
+              msg: "Input should be less than or equal to 90",
+            },
+            { type: "decimal_max_places", loc: ["body", "longitude"], msg: "second" },
+          ],
+        },
+        422,
+      ),
+    ).toBe("Input should be less than or equal to 90");
+  });
+
+  it("falls back when a detail list has no usable message", () => {
+    expect(errorMessage({ detail: [] }, 422)).toBe("Request failed: 422");
+    expect(errorMessage({ detail: [{ loc: ["body"] }] }, 422)).toBe("Request failed: 422");
+  });
+
   it("reads a top-level message from a custom backend error", () => {
     expect(errorMessage({ message: "This picture request can no longer be deleted." }, 409)).toBe(
       "This picture request can no longer be deleted.",
