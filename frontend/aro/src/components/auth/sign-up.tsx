@@ -2,6 +2,7 @@ import { useState, type FormEventHandler } from "react";
 import { useNavigate } from "react-router-dom";
 import { useRegister } from "@/hooks/useAuthMutations";
 import toastService from "@/services/Toast.service";
+import { Link } from "react-router-dom";
 
 /**
  * @brief Signup component for ARO
@@ -18,7 +19,7 @@ function Signup() {
   const register = useRegister();
   const navigate = useNavigate();
 
-  const handleSubmit: FormEventHandler<HTMLFormElement> = async (event) => {
+  const handleSubmit: FormEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
     register.mutate(
       {
@@ -141,15 +142,16 @@ function Signup() {
         </form>
         <button
           type="button"
+          disabled={register.isPending}
           className="w-full shadow bg-white text-black py-2 rounded-lg hover:bg-gray-200 transition-colors border border-gray-700/20 mt-2 mb-15 cursor-pointer"
         >
           Continue with Google
         </button>
         <footer className="flex gap-x-2 items-center justify-center mt-5 mb-5">
-          <p>Already have an Account?</p>
-          <a href="/login" className="underline">
+          <p className="text-black">Already have an account?</p>
+          <Link to="/login" className="underline">
             Login
-          </a>
+          </Link>
         </footer>
       </div>
     </div>

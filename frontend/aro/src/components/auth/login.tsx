@@ -35,7 +35,7 @@ function Login() {
         <div className="flex flex-col gap-y-1 mb-8">
           <h1 className="text-black text-lg font-medium text-center">Login to your ARO Account</h1>
           <h2 className="text-gray-500 text-center">
-            Enter your email below to login to your account
+            Enter your email and password below to login to your account
           </h2>
         </div>
         <form className="space-y-6" onSubmit={handleSubmit}>
@@ -74,6 +74,7 @@ function Login() {
           </div>
           <button
             type="submit"
+            disabled={isSubmitting}
             className="w-full bg-black text-white py-2 rounded-lg hover:bg-gray-700 transition-colors cursor-pointer"
           >
             {isSubmitting ? "Logging in" : "Login"}
@@ -81,16 +82,17 @@ function Login() {
         </form>
         <button
           type="button"
+          disabled={isSubmitting}
           className="w-full shadow bg-white text-black py-2 rounded-lg hover:bg-gray-200 transition-colors border border-gray-700/20 mt-2 cursor-pointer"
         >
           Login with Google
         </button>
 
         <footer className="flex gap-x-2 items-center justify-center mt-5 mb-5">
-          <p>Don&apos;t have an Account?</p>
-          <a href="/sign-up" className="underline">
+          <p className="text-black">Don&apos;t have an account?</p>
+          <Link to="/sign-up" className="underline">
             Sign Up
-          </a>
+          </Link>
         </footer>
       </div>
     </div>
