@@ -28,14 +28,9 @@ const renderAt = (auth: Partial<AuthState>) => {
   render(
     <MemoryRouter initialEntries={["/secret"]}>
       <Routes>
-        <Route
-          path="/secret"
-          element={
-            <ProtectedRoute>
-              <p>secret page</p>
-            </ProtectedRoute>
-          }
-        />
+        <Route element={<ProtectedRoute />}>
+          <Route path="/secret" element={<p>secret page</p>} />
+        </Route>
         <Route path="/login" element={<LoginPage />} />
       </Routes>
     </MemoryRouter>,

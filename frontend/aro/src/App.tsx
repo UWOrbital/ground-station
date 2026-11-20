@@ -38,31 +38,13 @@ function App() {
         <Route path="/verify" element={<Verify />} />
         <Route path="/verify/request" element={<RequestVerification />} />
         <Route path="/sign-up" element={<Signup />} />
-        <Route
-          path="/new-request"
-          element={
-            <ProtectedRoute>
-              <NewRequestForm />
-            </ProtectedRoute>
-          }
-        />
+        {/* Pages that need a signed-in user */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/new-request" element={<NewRequestForm />} />
+          <Route path="/profile/gallery" element={<Gallery />} />
+          <Route path="/profile/settings" element={<ProfileForm />} />
+        </Route>
         <Route path="*" element={<PageNotFound />} />
-        <Route
-          path="/profile/gallery"
-          element={
-            <ProtectedRoute>
-              <Gallery />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/profile/settings"
-          element={
-            <ProtectedRoute>
-              <ProfileForm />
-            </ProtectedRoute>
-          }
-        />
       </Routes>
       <ToastContainer />
     </AuthProvider>

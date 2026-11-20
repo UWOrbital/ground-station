@@ -39,7 +39,10 @@ describe("Nav", () => {
   it("shows New and Profile instead of Login when signed in", () => {
     renderNav({ status: "signedIn" });
     expect(screen.getByRole("link", { name: "New" })).toHaveAttribute("href", "/new-request");
-    expect(screen.getByRole("link", { name: "Profile" })).toHaveAttribute("href", "/profile");
+    expect(screen.getByRole("link", { name: "Profile" })).toHaveAttribute(
+      "href",
+      "/profile/settings",
+    );
     expect(screen.queryByRole("link", { name: "Login" })).not.toBeInTheDocument();
   });
 

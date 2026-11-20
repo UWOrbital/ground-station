@@ -5,7 +5,7 @@
 export interface Route {
   text: string;
   url: string;
-  /** Only shown to signed-in users; the route itself must also be wrapped in ProtectedRoute. */
+  /** Only shown to signed-in users; the route itself must also be nested under ProtectedRoute in App.tsx. */
   requiresAuth?: boolean;
 }
 

@@ -31,7 +31,12 @@ function Nav() {
         {/* Hidden until the auth status is known so a signed-in user never sees Login flash */}
         {(signedIn || status === "signedOut") && (
           <div className="border-1 border-white rounded-xl py-2 px-4 hover:bg-white hover:text-black">
-            {signedIn ? <Link to="/profile">Profile</Link> : <Link to="/login">Login</Link>}
+            {/* TODO(#8): point Profile at /profile once that page exists */}
+            {signedIn ? (
+              <Link to="/profile/settings">Profile</Link>
+            ) : (
+              <Link to="/login">Login</Link>
+            )}
           </div>
         )}
       </div>

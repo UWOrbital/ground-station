@@ -23,10 +23,12 @@ const signedIn = {
 /**
  * @brief Render the full App at a path against a mocked backend.
  * @param path the initial route.
- * @param backend fetch responses by URL substring; defaults to a signed-out backend.
+ * @param backend fetch responses by URL substring, or null for an unreachable backend;
+ *   defaults to a signed-out backend.
  */
-const renderAppAt = (path: string, backend: Record<string, Response> = signedOut) => {
-  mockFetchByPath(backend);
+const renderAppAt = (path: string, backend: Record<string, Response> | null = signedOut) => {
+  if (backend) mockFetchByPath(backend);
+  else vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("network"));
   render(
     <MemoryRouter initialEntries={[path]}>
       <App />
@@ -79,13 +81,7 @@ describe("App", () => {
   });
 
   it("offers a retry instead of the login page when the backend is down", async () => {
-    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("network"));
-    render(
-      <MemoryRouter initialEntries={["/profile/settings"]}>
-        <App />
-      </MemoryRouter>,
-      { wrapper: createQueryWrapper() },
-    );
+    renderAppAt("/profile/settings", null);
     expect(await screen.findByRole("button", { name: "Retry" })).toBeInTheDocument();
     expect(screen.queryByText("Login to your ARO Account")).not.toBeInTheDocument();
   });

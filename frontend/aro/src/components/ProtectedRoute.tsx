@@ -1,25 +1,24 @@
-import type { ReactNode } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import AuthGate from "./AuthGate";
 
 /**
- * @brief Render children only for signed-in users, otherwise redirect to login.
+ * @brief Layout route rendering its child routes only for signed-in users, otherwise redirecting to login.
  *
- * The attempted location is passed as `state.from` so the login page can
- * send the user back after signing in.
+ * Nest protected pages under `<Route element={<ProtectedRoute />}>`. The
+ * attempted location is passed as `state.from` so the login page can send the
+ * user back after signing in.
  *
- * @param children the protected page.
- * @return the page, a loading/unavailable state, or a redirect to /login.
+ * @return the matched child route, a loading/unavailable state, or a redirect to /login.
  */
-function ProtectedRoute({ children }: { children: ReactNode }) {
+function ProtectedRoute() {
   const { status } = useAuth();
   const location = useLocation();
 
   return (
     <AuthGate>
       {status === "signedIn" ? (
-        children
+        <Outlet />
       ) : (
         <Navigate to="/login" replace state={{ from: location }} />
       )}
