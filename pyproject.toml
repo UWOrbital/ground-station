@@ -66,5 +66,5 @@ strict = true
 plugins = "pydantic.mypy"
 
 [[tool.mypy.overrides]]
-module = ["jwcrypto.*"]
+module = ["jwcrypto.*", "skyfield.*"]
 ignore_missing_imports = true
