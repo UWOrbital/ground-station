@@ -244,7 +244,7 @@ requires-dist = [
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = "==7.1.0" },
     { name = "python-keycloak", specifier = "==7.1.1" },
     { name = "ruff", marker = "extra == 'dev'", specifier = "==0.15.15" },
-    { name = "skyfield", specifier = ">=1.55" },
+    { name = "skyfield", specifier = "==1.55" },
     { name = "sqlmodel", specifier = "==0.0.38" },
     { name = "testcontainers", marker = "extra == 'dev'", specifier = ">=4.14.2" },
 ]
