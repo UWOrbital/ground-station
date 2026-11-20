@@ -7,7 +7,8 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Any, Final
 
-from skyfield.api import EarthSatellite, GeographicPosition, Timescale, load, wgs84
+from skyfield.api import EarthSatellite, Time, Timescale, load, wgs84
+from skyfield.toposlib import GeographicPosition
 
 # Search a little past the window to allow passes that rise before `end` but set after
 _SEARCH_MARGIN: Final[timedelta] = timedelta(minutes=30)
@@ -81,7 +82,45 @@ def predict_passes(
         raise ValueError("end must be after start")
 
     satellite = _satellite(omm)
-    observer = _satellite(station)
+    observer = _observer(station)
+    times, events = satellite.find_events(
+        observer,
+        _timescale.from_datetime(start),
+        _timescale.from_datetime(end + _SEARCH_MARGIN),
+        altitude_degrees=min_elevation_deg,
+    )
+
+    passes: list[PredictedPass] = []
+    rise: Time | None = None
+    peak: Time | None = None
+    peak_elevation = 0.0
+
+    for t, event in zip(times, events, strict=True):
+        if event == _RISE:
+            rise, peak, peak_elevation = t, None, 0.0
+        elif event == _PEAK and rise is not None:
+            elevation = _elevation_deg(satellite, observer, t)
+            # Skyfield can potentially report several peaks in one pass, keep the highest
+            if peak is None or elevation > peak_elevation:
+                peak, peak_elevation = t, elevation
+        elif event == _SET:
+            if rise is not None and peak is not None:
+                rise_time = rise.utc_datetime()
+                if start <= rise_time < end:
+                    passes.append(
+                        PredictedPass(
+                            rise_time=rise_time,
+                            peak_time=peak.utc_datetime(),
+                            set_time=t.utc_datetime(),
+                            min_elevation_deg=min_elevation_deg,
+                            max_elevation_deg=peak_elevation,
+                            rise_azimuth_deg=_azimuth_deg(satellite, observer, rise),
+                            set_azimuth_deg=_azimuth_deg(satellite, observer, t),
+                        )
+                    )
+            rise, peak, peak_elevation = None, None, 0.0
+
+    return passes
 
 
 def _satellite(omm: dict[str, Any]) -> EarthSatellite:
@@ -102,3 +141,29 @@ def _observer(station: Station) -> GeographicPosition:
     :return: WGS84 position for the ground station.
     """
     return wgs84.latlon(station.latitude_deg, station.longitude_deg, elevation_m=station.altitude_m)
+
+
+def _elevation_deg(satellite: EarthSatellite, observer: GeographicPosition, t: Time) -> float:
+    """
+    Compute the satellite's elevation deg above the station's horizon.
+
+    :param satellite: the satellite.
+    :param observer: the ground station position.
+    :param t: the time to evaluate at.
+    :return: elevation in degrees.
+    """
+    altitude, _, _ = (satellite - observer).at(t).altaz()
+    return float(altitude.degrees)
+
+
+def _azimuth_deg(satellite: EarthSatellite, observer: GeographicPosition, t: Time) -> float:
+    """
+    Compute the satellite's compass direction from the station.
+
+    :param satellite: the satellite.
+    :param observer: the ground station position.
+    :param t: the time to evaluate at.
+    :return: azimuth in degrees clockwise from north, [0, 360)
+    """
+    _, azimuth, _ = (satellite - observer).at(t).altaz()
+    return float(azimuth.degrees) % 360.0  # mod by 360 to prevent rounding errors to 360
