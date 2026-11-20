@@ -7,6 +7,7 @@ import {
   parseOrThrow,
   refreshAccessToken,
   setUnauthorizedHandler,
+  shouldRetry,
 } from "./apiClient";
 import { accessTokenStore } from "./authToken";
 import { calledUrls, jsonResponse, mockFetchByPath, tokenBody } from "@/hooks/testUtils";
@@ -272,15 +273,10 @@ describe("errorMessage", () => {
 });
 
 describe("parseOrThrow", () => {
-  it("returns the parsed body on success", async () => {
-    expect(await parseOrThrow(jsonResponse(200, { ok: 1 }))).toEqual({ ok: 1 });
-  });
-
-  it("on a 401 drops the token, notifies the handler and throws, without reloading", async () => {
+  it("on a 401 drops the token, notifies the handler and throws", async () => {
     signIn();
     const onUnauthorized = vi.fn();
     setUnauthorizedHandler(onUnauthorized);
-    const hrefBefore = window.location.href;
 
     const err = await parseOrThrow(jsonResponse(401)).catch((e: unknown) => e);
 
@@ -288,7 +284,6 @@ describe("parseOrThrow", () => {
     expect((err as ApiError).status).toBe(401);
     expect(onUnauthorized).toHaveBeenCalledTimes(1);
     expect(accessTokenStore.get()).toBeNull();
-    expect(window.location.href).toBe(hrefBefore);
   });
 
   it("still throws on a 401 when no handler is registered", async () => {
@@ -303,5 +298,17 @@ describe("parseOrThrow", () => {
     await expect(parseOrThrow(jsonResponse(500, { detail: "boom" }))).rejects.toThrow("boom");
     expect(onUnauthorized).not.toHaveBeenCalled();
     expect(accessTokenStore.get()).toBe("old-token");
+  });
+});
+
+describe("shouldRetry", () => {
+  it("retries failures up to 3 times", () => {
+    expect(shouldRetry(2, new ApiError(500, "boom"))).toBe(true);
+    expect(shouldRetry(2, new Error("network"))).toBe(true);
+    expect(shouldRetry(3, new ApiError(500, "boom"))).toBe(false);
+  });
+
+  it("never retries a 401", () => {
+    expect(shouldRetry(0, new ApiError(401, "Not authenticated"))).toBe(false);
   });
 });

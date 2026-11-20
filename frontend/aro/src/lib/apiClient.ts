@@ -51,6 +51,20 @@ export class ApiError extends Error {
 }
 
 /**
+ * @brief React Query retry rule: retry a failure up to 3 times, except a 401.
+ *
+ * A 401 means the session is gone and the user has already been signed out
+ * (see {@link throwIfError}), so a retry can't succeed.
+ *
+ * @param failureCount how many times the query has failed so far.
+ * @param error the error the query failed with.
+ * @return true when the query should be retried.
+ */
+export function shouldRetry(failureCount: number, error: unknown): boolean {
+  return !(error instanceof ApiError && error.status === 401) && failureCount < 3;
+}
+
+/**
  * @brief Build the default JSON request headers.
  * @return headers object requesting/sending JSON.
  */
@@ -184,13 +198,12 @@ export function errorMessage(body: unknown, status: number): string {
 }
 
 /**
- * @brief Parse a fetch Response, throwing an ApiError on any failure.
+ * @brief Throw an ApiError if a fetch Response failed.
  *
  * A 401 also drops the access token and notifies the unauthorized handler, so
  * the app marks the user signed out and `ProtectedRoute` redirects to login.
  *
- * @param res the fetch Response to parse.
- * @return the parsed JSON body typed as T.
+ * @param res the fetch Response to check.
  */
 export async function throwIfError(res: Response): Promise<void> {
   if (res.status === 401) {
@@ -205,7 +218,7 @@ export async function throwIfError(res: Response): Promise<void> {
 }
 
 /**
- * @brief Parse a fetch Response, redirecting to login on 401 and throwing on other errors.
+ * @brief Parse a fetch Response's JSON body, failing as {@link throwIfError} does.
  * @param res the fetch Response to parse.
  * @return the parsed JSON body typed as T.
  */

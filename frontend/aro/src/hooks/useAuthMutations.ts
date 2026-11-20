@@ -1,4 +1,4 @@
-import { type QueryClient, useMutation, useQueryClient } from "@tanstack/react-query";
+import { type Query, type QueryClient, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   API_BASE_URL,
   ApiError,
@@ -21,7 +21,7 @@ export interface LoginCredentials {
  * @brief Log in with email and password, storing the returned access token.
  *
  * Uses plain fetch rather than `parseOrThrow` so a 401 (bad credentials)
- * surfaces as an error instead of redirecting back to the login page.
+ * surfaces the backend's message instead of being treated as an expired session.
  *
  * @param credentials the email and password to authenticate with.
  * @throws ApiError when the backend rejects the credentials.
@@ -57,27 +57,43 @@ async function postLogout(): Promise<void> {
 }
 
 /**
+ * @brief Whether a cached query holds signed-in user data (anything but auth state).
+ * @param query the cached query to check.
+ * @return true for every query outside the `auth` key namespace.
+ */
+const isUserQuery = (query: Query): boolean => query.queryKey[0] !== "auth";
+
+/**
  * @brief Mutation hook logging the user in and refreshing the auth status.
+ *
+ * Drops any data a previous user left in the cache first, so the new user
+ * never sees it.
+ *
  * @return useMutation result object; call `mutateAsync(credentials)`.
  */
 export const useLogin = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: postLogin,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: AUTH_STATUS_QUERY_KEY }),
+    onSuccess: () => {
+      queryClient.removeQueries({ predicate: isUserQuery });
+      return queryClient.invalidateQueries({ queryKey: AUTH_STATUS_QUERY_KEY });
+    },
   });
 };
 
 /**
- * @brief Mark the user signed out and drop every cached query holding their data.
+ * @brief Mark the user signed out and drop the cached user data no page is using.
  *
- * Shared by logout and by the API 401 handler, so the next user never sees the
- * previous user's data.
+ * Shared by logout and the API 401 handler. Cancels any in-flight auth check so
+ * it can't sign the user back in. Keeps queries a mounted page uses, since
+ * removing one mid-fetch leaves that page loading forever; login clears those.
  *
  * @param queryClient the app's React Query client.
  */
 export function clearSession(queryClient: QueryClient): void {
-  queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== "auth" });
+  void queryClient.cancelQueries({ queryKey: AUTH_STATUS_QUERY_KEY });
+  queryClient.removeQueries({ predicate: isUserQuery, type: "inactive" });
   queryClient.setQueryData(AUTH_STATUS_QUERY_KEY, null);
 }
 

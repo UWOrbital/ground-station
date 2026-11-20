@@ -53,10 +53,13 @@ export function tokenBody(token: string = "access-token") {
 
 /**
  * @brief Mock global fetch, answering each call by the first route whose path the URL contains.
- * @param routes map of URL substring to a response, or a function producing one per call.
+ * @param routes map of URL substring to a response, or a function producing one (or a
+ *     promise of one, to hold the request open) per call.
  * @return the fetch spy, for asserting on calls.
  */
-export function mockFetchByPath(routes: Record<string, Response | (() => Response)>) {
+export function mockFetchByPath(
+  routes: Record<string, Response | (() => Response | Promise<Response>)>,
+) {
   return vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
     const url = String(input);
     const path = Object.keys(routes).find((key) => url.includes(key));
