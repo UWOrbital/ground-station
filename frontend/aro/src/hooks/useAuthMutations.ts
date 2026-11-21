@@ -77,6 +77,8 @@ export const useLogin = () => {
     mutationFn: postLogin,
     onSuccess: () => {
       queryClient.removeQueries({ predicate: isUserQuery });
+      // Refetch in place (not reset): the status stays signedOut until the user
+      // loads, so GuestRoute keeps the login form mounted instead of "Loading...".
       return queryClient.invalidateQueries({ queryKey: AUTH_STATUS_QUERY_KEY });
     },
   });
