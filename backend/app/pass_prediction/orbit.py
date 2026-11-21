@@ -81,7 +81,7 @@ def predict_passes(
     if end <= start:
         raise ValueError("end must be after start")
 
-    satellite = _satellite(omm)
+    satellite = satellite_from_omm(omm)
     observer = _observer(station)
     times, events = satellite.find_events(
         observer,
@@ -123,12 +123,14 @@ def predict_passes(
     return passes
 
 
-def _satellite(omm: dict[str, Any]) -> EarthSatellite:
+def satellite_from_omm(omm: dict[str, Any]) -> EarthSatellite:
     """
     Create a Skyfield satellite from an OMM record.
 
     :param omm: OMM record using CelesTrak JSON field names.
     :return: the satellite.
+    :raises KeyError: if a field is missing.
+    :raises ValueError: if a field is invalid.
     """
     return EarthSatellite.from_omm(_timescale, omm)
 
