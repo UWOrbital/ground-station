@@ -30,15 +30,15 @@ uv run python -m app.pass_prediction add-omm path/to.json  # store manual orbit 
 | Variable | Default | Notes |
 |---|---|---|
 | `PASS_PREDICTION_NORAD_CAT_ID` | `25544` | Satellite to track (the ISS, for development) |
-| `PASS_PREDICTION_STATION_LATITUDE_DEG` | `43.4730` | Defaults to E7. |
+| `PASS_PREDICTION_STATION_LATITUDE_DEG` | `43.4730` | Defaults to E7 |
 | `PASS_PREDICTION_STATION_LONGITUDE_DEG` | `-80.5395` | |
 | `PASS_PREDICTION_STATION_ALTITUDE_M` | `372.0` | |
-| `PASS_PREDICTION_MIN_ELEVATION_DEG` | `15.0` | Elevation above the horizon where a pass starts and ends. |
+| `PASS_PREDICTION_MIN_ELEVATION_DEG` | `15.0` | Elevation above the horizon where a pass starts and ends |
 | `PASS_PREDICTION_PRE_PADDING_S` | `60` | Session time before the pass starts, for station setup |
 | `PASS_PREDICTION_POST_PADDING_S` | `60` | Session time after the pass ends |
 | `PASS_PREDICTION_WINDOW_DAYS` | `7` | How far ahead to predict |
 | `PASS_PREDICTION_FREEZE_HOURS` | `12.0` | How long before a session its times stop changing |
-| `PASS_PREDICTION_REFRESH_HOURS` | `6.0` | Minimum time between downloads. Can't be below 2. |
+| `PASS_PREDICTION_REFRESH_HOURS` | `6.0` | Minimum time between downloads, can't be below 2 |
 | `PASS_PREDICTION_CELESTRAK_URL` | CelesTrak's GP API | |
 | `PASS_PREDICTION_REQUEST_TIMEOUT_S` | `30.0` | |
 
