@@ -21,8 +21,8 @@ CelesTrak -> orbit_elements (orbit_source.py) -> predicted passes (orbit.py) -> 
 
 ```sh
 cd backend
-uv run python -m app.pass_prediction fetch  # download orbit data if a refresh is possible
-uv run python -m app.pass_prediction add-omm path/to.json  # store manual orbit data
+uv run python -m app.pass_prediction fetch  # download orbit data if a refresh is needed
+uv run python -m app.pass_prediction add-omm path/to/omm.json  # store manual orbit data
 ```
 
 ## Settings
