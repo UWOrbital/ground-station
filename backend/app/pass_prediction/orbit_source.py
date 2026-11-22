@@ -206,10 +206,12 @@ async def _record_attempt(
     :param error: why the attempt failed, or None if it was successful.
     :param inserted: whether the orbit elements were stored.
     """
-    await attempts.create({
-        "norad_cat_id": norad_cat_id,
-        "attempted_at": attempted_at,
-        "http_status": http_status,
-        "error": error,
-        "inserted": inserted,
-    })
+    await attempts.create(
+        {
+            "norad_cat_id": norad_cat_id,
+            "attempted_at": attempted_at,
+            "http_status": http_status,
+            "error": error,
+            "inserted": inserted,
+        }
+    )
