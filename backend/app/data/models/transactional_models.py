@@ -6,7 +6,7 @@ from uuid import UUID, uuid4
 from sqlalchemy import Column, DateTime, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as DB_UUID
-from sqlalchemy.schema import CheckConstraint, ForeignKey, ForeignKeyConstraint, UniqueConstraint
+from sqlalchemy.schema import CheckConstraint, ForeignKey, ForeignKeyConstraint, Index, UniqueConstraint
 from sqlmodel import Field
 
 from app.config.data_values import (
@@ -42,6 +42,7 @@ TRANSACTIONAL_SCHEMA_NAME: Final[str] = "transactional"
 ARO_REQUESTS_TABLE_NAME: Final[str] = "aro_requests"
 SESSIONS_TABLE_NAME: Final[str] = "sessions"
 ORBIT_ELEMENTS_TABLE_NAME: Final[str] = "orbit_elements"
+ORBIT_FETCH_ATTEMPTS_TABLE_NAME: Final[str] = "orbit_fetch_attempts"
 PACKETS_TABLE_NAME: Final[str] = "packets"
 TELEMETRY_TABLE_NAME: Final[str] = "telemetry"
 COMMANDS_TABLE_NAME: Final[str] = "commands"
@@ -245,6 +246,27 @@ class OrbitElement(BaseSQLModel, table=True):
     __tablename__ = ORBIT_ELEMENTS_TABLE_NAME
     __table_args__ = (
         UniqueConstraint("norad_cat_id", "epoch", name="uq_orbit_elements_norad_cat_id_epoch"),
+        {"schema": TRANSACTIONAL_SCHEMA_NAME},
+    )
+
+
+class OrbitFetchAttempt(BaseSQLModel, table=True):
+    """
+    Records each attempt to download orbit elements (successful or not).
+
+    Used to rate-limit requests to CelesTrak and check when orbit data has stopped arriving.
+    """
+
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    norad_cat_id: int
+    attempted_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
+    http_status: int | None = Field(default=None)  # None when no response received
+    error: str | None = Field(default=None)  # None when the attempt succeeded
+    inserted: bool = Field(default=False)  # Whether a new orbit element was stored
+
+    __tablename__ = ORBIT_FETCH_ATTEMPTS_TABLE_NAME
+    __table_args__ = (
+        Index("ix_orbit_fetch_attempts_norad_cat_id_attempted_at", "norad_cat_id", "attempted_at"),
         {"schema": TRANSACTIONAL_SCHEMA_NAME},
     )
 

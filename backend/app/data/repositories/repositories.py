@@ -1,14 +1,16 @@
 from datetime import UTC, datetime, timedelta
-from uuid import UUID
+from typing import Any
+from uuid import UUID, uuid4
 
 from pydantic import EmailStr
 from sqlalchemy import delete, update
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlmodel import col, select
 
 from app.api.mcc.schemas.responses import TelemetryEntry, TelemetrySubrow
 from app.config.data_values import SESSION_LOCKOUT_SECONDS
 from app.data.database.engine import get_db_session
-from app.data.enums.transactional import SessionSource, SessionStatus
+from app.data.enums.transactional import OrbitElementSource, SessionSource, SessionStatus
 from app.data.models.aro_user_models import AROUserAuthToken, AROUserCallsigns, AROUserLogin, AROUsers
 from app.data.models.logs_models import APILog
 from app.data.models.main_models import MainCommand, MainTelemetry
@@ -18,6 +20,7 @@ from app.data.models.transactional_models import (
     Command,
     Image,
     OrbitElement,
+    OrbitFetchAttempt,
     Packet,
     Session,
     Telemetry,
@@ -314,6 +317,64 @@ class OrbitElementRepository(AbstractRepository[OrbitElement, UUID]):
                 select(OrbitElement)
                 .where(OrbitElement.norad_cat_id == norad_cat_id)
                 .order_by(col(OrbitElement.epoch).desc())
+                .limit(1)
+            )
+            return (await db.exec(query)).first()
+
+    async def insert_if_new(
+        self, norad_cat_id: int, epoch: datetime, omm: dict[str, Any], source: OrbitElementSource
+    ) -> bool:
+        """
+        Stores orbit elements unless elements with the same epoch already exist for the satellite
+
+        Since CelesTrak serves the same element set until the next update, re-downloading is normal
+        and should not create a duplicate row
+
+        :param norad_cat_id: NORAD catalog number of the satellite
+        :param epoch: epoch of the elements (with timezone)
+        :param omm: the OMM record
+        :param source: where the elements came from
+        :return: True if a new row was stored, False if these elements were already stored
+        """
+        statement = (
+            pg_insert(OrbitElement)
+            .values(
+                id=uuid4(),
+                norad_cat_id=norad_cat_id,
+                epoch=epoch,
+                omm=omm,
+                source=source,
+                created_at=datetime.now(UTC),
+            )
+            .on_conflict_do_nothing(constraint="uq_orbit_elements_norad_cat_id_epoch")
+            .returning(col(OrbitElement.id))
+        )
+        async with get_db_session() as db:
+            result = await db.exec(statement)
+            inserted = result.first() is not None
+            await db.commit()
+            return inserted
+
+
+class OrbitFetchAttemptRepository(AbstractRepository[OrbitFetchAttempt, UUID]):
+    """
+    Repository for OrbitFetchElement table.
+    """
+
+    model = OrbitFetchAttempt
+
+    async def get_latest(self, norad_cat_id: int) -> OrbitFetchAttempt | None:
+        """
+        Retrieves the most recent fetch attempt for a satellite
+
+        :param norad_cat_id: NORAD catalog number of the satellite
+        :return: the latest attempt, or None if none exists
+        """
+        async with get_db_session() as db:
+            query = (
+                select(OrbitFetchAttempt)
+                .where(OrbitFetchAttempt.norad_cat_id == norad_cat_id)
+                .order_by(col(OrbitFetchAttempt.attempted_at).desc())
                 .limit(1)
             )
             return (await db.exec(query)).first()
