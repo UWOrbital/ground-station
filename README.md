@@ -1,8 +1,9 @@
 <div align = center>
-  <img width="1584" height="396" alt="UW Orbital Ground Station" src="https://github.com/user-attachments/assets/e8afd54f-120e-4fea-b2e2-aee9edd39e34" />
+  <img width="1584" height="396" alt="Orbital Repo Banners" src="https://github.com/user-attachments/assets/acf0e4ff-55ef-4ed6-bcbe-9291ca5e7b74" />
   <br>
   UW Orbital's ground station web applications and services.
 </div>
+
 <br>
 
 **[MCC](https://mcc.uworbital.org)**: Mission Control Centre. Operator interface for commanding the satellite and viewing telemetry.
