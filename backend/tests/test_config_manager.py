@@ -12,7 +12,7 @@ from pydantic_settings import SettingsConfigDict
 def test_logger_config_default():
     cfg = LoggerConfig()
 
-    assert cfg.excluded_endpoints == []
+    assert cfg.excluded_endpoints == ["/health", "/health/ready"]
 
 
 def test_cors_config_default():

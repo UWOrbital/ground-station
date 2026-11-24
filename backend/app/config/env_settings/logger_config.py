@@ -10,7 +10,7 @@ class LoggerConfig(BaseSettings):
 
     model_config = SettingsConfigDict(env_prefix="LOGGER_")
 
-    excluded_endpoints: Sequence[str] = []
+    excluded_endpoints: Sequence[str] = ["/health", "/health/ready"]
 
     # Database log sink (see app/config/db_log_sink.py). Logs are persisted to logs.api
     # in addition to the console sink so a DB outage never loses log output.

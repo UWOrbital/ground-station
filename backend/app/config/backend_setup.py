@@ -7,6 +7,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from app.api.aro.routes.auth import router as aro_auth_router
 from app.api.aro.routes.picture_requests import picture_requests_router
 from app.api.aro.routes.user import aro_user_router
+from app.api.health import router as health_router
 from app.api.mcc.routes.admin import admin_router
 from app.api.mcc.routes.aro_requests import aro_requests_router
 from app.api.mcc.routes.auth import mcc_auth_router
@@ -28,6 +29,9 @@ from app.config.user_id_middleware import UserIdMiddleware
 def setup_routes(app: FastAPI) -> None:
     """Adds the routes to the app"""
     version_1 = "/api"
+
+    # Health Ping Route
+    app.include_router(health_router)
 
     # ARO routes
     aro_prefix = f"{version_1}/aro"
