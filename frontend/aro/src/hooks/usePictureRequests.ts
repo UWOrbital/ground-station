@@ -1,5 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-import { API_BASE_URL, authFetch, parseOrThrow } from "@/lib/apiClient";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { API_BASE_URL, authFetch, parseOrThrow, throwIfError } from "@/lib/apiClient";
 import type { AROCommandStatus } from "@/types";
 
 /**
@@ -32,6 +32,8 @@ export interface PictureRequest {
   operations: Record<string, OperationLink>;
 }
 
+const PICTURE_REQUESTS_QUERY_KEY = "picture-requests";
+
 interface PictureRequestsResponse {
   data: PictureRequest[];
   operations: Record<string, OperationLink>;
@@ -61,7 +63,33 @@ async function fetchPictureRequests(count: number, offset: number): Promise<Pict
  */
 export const usePictureRequests = (count: number = 100, offset: number = 0) => {
   return useQuery({
-    queryKey: ["picture-requests", count, offset],
+    queryKey: [PICTURE_REQUESTS_QUERY_KEY, count, offset],
     queryFn: () => fetchPictureRequests(count, offset),
+  });
+};
+
+/**
+ * @brief Delete a picture request through the URL the backend advertised for it.
+ * @param url the request's `operations.delete.url`.
+ * @throws ApiError when the backend refuses the delete (e.g. the window has closed).
+ */
+async function deletePictureRequest(url: string): Promise<void> {
+  await throwIfError(await authFetch(url, { method: "DELETE" }));
+}
+
+/**
+ * @brief Mutation hook deleting a picture request and refreshing the request list.
+ *
+ * Takes the `operations.delete.url` from a {@link PictureRequest} rather than an
+ * id, so whether a request is deletable is decided only by the backend. The list
+ * is refetched even when the delete fails, so stale operations disappear.
+ *
+ * @return useMutation result object; call `mutate(request.operations.delete.url)`.
+ */
+export const useDeletePictureRequest = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deletePictureRequest,
+    onSettled: () => queryClient.invalidateQueries({ queryKey: [PICTURE_REQUESTS_QUERY_KEY] }),
   });
 };

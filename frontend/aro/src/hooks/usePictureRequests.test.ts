@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
-import { usePictureRequests } from "./usePictureRequests";
+import { useDeletePictureRequest, usePictureRequests } from "./usePictureRequests";
 import { ApiError } from "@/lib/apiClient";
 import { accessTokenStore } from "@/lib/authToken";
-import { createQueryWrapper } from "./testUtils";
+import { createQueryWrapper, jsonResponse } from "./testUtils";
 
 beforeEach(() => {
   vi.restoreAllMocks();
@@ -64,5 +64,39 @@ describe("usePictureRequests", () => {
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.error).toBeInstanceOf(ApiError);
     expect((result.current.error as ApiError).status).toBe(500);
+  });
+});
+
+describe("useDeletePictureRequest", () => {
+  const deleteUrl = "http://localhost:8000/api/aro/requests/11111111-1111-1111-1111-111111111111";
+
+  it("sends DELETE to the advertised URL with the bearer token", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse(200));
+
+    const { result } = renderHook(() => useDeletePictureRequest(), {
+      wrapper: createQueryWrapper(),
+    });
+    result.current.mutate(deleteUrl);
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(String(fetchSpy.mock.calls[0][0])).toBe(deleteUrl);
+    const init = fetchSpy.mock.calls[0][1] as RequestInit;
+    expect(init.method).toBe("DELETE");
+    expect((init.headers as Record<string, string>).Authorization).toBe("Bearer abc");
+  });
+
+  it("surfaces the backend message when the delete is refused", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      jsonResponse(409, { message: "This picture request can no longer be deleted." }),
+    );
+
+    const { result } = renderHook(() => useDeletePictureRequest(), {
+      wrapper: createQueryWrapper(),
+    });
+    result.current.mutate(deleteUrl);
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.error).toBeInstanceOf(ApiError);
+    expect(result.current.error?.message).toBe("This picture request can no longer be deleted.");
   });
 });
